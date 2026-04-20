@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState, useMemo } from 'react';
+import { useEffect, useState, useMemo, useRef } from 'react';
 import Image from 'next/image';
 import type {
   Product,
@@ -11,6 +11,7 @@ import type {
 } from 'brainerce';
 import { getProductPriceInfo, getDescriptionContent } from 'brainerce';
 import { useCart } from '@/providers/store-provider';
+import { flyToCart } from '@/lib/fly-to-cart';
 import { PriceDisplay } from '@/components/shared/price-display';
 import { LoadingSpinner } from '@/components/shared/loading-spinner';
 import { VariantSelector } from '@/components/products/variant-selector';
@@ -110,7 +111,8 @@ interface ProductClientSectionProps {
 }
 
 export function ProductClientSection({ product: initialProduct }: ProductClientSectionProps) {
-  const { refreshCart } = useCart();
+  const { refreshCart, openCartDrawer } = useCart();
+  const mainImageRef = useRef<HTMLDivElement>(null);
   const t = useTranslations('productDetail');
 
   const product = initialProduct;
@@ -206,6 +208,12 @@ export function ProductClientSection({ product: initialProduct }: ProductClientS
 
     try {
       setAddingToCart(true);
+
+      // Start fly animation
+      if (mainImageRef.current) {
+        flyToCart(mainImageRef.current);
+      }
+
       const { getClient } = await import('@/lib/brainerce');
       const client = getClient();
       await client.smartAddToCart({
@@ -215,6 +223,7 @@ export function ProductClientSection({ product: initialProduct }: ProductClientS
       });
       await refreshCart();
       setAddedMessage(true);
+      openCartDrawer();
       setTimeout(() => setAddedMessage(false), 2000);
     } catch (err) {
       console.error('Failed to add to cart:', err);
@@ -224,12 +233,12 @@ export function ProductClientSection({ product: initialProduct }: ProductClientS
   }
 
   return (
-    <div className="mx-auto max-w-7xl px-4 py-8 sm:px-6 lg:px-8">
-      <div className="grid grid-cols-1 gap-8 lg:grid-cols-2 lg:gap-12">
+    <div className="mx-auto max-w-7xl px-4 py-12 sm:px-6 lg:px-8">
+      <div className="grid grid-cols-1 gap-10 lg:grid-cols-2 lg:gap-16">
         {/* Image Gallery */}
         <div className="space-y-4">
           {/* Main Image */}
-          <div className="bg-muted relative aspect-square overflow-hidden rounded-lg">
+          <div ref={mainImageRef} className="bg-secondary/30 relative aspect-square overflow-hidden rounded-2xl shadow-sm">
             {mainImageUrl ? (
               <Image
                 src={mainImageUrl}
@@ -262,10 +271,10 @@ export function ProductClientSection({ product: initialProduct }: ProductClientS
                   type="button"
                   onClick={() => setSelectedImageIndex(idx)}
                   className={cn(
-                    'relative h-16 w-16 flex-shrink-0 overflow-hidden rounded border-2 transition-colors',
+                    'relative h-16 w-16 flex-shrink-0 overflow-hidden rounded-xl border-2 transition-all',
                     selectedImageIndex === idx
-                      ? 'border-primary'
-                      : 'border-border hover:border-muted-foreground'
+                      ? 'border-primary shadow-sm'
+                      : 'border-border hover:border-primary/40'
                   )}
                 >
                   <Image
@@ -311,7 +320,7 @@ export function ProductClientSection({ product: initialProduct }: ProductClientS
             )}
 
           {/* Title */}
-          <h1 className="text-foreground text-2xl font-bold sm:text-3xl">{product.name}</h1>
+          <h1 className="text-foreground text-3xl font-bold sm:text-4xl leading-tight">{product.name}</h1>
 
           {/* Tags */}
           {(product as { tags?: Array<{ id: string; name: string }> }).tags &&
@@ -404,22 +413,22 @@ export function ProductClientSection({ product: initialProduct }: ProductClientS
 
           {/* Quantity + Add to Cart */}
           <div className="flex items-center gap-4">
-            <div className="border-border flex items-center rounded border">
+            <div className="border-border flex items-center rounded-xl border bg-secondary/30">
               <button
                 type="button"
                 onClick={() => setQuantity((q) => Math.max(1, q - 1))}
-                className="text-foreground hover:bg-muted px-3 py-2 transition-colors"
+                className="text-foreground hover:bg-secondary px-4 py-3 transition-colors rounded-s-xl"
                 aria-label={t('decreaseQuantity')}
               >
                 -
               </button>
-              <span className="text-foreground min-w-[3rem] px-4 py-2 text-center text-sm font-medium">
+              <span className="text-foreground min-w-[3rem] px-4 py-3 text-center text-sm font-semibold">
                 {quantity}
               </span>
               <button
                 type="button"
                 onClick={() => setQuantity((q) => q + 1)}
-                className="text-foreground hover:bg-muted px-3 py-2 transition-colors"
+                className="text-foreground hover:bg-secondary px-4 py-3 transition-colors rounded-e-xl"
                 aria-label={t('increaseQuantity')}
               >
                 +
@@ -431,9 +440,9 @@ export function ProductClientSection({ product: initialProduct }: ProductClientS
               onClick={handleAddToCart}
               disabled={!canPurchase || addingToCart}
               className={cn(
-                'flex-1 rounded px-6 py-3 text-sm font-medium transition-all',
+                'flex-1 rounded-xl px-6 py-3.5 text-sm font-semibold transition-all shadow-sm',
                 canPurchase
-                  ? 'bg-primary text-primary-foreground hover:opacity-90'
+                  ? 'bg-accent text-accent-foreground hover:brightness-110 hover:shadow-md'
                   : 'bg-muted text-muted-foreground cursor-not-allowed'
               )}
             >

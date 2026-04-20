@@ -4,20 +4,20 @@
 
 @layer base {
   :root {
-    --background: 0 0% 100%;
-    --foreground: 0 0% 9%;
-    --primary: 0 0% 9%;
-    --primary-foreground: 0 0% 98%;
-    --secondary: 0 0% 96%;
-    --secondary-foreground: 0 0% 9%;
-    --muted: 0 0% 96%;
-    --muted-foreground: 0 0% 45%;
-    --accent: 0 0% 96%;
-    --accent-foreground: 0 0% 9%;
+    --background: 30 25% 98%;
+    --foreground: 220 30% 18%;
+    --primary: 220 45% 30%;
+    --primary-foreground: 30 25% 98%;
+    --secondary: 30 20% 93%;
+    --secondary-foreground: 220 30% 18%;
+    --muted: 30 15% 94%;
+    --muted-foreground: 220 15% 45%;
+    --accent: 35 60% 50%;
+    --accent-foreground: 30 25% 98%;
     --destructive: 0 84% 60%;
     --destructive-foreground: 0 0% 98%;
-    --border: 0 0% 90%;
-    --radius: 0.5rem;
+    --border: 30 15% 88%;
+    --radius: 0.75rem;
   }
 
   * {
@@ -27,4 +27,181 @@
   body {
     @apply bg-background text-foreground antialiased;
   }
+}
+
+/* Smooth scrolling */
+html {
+  scroll-behavior: smooth;
+}
+
+/* Hero video section */
+.hero-video-section {
+  position: relative;
+  width: 100%;
+  height: 100vh;
+  min-height: 600px;
+  overflow: hidden;
+}
+
+.hero-video-section video {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  min-width: 100%;
+  min-height: 100%;
+  width: auto;
+  height: auto;
+  transform: translate(-50%, -50%);
+  object-fit: cover;
+}
+
+.hero-video-overlay {
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(
+    to bottom,
+    rgba(20, 30, 50, 0.3) 0%,
+    rgba(20, 30, 50, 0.5) 50%,
+    rgba(20, 30, 50, 0.7) 100%
+  );
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  padding: 2rem;
+}
+
+/* Fade in animation */
+@keyframes fadeInUp {
+  from {
+    opacity: 0;
+    transform: translateY(30px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.animate-fade-in-up {
+  animation: fadeInUp 1s ease-out forwards;
+}
+
+.animate-fade-in-up-delay {
+  animation: fadeInUp 1s ease-out 0.3s forwards;
+  opacity: 0;
+}
+
+.animate-fade-in-up-delay-2 {
+  animation: fadeInUp 1s ease-out 0.6s forwards;
+  opacity: 0;
+}
+
+/* Custom dropdown animation */
+@keyframes fadeInDropdown {
+  from {
+    opacity: 0;
+    transform: translateY(-4px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.animate-fade-in-dropdown {
+  animation: fadeInDropdown 0.15s ease-out forwards;
+}
+
+/* Scroll indicator */
+@keyframes bounce-slow {
+  0%, 100% {
+    transform: translateY(0) translateX(-50%);
+  }
+  50% {
+    transform: translateY(10px) translateX(-50%);
+  }
+}
+
+.scroll-indicator {
+  position: absolute;
+  bottom: 2rem;
+  left: 50%;
+  transform: translateX(-50%);
+  animation: bounce-slow 2s ease-in-out infinite;
+}
+
+/* Product card hover effects */
+.product-card-comfort {
+  transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.product-card-comfort:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 20px 40px -12px rgba(0, 0, 0, 0.08);
+}
+
+/* Soft section backgrounds */
+.section-warm {
+  background: linear-gradient(180deg, hsl(30 25% 98%) 0%, hsl(30 20% 95%) 100%);
+}
+
+.section-cool {
+  background: linear-gradient(180deg, hsl(220 30% 97%) 0%, hsl(30 25% 98%) 100%);
+}
+
+/* Dashboard card styles */
+.dashboard-card {
+  background: linear-gradient(135deg, hsl(30 25% 98%) 0%, hsl(220 30% 97%) 100%);
+  border: 1px solid hsl(30 15% 90%);
+  border-radius: 1rem;
+  transition: all 0.3s ease;
+}
+
+.dashboard-card:hover {
+  box-shadow: 0 8px 30px -8px rgba(0, 0, 0, 0.06);
+}
+
+/* Cart drawer slide */
+.cart-drawer {
+  inset-inline-end: 0;
+  transform: translateX(100%);
+}
+
+[dir="rtl"] .cart-drawer {
+  transform: translateX(-100%);
+}
+
+.cart-drawer.cart-drawer-open {
+  transform: translateX(0);
+}
+
+/* Cart icon pulse when item flies to it */
+@keyframes cartPulse {
+  0% { transform: scale(1); }
+  50% { transform: scale(1.3); }
+  100% { transform: scale(1); }
+}
+
+.cart-icon-pulse {
+  animation: cartPulse 0.4s ease-in-out 0.45s;
+}
+
+/* Custom scrollbar */
+::-webkit-scrollbar {
+  width: 8px;
+}
+
+::-webkit-scrollbar-track {
+  background: hsl(30 25% 96%);
+}
+
+::-webkit-scrollbar-thumb {
+  background: hsl(220 15% 75%);
+  border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: hsl(220 15% 60%);
 }

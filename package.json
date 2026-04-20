@@ -18,6 +18,9 @@
     "tailwind-merge": "^2.2.0",
     "isomorphic-dompurify": "^3.8.0"
   },
+  "overrides": {
+    "html-encoding-sniffer": "^4.0.0"
+  },
   "devDependencies": {
     "@types/node": "^20.0.0",
     "@types/react": "^19.0.0",

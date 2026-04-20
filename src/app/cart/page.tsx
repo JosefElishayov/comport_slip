@@ -38,14 +38,9 @@ export default function CartPage() {
       return;
     }
     const client = getClient();
-    client
-      .getCart(cart.id, { include: ['recommendations', 'upgrades', 'bundles'] })
-      .then((enriched) => {
-        setCartRecs(enriched.recommendations ?? null);
-        setUpgrades(enriched.upgrades ?? null);
-        setBundles(enriched.bundles ?? null);
-      })
-      .catch(() => {});
+    client.getCartRecommendations(cart.id).then(setCartRecs).catch(() => {});
+    client.getCartUpgrades(cart.id).then(setUpgrades).catch(() => {});
+    client.getCartBundles(cart.id).then(setBundles).catch(() => {});
   }, [cart?.id, cart?.items.length]);
 
   if (cartLoading) {

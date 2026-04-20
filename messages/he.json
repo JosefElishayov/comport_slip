@@ -51,8 +51,22 @@
   "home": {
     "pageTitle": "דף הבית",
     "welcomeTo": "ברוכים הבאים ל",
-    "heroSubtitle": "גלו את מגוון המוצרים שלנו, שנבחרו בקפידה עבורכם.",
-    "featuredProducts": "מוצרים מובילים"
+    "heroTitle": "השינה שמגיעה לך",
+    "heroSubtitle": "מזרונים שעוטפים אותך בנוחות מושלמת — כי אתה ראוי לקום כל בוקר עם חיוך",
+    "heroCta": "גלו את הקולקציה",
+    "featuredProducts": "הנבחרים שלנו",
+    "featuredSubtitle": "המזרונים הפופולריים ביותר, שנבחרו על ידי אלפי לקוחות מרוצים",
+    "benefitDelivery": "משלוח חינם עד הבית",
+    "benefitWarranty": "אחריות מלאה",
+    "benefitComfort": "נוחות ללא פשרות",
+    "benefitPrice": "מחיר הוגן",
+    "promiseTitle": "ההבטחה שלנו — שינה טובה יותר",
+    "promiseText": "אנחנו מאמינים ששינה איכותית משנה חיים. לכן כל מזרון שלנו עובר בדיקות קפדניות כדי להבטיח שתקבלו את הנוחות המושלמת.",
+    "promisePoint1": "חומרים איכותיים ובריאותיים שנבחרו בקפידה",
+    "promisePoint2": "תמיכה אורטופדית מותאמת לגוף שלכם",
+    "promisePoint3": "שירות אישי וליווי מקצועי בכל שלב",
+    "nightsTrial": "לילות ניסיון",
+    "nightsTrialSub": "החזרה מלאה"
   },
   "products": {
     "pageTitle": "מוצרים",
@@ -66,6 +80,7 @@
     "sortPriceLow": "מחיר: מהנמוך לגבוה",
     "sortPriceHigh": "מחיר: מהגבוה לנמוך",
     "selectOptions": "בחר אפשרויות",
+    "buyNow": "קנה עכשיו",
     "allBrands": "כל המותגים",
     "allTags": "כל התגיות"
   },
@@ -195,7 +210,9 @@
     "customFieldsImageUploading": "...מעלה",
     "customFieldsImageTooLarge": "הקובץ חייב להיות מתחת ל-5MB",
     "changeOptions": "שנה אפשרויות",
-    "surcharges": "תוספות"
+    "surcharges": "תוספות",
+    "fillAddressForShipping": "מלאו את פרטי הכתובת למעלה כדי לראות אפשרויות משלוח",
+    "completeAboveSteps": "השלימו את השלבים למעלה כדי להמשיך לתשלום"
   },
   "checkoutForm": {
     "email": "אימייל",
@@ -382,6 +399,10 @@
     "expired": "השריון פג. ייתכן שהמוצרים כבר לא זמינים.",
     "hurry": "מהרו!",
     "reservedFor": "המוצרים שמורים למשך"
+  },
+  "cartDrawer": {
+    "close": "סגור",
+    "goToCart": "עבור לעגלה"
   },
   "coupon": {
     "placeholder": "קוד קופון",

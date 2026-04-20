@@ -19,6 +19,8 @@ interface CheckoutFormProps {
   className?: string;
   showSaveDetails?: boolean;
   emailOnly?: boolean;
+  children?: React.ReactNode;
+  submitLabel?: string;
 }
 
 export function CheckoutForm({
@@ -29,6 +31,8 @@ export function CheckoutForm({
   className,
   showSaveDetails = false,
   emailOnly = false,
+  children,
+  submitLabel,
 }: CheckoutFormProps) {
   const [formData, setFormData] = useState<SetShippingAddressDto>({
     email: initialValues?.email || '',
@@ -404,12 +408,14 @@ export function CheckoutForm({
         </label>
       )}
 
+      {children}
+
       <button
         type="submit"
         disabled={loading}
         className="bg-primary text-primary-foreground w-full rounded px-6 py-3 text-sm font-medium transition-opacity hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-60"
       >
-        {loading ? tc('saving') : emailOnly ? t('continueToPayment') : t('continueToShipping')}
+        {loading ? tc('saving') : submitLabel ? submitLabel : emailOnly ? t('continueToPayment') : t('continueToShipping')}
       </button>
     </form>
   );

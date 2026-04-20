@@ -1,0 +1,17 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(npx next:*)",
+      "Bash(npx tsc:*)",
+      "Bash(npm run:*)",
+      "Bash(npm ls:*)",
+      "Bash(taskkill //f //im node.exe)",
+      "Bash(rm -rf .next)",
+      "Bash(node -e \"const m = require\\(''./messages/he.json''\\); console.log\\(Object.keys\\(m\\)\\); console.log\\(''cartDrawer:'', m.cartDrawer\\);\")",
+      "Bash(npm install:*)"
+    ],
+    "additionalDirectories": [
+      "D:\\Users\\User\\Downloads"
+    ]
+  }
+}

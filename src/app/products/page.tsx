@@ -69,6 +69,70 @@ function ChevronDown({ className }: { className?: string }) {
   );
 }
 
+/** Custom styled select dropdown */
+function CustomSelect({
+  label,
+  value,
+  options,
+  onChange,
+}: {
+  label: string;
+  value: string;
+  options: { value: string; label: string }[];
+  onChange: (value: string) => void;
+}) {
+  const [open, setOpen] = useState(false);
+  const ref = useRef<HTMLDivElement>(null);
+
+  const selectedLabel = options.find((o) => o.value === value)?.label || options[0]?.label || '';
+
+  useEffect(() => {
+    if (!open) return;
+    function handleClick(e: MouseEvent) {
+      if (ref.current && !ref.current.contains(e.target as Node)) {
+        setOpen(false);
+      }
+    }
+    document.addEventListener('mousedown', handleClick);
+    return () => document.removeEventListener('mousedown', handleClick);
+  }, [open]);
+
+  return (
+    <div ref={ref} className="relative flex flex-col items-center gap-1 min-w-[120px]">
+      <span className="text-xs text-gray-400 font-medium">{label}</span>
+      <button
+        onClick={() => setOpen((prev) => !prev)}
+        className="inline-flex items-center gap-1.5 text-sm font-semibold text-gray-800 hover:text-gray-600 transition-colors cursor-pointer px-2 py-0.5"
+      >
+        {selectedLabel}
+        <ChevronDown className={cn('transition-transform duration-200', open && 'rotate-180')} />
+      </button>
+
+      {open && (
+        <div className="absolute top-full mt-2 z-50 min-w-[180px] max-h-[240px] overflow-y-auto rounded-xl bg-white border border-gray-100 shadow-xl py-1 animate-fade-in-dropdown">
+          {options.map((opt) => (
+            <button
+              key={opt.value}
+              onClick={() => {
+                onChange(opt.value);
+                setOpen(false);
+              }}
+              className={cn(
+                'w-full px-4 py-2.5 text-sm text-start transition-colors',
+                opt.value === value
+                  ? 'bg-primary/10 text-primary font-semibold'
+                  : 'text-gray-700 hover:bg-gray-50'
+              )}
+            >
+              {opt.label}
+            </button>
+          ))}
+        </div>
+      )}
+    </div>
+  );
+}
+
 /** Recursive dropdown items for nested categories */
 function CategoryDropdownItems({
   items,
@@ -327,102 +391,121 @@ function ProductsContent() {
   }
 
   return (
-    <div className="mx-auto max-w-7xl px-4 py-8 sm:px-6 lg:px-8">
-      {/* Page Header */}
-      <div className="mb-8">
-        <h1 className="text-foreground text-3xl font-bold">
-          {searchQuery ? `${t('searchPrefix')} "${searchQuery}"` : t('allProducts')}
-        </h1>
-        {!loading && (
-          <p className="text-muted-foreground mt-1 text-sm">
-            {total} {total === 1 ? tc('product') : tc('products')} {tc('found')}
-          </p>
-        )}
-      </div>
-
-      {/* Filters and Sort */}
-      <div className="mb-6 flex flex-col gap-4">
-        {/* Category Filter */}
-        {categories.length > 0 && (
-          <div className="flex flex-wrap gap-2">
-            <button
-              onClick={() => updateParam('category', '')}
-              className={cn(
-                'rounded-full border px-3 py-1.5 text-sm transition-colors',
-                !categoryId
-                  ? 'bg-primary text-primary-foreground border-primary'
-                  : 'border-border text-muted-foreground hover:border-primary hover:text-foreground'
-              )}
-            >
-              {tc('all')}
-            </button>
-            {categories.map((cat) => (
-              <CategoryChip
-                key={cat.id}
-                category={cat}
-                selectedId={categoryId}
-                onSelect={handleCategorySelect}
-                tc={tc as (key: string) => string}
-              />
-            ))}
+    <div className="min-h-screen">
+      {/* Hero Banner with Filters */}
+      <div className="relative flex flex-col items-center justify-center">
+        {/* Background Image */}
+        <div className="absolute inset-0 overflow-hidden">
+          <img
+            src="/products-hero.webp"
+            alt=""
+            className="h-full w-full object-cover object-center scale-110"
+            style={{ filter: 'brightness(0.3)' }}
+          />
+        </div>
+        {/* Content */}
+        <div className="relative z-10 flex flex-col items-center gap-8 px-4 py-20 sm:py-28 w-full max-w-4xl mx-auto">
+          <div className="text-center">
+            <h1 className="text-white text-3xl font-extrabold sm:text-5xl tracking-tight animate-fade-in-up">
+              {searchQuery ? `${t('searchPrefix')} "${searchQuery}"` : t('allProducts')}
+            </h1>
+            {!loading && (
+              <p className="text-white/70 mt-3 text-base sm:text-lg animate-fade-in-up-delay">
+                {total} {total === 1 ? tc('product') : tc('products')} {tc('found')}
+              </p>
+            )}
           </div>
-        )}
 
-        {/* Brand, Tag & Sort row */}
-        <div className="flex flex-wrap items-center gap-3">
-          {/* Brand Filter */}
-          {brands.length > 0 && (
-            <select
-              value={brandId}
-              onChange={(e) => updateParam('brand', e.target.value)}
-              className="border-border bg-background text-foreground focus:ring-primary/20 focus:border-primary h-9 rounded border px-3 text-sm focus:outline-none focus:ring-2"
-            >
-              <option value="">{t('allBrands')}</option>
-              {brands.map((b) => (
-                <option key={b.id} value={b.id}>
-                  {b.name}
-                </option>
-              ))}
-            </select>
-          )}
+          {/* Filters Bar */}
+          <div className="animate-fade-in-up-delay-2 w-full max-w-3xl relative z-20">
+            <div className="flex flex-wrap items-center justify-center gap-3 rounded-2xl bg-white/95 backdrop-blur-md px-5 py-4 shadow-2xl">
+              {/* Category Filter */}
+              {categories.length > 0 && (
+                <CustomSelect
+                  label={t('pageTitle')}
+                  value={categoryId}
+                  options={[
+                    { value: '', label: tc('all') },
+                    ...categories.map((cat) => ({ value: cat.id, label: cat.name })),
+                  ]}
+                  onChange={(v) => updateParam('category', v)}
+                />
+              )}
 
-          {/* Tag Filter */}
-          {tags.length > 0 && (
-            <select
-              value={tagId}
-              onChange={(e) => updateParam('tag', e.target.value)}
-              className="border-border bg-background text-foreground focus:ring-primary/20 focus:border-primary h-9 rounded border px-3 text-sm focus:outline-none focus:ring-2"
-            >
-              <option value="">{t('allTags')}</option>
-              {tags.map((tg) => (
-                <option key={tg.id} value={tg.id}>
-                  {tg.name}
-                </option>
-              ))}
-            </select>
-          )}
+              {/* Divider */}
+              {categories.length > 0 && (brands.length > 0 || tags.length > 0) && (
+                <div className="h-8 w-px bg-gray-200" />
+              )}
 
-          {/* Sort */}
-          <div className="flex items-center gap-2 sm:ms-auto">
-            <label htmlFor="sort" className="text-muted-foreground whitespace-nowrap text-sm">
-              {tc('sortBy')}
-            </label>
-            <select
-              id="sort"
-              value={sortIndex}
-              onChange={(e) => updateParam('sort', e.target.value)}
-              className="border-border bg-background text-foreground focus:ring-primary/20 focus:border-primary h-9 rounded border px-3 text-sm focus:outline-none focus:ring-2"
-            >
-              {sortOptions.map((opt, idx) => (
-                <option key={idx} value={idx}>
-                  {t(opt.labelKey)}
-                </option>
-              ))}
-            </select>
+              {/* Brand Filter */}
+              {brands.length > 0 && (
+                <CustomSelect
+                  label={t('allBrands')}
+                  value={brandId}
+                  options={[
+                    { value: '', label: tc('all') },
+                    ...brands.map((b) => ({ value: b.id, label: b.name })),
+                  ]}
+                  onChange={(v) => updateParam('brand', v)}
+                />
+              )}
+
+              {/* Divider */}
+              {brands.length > 0 && tags.length > 0 && (
+                <div className="h-8 w-px bg-gray-200" />
+              )}
+
+              {/* Tag Filter */}
+              {tags.length > 0 && (
+                <CustomSelect
+                  label={t('allTags')}
+                  value={tagId}
+                  options={[
+                    { value: '', label: tc('all') },
+                    ...tags.map((tg) => ({ value: tg.id, label: tg.name })),
+                  ]}
+                  onChange={(v) => updateParam('tag', v)}
+                />
+              )}
+
+              {/* Divider */}
+              <div className="h-8 w-px bg-gray-200" />
+
+              {/* Sort */}
+              <CustomSelect
+                label={tc('sortBy')}
+                value={String(sortIndex)}
+                options={sortOptions.map((opt, idx) => ({
+                  value: String(idx),
+                  label: t(opt.labelKey),
+                }))}
+                onChange={(v) => updateParam('sort', v)}
+              />
+
+              {/* Search indicator */}
+              {searchQuery && (
+                <>
+                  <div className="h-8 w-px bg-gray-200" />
+                  <button
+                    onClick={() => updateParam('search', '')}
+                    className="flex items-center gap-2 rounded-full bg-gray-100 px-4 py-2 text-sm text-gray-600 hover:bg-gray-200 transition-colors"
+                  >
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                      <circle cx="11" cy="11" r="8" />
+                      <path d="m21 21-4.3-4.3" />
+                    </svg>
+                    {searchQuery}
+                    <span className="text-gray-400">&times;</span>
+                  </button>
+                </>
+              )}
+            </div>
           </div>
         </div>
       </div>
 
+    <div className="section-warm">
+    <div className="mx-auto max-w-7xl px-4 py-10 sm:px-6 lg:px-8">
       {/* Products Grid */}
       {loading ? (
         <div className="flex items-center justify-center py-20">
@@ -438,7 +521,7 @@ function ProductsContent() {
               <button
                 onClick={handleLoadMore}
                 disabled={loadingMore}
-                className="bg-primary text-primary-foreground inline-flex items-center gap-2 rounded px-6 py-2.5 font-medium transition-opacity hover:opacity-90 disabled:opacity-50"
+                className="bg-accent text-accent-foreground inline-flex items-center gap-2 rounded-full px-8 py-3 font-semibold shadow-sm transition-all hover:brightness-110 hover:shadow-md disabled:opacity-50"
               >
                 {loadingMore ? (
                   <>
@@ -456,6 +539,8 @@ function ProductsContent() {
           )}
         </>
       )}
+    </div>
+    </div>
     </div>
   );
 }

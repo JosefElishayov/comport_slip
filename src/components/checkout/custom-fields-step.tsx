@@ -13,6 +13,7 @@ interface CustomFieldsStepProps {
   onUploadFile?: (file: File) => Promise<{ url: string; key: string }>;
   loading?: boolean;
   className?: string;
+  hideSubmit?: boolean;
 }
 
 const MAX_IMAGE_SIZE = 5 * 1024 * 1024; // 5 MB
@@ -26,6 +27,7 @@ export function CustomFieldsStep({
   onUploadFile,
   loading = false,
   className,
+  hideSubmit = false,
 }: CustomFieldsStepProps) {
   const t = useTranslations('checkout');
   const [uploadingKeys, setUploadingKeys] = useState<Set<string>>(new Set());
@@ -245,14 +247,16 @@ export function CustomFieldsStep({
         }
       })}
 
-      <button
-        type="button"
-        onClick={onApply}
-        disabled={loading || isMissing}
-        className="bg-primary text-primary-foreground w-full rounded px-4 py-3 text-sm font-medium transition-opacity hover:opacity-90 disabled:opacity-50"
-      >
-        {loading ? t('customFieldsApplying') : t('customFieldsApply')}
-      </button>
+      {!hideSubmit && (
+        <button
+          type="button"
+          onClick={onApply}
+          disabled={loading || isMissing}
+          className="bg-primary text-primary-foreground w-full rounded px-4 py-3 text-sm font-medium transition-opacity hover:opacity-90 disabled:opacity-50"
+        >
+          {loading ? t('customFieldsApplying') : t('customFieldsApply')}
+        </button>
+      )}
     </div>
   );
 }

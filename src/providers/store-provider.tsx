@@ -50,6 +50,9 @@ interface CartContextValue {
   refreshCart: () => Promise<void>;
   itemCount: number;
   totals: { subtotal: number; discount: number; shipping: number; total: number };
+  isCartDrawerOpen: boolean;
+  openCartDrawer: () => void;
+  closeCartDrawer: () => void;
 }
 
 const CartContext = createContext<CartContextValue>({
@@ -58,6 +61,9 @@ const CartContext = createContext<CartContextValue>({
   refreshCart: async () => {},
   itemCount: 0,
   totals: { subtotal: 0, discount: 0, shipping: 0, total: 0 },
+  isCartDrawerOpen: false,
+  openCartDrawer: () => {},
+  closeCartDrawer: () => {},
 });
 
 export function useCart() {
@@ -75,6 +81,10 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
   const [authLoading, setAuthLoading] = useState(true);
   const [cart, setCart] = useState<Cart | null>(null);
   const [cartLoading, setCartLoading] = useState(true);
+  const [isCartDrawerOpen, setIsCartDrawerOpen] = useState(false);
+
+  const openCartDrawer = useCallback(() => setIsCartDrawerOpen(true), []);
+  const closeCartDrawer = useCallback(() => setIsCartDrawerOpen(false), []);
 
 
   // Check auth status via httpOnly cookie (server-side validation)
@@ -171,7 +181,7 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
     <StoreInfoContext.Provider value={{ storeInfo, loading: storeLoading }}>
       <AuthContext.Provider value={{ isLoggedIn, authLoading, customer, login, logout }}>
         <CartContext.Provider
-          value={{ cart, cartLoading, refreshCart, itemCount, totals }}
+          value={{ cart, cartLoading, refreshCart, itemCount, totals, isCartDrawerOpen, openCartDrawer, closeCartDrawer }}
         >
           {children}
         </CartContext.Provider>

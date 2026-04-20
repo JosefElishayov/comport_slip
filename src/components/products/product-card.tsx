@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useRef } from 'react';
 import { Link, useRouter } from '@/lib/navigation';
 import Image from 'next/image';
 import type { Product } from 'brainerce';
@@ -11,6 +11,8 @@ import { StockBadge } from '@/components/products/stock-badge';
 import { DiscountBadge } from '@/components/products/discount-badge';
 import { useCart, useStoreInfo } from '@/providers/store-provider';
 import { cn } from '@/lib/utils';
+import { flyToCart } from '@/lib/fly-to-cart';
+import { LoadingSpinner } from '@/components/shared/loading-spinner';
 
 interface ProductCardProps {
   product: Product;
@@ -28,7 +30,7 @@ function VariantPriceRange({ product }: { product: Product }) {
   const max = Math.max(...prices);
 
   return (
-    <span className="text-foreground text-sm font-medium">
+    <span className="text-foreground text-sm font-semibold">
       {min === max
         ? (formatPrice(min, { currency }) as string)
         : `${formatPrice(min, { currency })} – ${formatPrice(max, { currency })}`}
@@ -41,7 +43,8 @@ export function ProductCard({ product, className }: ProductCardProps) {
   const tp = useTranslations('productDetail');
   const tProd = useTranslations('products');
   const router = useRouter();
-  const { refreshCart } = useCart();
+  const { refreshCart, openCartDrawer } = useCart();
+  const imageRef = useRef<HTMLDivElement>(null);
   const { price, originalPrice, isOnSale } = getProductPriceInfo(product);
   const mainImage = product.images?.[0];
   const imageUrl = mainImage?.url || null;
@@ -66,11 +69,16 @@ export function ProductCard({ product, className }: ProductCardProps) {
 
     try {
       setAdding(true);
+      if (imageRef.current) {
+        flyToCart(imageRef.current);
+      }
+
       const { getClient } = await import('@/lib/brainerce');
       const client = getClient();
       await client.smartAddToCart({ productId: product.id, quantity: 1 });
       await refreshCart();
       setAdded(true);
+      openCartDrawer();
       setTimeout(() => setAdded(false), 2000);
     } catch (err) {
       console.error('Failed to add to cart:', err);
@@ -79,23 +87,51 @@ export function ProductCard({ product, className }: ProductCardProps) {
     }
   }
 
+  function handleBuyNow(e: React.MouseEvent) {
+    e.preventDefault();
+    e.stopPropagation();
+
+    if (isVariable) {
+      router.push(`/products/${slug}`);
+      return;
+    }
+
+    if (!canPurchase) return;
+
+    // Add to cart and go to checkout
+    (async () => {
+      try {
+        setAdding(true);
+        const { getClient } = await import('@/lib/brainerce');
+        const client = getClient();
+        await client.smartAddToCart({ productId: product.id, quantity: 1 });
+        await refreshCart();
+        router.push('/checkout');
+      } catch (err) {
+        console.error('Failed to buy now:', err);
+      } finally {
+        setAdding(false);
+      }
+    })();
+  }
+
   return (
     <div
       className={cn(
-        'border-border bg-background group block overflow-hidden rounded-lg border transition-shadow hover:shadow-md',
+        'product-card-comfort border-border bg-background group flex flex-col overflow-hidden rounded-2xl border',
         className
       )}
     >
       {/* Image — clickable */}
       <Link href={`/products/${slug}`} className="block">
-        <div className="bg-muted relative aspect-square overflow-hidden">
+        <div ref={imageRef} className="bg-secondary/30 relative aspect-square overflow-hidden">
           {imageUrl ? (
             <Image
               src={imageUrl}
               alt={mainImage?.alt || product.name}
               fill
               sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 25vw"
-              className="object-cover transition-transform duration-300 group-hover:scale-105"
+              className="object-contain p-4 transition-transform duration-500 group-hover:scale-105"
             />
           ) : (
             <div className="text-muted-foreground absolute inset-0 flex items-center justify-center">
@@ -111,106 +147,102 @@ export function ProductCard({ product, className }: ProductCardProps) {
           )}
 
           {/* Badges */}
-          <div className="absolute start-2 top-2 flex flex-col gap-1">
+          <div className="absolute start-3 top-3 flex flex-col gap-1.5">
+            {/* Categories */}
+            {product.categories && product.categories.length > 0 && (
+              product.categories.slice(0, 1).map((cat) => (
+                <span
+                  key={cat.id}
+                  className="bg-background/90 backdrop-blur-sm text-foreground rounded-full px-3 py-1 text-xs font-medium shadow-sm border border-border"
+                >
+                  {cat.name}
+                </span>
+              ))
+            )}
             {isOnSale && (
-              <span className="bg-destructive text-destructive-foreground rounded px-2 py-1 text-xs font-bold">
+              <span className="bg-destructive text-destructive-foreground rounded-full px-3 py-1 text-xs font-bold shadow-sm">
                 {t('sale')}
               </span>
             )}
             <DiscountBadge discount={product.discount} />
             {product.isDownloadable && (
-              <span className="bg-primary text-primary-foreground rounded px-2 py-1 text-xs font-bold">
+              <span className="bg-primary text-primary-foreground rounded-full px-3 py-1 text-xs font-bold shadow-sm">
                 {tp('digitalProduct')}
               </span>
             )}
           </div>
-
-          {/* Add to cart overlay button */}
-          {(isVariable || canPurchase) && (
-            <button
-              onClick={handleAddToCart}
-              disabled={adding}
-              aria-label={isVariable ? tProd('selectOptions') : tp('addToCart')}
-              className={cn(
-                'absolute bottom-2 end-2 flex h-8 w-8 items-center justify-center rounded-full shadow-md transition-all',
-                'translate-y-2 opacity-0 group-hover:translate-y-0 group-hover:opacity-100',
-                added
-                  ? 'bg-green-500 text-white'
-                  : 'bg-primary text-primary-foreground hover:opacity-90'
-              )}
-            >
-              {added ? (
-                <svg
-                  className="h-4 w-4"
-                  fill="none"
-                  viewBox="0 0 24 24"
-                  stroke="currentColor"
-                  strokeWidth={2.5}
-                >
-                  <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
-                </svg>
-              ) : isVariable ? (
-                <svg
-                  className="h-4 w-4"
-                  fill="none"
-                  viewBox="0 0 24 24"
-                  stroke="currentColor"
-                  strokeWidth={2}
-                >
-                  <path strokeLinecap="round" strokeLinejoin="round" d="M12 4v16m8-8H4" />
-                </svg>
-              ) : (
-                <svg
-                  className="h-4 w-4"
-                  fill="none"
-                  viewBox="0 0 24 24"
-                  stroke="currentColor"
-                  strokeWidth={2}
-                >
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 100 4 2 2 0 000-4zm-8 2a2 2 0 11-4 0 2 2 0 014 0z"
-                  />
-                </svg>
-              )}
-            </button>
-          )}
         </div>
       </Link>
 
       {/* Content */}
-      <div className="space-y-2 p-3">
-        {/* Categories */}
-        {product.categories && product.categories.length > 0 && (
-          <div className="flex flex-wrap gap-1">
-            {product.categories.slice(0, 2).map((cat) => (
-              <span
-                key={cat.id}
-                className="text-muted-foreground bg-muted rounded px-1.5 py-0.5 text-[10px]"
-              >
-                {cat.name}
-              </span>
-            ))}
-          </div>
-        )}
-
+      <div className="flex flex-1 flex-col p-4">
         {/* Name — clickable */}
         <Link href={`/products/${slug}`}>
-          <h3 className="text-foreground hover:text-primary line-clamp-2 text-sm font-medium transition-colors">
+          <h3 className="text-foreground hover:text-primary line-clamp-2 text-sm font-bold transition-colors">
             {product.name}
           </h3>
         </Link>
 
         {/* Price */}
-        {isVariable ? (
-          <VariantPriceRange product={product} />
-        ) : (
-          <PriceDisplay price={originalPrice} salePrice={isOnSale ? price : undefined} size="sm" />
-        )}
+        <div className="mt-2">
+          {isVariable ? (
+            <VariantPriceRange product={product} />
+          ) : (
+            <PriceDisplay price={originalPrice} salePrice={isOnSale ? price : undefined} size="sm" />
+          )}
+        </div>
 
         {/* Stock */}
-        <StockBadge inventory={product.inventory} />
+        <div className="mt-1">
+          <StockBadge inventory={product.inventory} />
+        </div>
+
+        {/* Spacer */}
+        <div className="flex-1" />
+
+        {/* Action Buttons */}
+        {(isVariable || canPurchase) && (
+          <div className="mt-3 flex gap-2">
+            {/* Add to Cart */}
+            <button
+              onClick={handleAddToCart}
+              disabled={adding}
+              className={cn(
+                'flex flex-1 items-center justify-center gap-1.5 rounded-xl border border-border py-2.5 text-xs font-semibold transition-all',
+                added
+                  ? 'bg-green-500 text-white border-green-500'
+                  : 'bg-background text-foreground hover:bg-secondary/50'
+              )}
+            >
+              {added ? (
+                <>
+                  <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
+                  </svg>
+                  {tp('addedToCart')}
+                </>
+              ) : adding ? (
+                <LoadingSpinner size="sm" className="border-muted-foreground/30 border-t-foreground" />
+              ) : (
+                <>
+                  <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 100 4 2 2 0 000-4zm-8 2a2 2 0 11-4 0 2 2 0 014 0z" />
+                  </svg>
+                  {isVariable ? tProd('selectOptions') : tp('addToCart')}
+                </>
+              )}
+            </button>
+
+            {/* Buy Now */}
+            <button
+              onClick={handleBuyNow}
+              disabled={adding}
+              className="flex flex-1 items-center justify-center rounded-xl bg-accent text-accent-foreground py-2.5 text-xs font-semibold shadow-sm transition-all hover:brightness-110 disabled:opacity-50"
+            >
+              {tProd('buyNow')}
+            </button>
+          </div>
+        )}
       </div>
     </div>
   );
