@@ -72,16 +72,6 @@ export function PaymentStep({ checkoutId, className }: PaymentStepProps) {
   const t = useTranslations('checkout');
   const { storeInfo } = useStoreInfo();
 
-  // Defense in depth: the parent already validates checkoutId from URL params,
-  // but we re-check here so the component is safe to render in any context.
-  if (!isValidCheckoutId(checkoutId)) {
-    return (
-      <div className={cn('border-destructive/50 rounded-md border p-4', className)}>
-        <p className="text-destructive text-sm">{t('paymentError')}</p>
-      </div>
-    );
-  }
-
   const [paymentIntent, setPaymentIntent] = useState<PaymentIntent | null>(null);
   const [preloadedSdk, setPreloadedSdk] = useState<PaymentClientSdk | null>(null);
   const [loading, setLoading] = useState(true);
@@ -453,6 +443,16 @@ export function PaymentStep({ checkoutId, className }: PaymentStepProps) {
   }, [checkoutId]);
 
   // --- UI ---
+
+  // Defense in depth: the parent already validates checkoutId from URL params,
+  // but we re-check here so the component is safe to render in any context.
+  if (!isValidCheckoutId(checkoutId)) {
+    return (
+      <div className={cn('border-destructive/50 rounded-md border p-4', className)}>
+        <p className="text-destructive text-sm">{t('paymentError')}</p>
+      </div>
+    );
+  }
 
   if (loading) {
     return (

@@ -323,15 +323,14 @@ export function ProductClientSection({ product: initialProduct }: ProductClientS
           <h1 className="text-foreground text-3xl font-bold sm:text-4xl leading-tight">{product.name}</h1>
 
           {/* Tags */}
-          {(product as { tags?: Array<{ id: string; name: string }> }).tags &&
-            (product as { tags: Array<{ id: string; name: string }> }).tags.length > 0 && (
+          {product.tags && product.tags.length > 0 && (
               <div className="flex flex-wrap gap-1.5">
-                {(product as { tags: Array<{ id: string; name: string }> }).tags.map((tag) => (
+                {product.tags.map((tag) => (
                   <span
-                    key={tag.id}
+                    key={tag}
                     className="border-border text-muted-foreground rounded-full border px-2.5 py-0.5 text-xs"
                   >
-                    #{tag.name}
+                    #{tag}
                   </span>
                 ))}
               </div>

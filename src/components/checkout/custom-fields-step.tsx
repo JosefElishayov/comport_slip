@@ -57,7 +57,7 @@ export function CustomFieldsStep({
           <p className="text-muted-foreground mt-1 text-xs">{field.description}</p>
         ) : null;
 
-        switch (field.type) {
+        switch (field.type as string) {
           case 'TEXT':
             return (
               <div key={field.key}>
