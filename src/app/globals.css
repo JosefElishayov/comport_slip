@@ -188,6 +188,173 @@ html {
   animation: cartPulse 0.4s ease-in-out 0.45s;
 }
 
+/* ============================================
+   Accessibility (תקן ישראלי 5568 / WCAG 2.0 AA)
+   ============================================ */
+
+:root {
+  --a11y-font-scale: 1;
+}
+
+html { font-size: calc(16px * var(--a11y-font-scale)); }
+
+/* Visible keyboard focus - critical for a11y */
+*:focus-visible {
+  outline: 3px solid hsl(35 60% 50%);
+  outline-offset: 2px;
+  border-radius: 2px;
+}
+
+/* Screen reader only */
+.sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
+}
+.focus\:not-sr-only:focus {
+  position: fixed;
+  width: auto;
+  height: auto;
+  padding: inherit;
+  margin: 0;
+  overflow: visible;
+  clip: auto;
+  white-space: normal;
+}
+
+/* Respect OS-level reduced motion preference */
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: 0.001ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.001ms !important;
+    scroll-behavior: auto !important;
+  }
+}
+
+/* High contrast */
+html.a11y-contrast-high,
+html.a11y-contrast-high body {
+  background: #000 !important;
+  color: #fff !important;
+}
+html.a11y-contrast-high *:not([class*="a11y-"]) {
+  background-color: #000 !important;
+  color: #fff !important;
+  border-color: #fff !important;
+}
+html.a11y-contrast-high a { color: #ffff00 !important; }
+html.a11y-contrast-high button,
+html.a11y-contrast-high input,
+html.a11y-contrast-high select,
+html.a11y-contrast-high textarea {
+  background: #000 !important;
+  color: #fff !important;
+  border: 1px solid #fff !important;
+}
+
+/* Inverted contrast */
+html.a11y-contrast-inverted {
+  filter: invert(1) hue-rotate(180deg);
+}
+html.a11y-contrast-inverted img,
+html.a11y-contrast-inverted video,
+html.a11y-contrast-inverted picture {
+  filter: invert(1) hue-rotate(180deg);
+}
+
+/* Monochrome */
+html.a11y-contrast-monochrome { filter: grayscale(100%); }
+
+/* Light background */
+html.a11y-contrast-light,
+html.a11y-contrast-light body {
+  background: #ffffff !important;
+  color: #000000 !important;
+}
+html.a11y-contrast-light *:not([class*="a11y-"]) {
+  background-color: #ffffff !important;
+  color: #000000 !important;
+}
+html.a11y-contrast-light a { color: #0000ee !important; }
+
+/* Highlight links */
+html.a11y-highlight-links a {
+  text-decoration: underline !important;
+  font-weight: 700 !important;
+  background-color: #fff2a8 !important;
+  color: #000 !important;
+  padding: 0 2px;
+  border-radius: 2px;
+}
+
+/* Highlight headings */
+html.a11y-highlight-headings :is(h1, h2, h3, h4, h5, h6) {
+  outline: 2px solid hsl(35 60% 50%) !important;
+  outline-offset: 2px;
+  padding: 2px 4px;
+  border-radius: 2px;
+}
+
+/* Readable font (dyslexia-friendly) */
+html.a11y-readable-font,
+html.a11y-readable-font * {
+  font-family: Verdana, Tahoma, "Trebuchet MS", Arial, sans-serif !important;
+  letter-spacing: 0.05em !important;
+  word-spacing: 0.1em !important;
+}
+
+/* Letter spacing */
+html.a11y-letter-spacing,
+html.a11y-letter-spacing * {
+  letter-spacing: 0.15em !important;
+  word-spacing: 0.2em !important;
+}
+
+/* Line height */
+html.a11y-line-height,
+html.a11y-line-height * {
+  line-height: 2 !important;
+}
+
+/* Stop animations */
+html.a11y-stop-animations,
+html.a11y-stop-animations *,
+html.a11y-stop-animations *::before,
+html.a11y-stop-animations *::after {
+  animation: none !important;
+  transition: none !important;
+  scroll-behavior: auto !important;
+}
+html.a11y-stop-animations video {
+  /* autoplay videos paused via JS if needed */
+}
+
+/* Big cursor */
+html.a11y-big-cursor,
+html.a11y-big-cursor * {
+  cursor: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='48' height='48' viewBox='0 0 48 48'><path d='M4 4 L4 36 L14 28 L20 44 L26 42 L20 26 L32 26 Z' fill='black' stroke='white' stroke-width='2'/></svg>") 4 4, auto !important;
+}
+html.a11y-big-cursor a,
+html.a11y-big-cursor button,
+html.a11y-big-cursor [role="button"] {
+  cursor: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='48' height='48' viewBox='0 0 48 48'><path d='M20 4 L20 24 L14 24 L24 40 L34 24 L28 24 L28 4 Z' fill='black' stroke='white' stroke-width='2'/></svg>") 24 4, pointer !important;
+}
+
+/* Hide images */
+html.a11y-hide-images img,
+html.a11y-hide-images picture,
+html.a11y-hide-images video,
+html.a11y-hide-images svg:not([data-a11y-keep]) {
+  visibility: hidden !important;
+}
+
 /* Custom scrollbar */
 ::-webkit-scrollbar {
   width: 8px;

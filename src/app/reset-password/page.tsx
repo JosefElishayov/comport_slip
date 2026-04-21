@@ -56,7 +56,7 @@ export default function ResetPasswordPage() {
         </div>
 
         {error && (
-          <div className="bg-destructive/10 border-destructive/20 text-destructive space-y-2 rounded-lg border px-4 py-3 text-sm">
+          <div role="alert" aria-live="assertive" className="bg-destructive/10 border-destructive/20 text-destructive space-y-2 rounded-lg border px-4 py-3 text-sm">
             <p>{error}</p>
             <Link
               href="/forgot-password"
@@ -68,22 +68,23 @@ export default function ResetPasswordPage() {
         )}
 
         {success ? (
-          <div className="rounded-lg border border-green-200 bg-green-50 px-4 py-3 text-sm text-green-800 dark:border-green-800 dark:bg-green-950/30 dark:text-green-300">
+          <div role="status" aria-live="polite" className="rounded-lg border border-green-200 bg-green-50 px-4 py-3 text-sm text-green-800 dark:border-green-800 dark:bg-green-950/30 dark:text-green-300">
             {t('passwordResetSuccess')}
           </div>
         ) : (
-          <form onSubmit={handleSubmit} className="space-y-4">
+          <form onSubmit={handleSubmit} className="space-y-4" noValidate aria-label={t('resetPasswordTitle')}>
             <div>
               <label
                 htmlFor="new-password"
                 className="text-foreground mb-1.5 block text-sm font-medium"
               >
-                {t('newPassword')}
+                {t('newPassword')} <span className="text-destructive" aria-hidden="true">*</span>
               </label>
               <input
                 id="new-password"
                 type="password"
                 required
+                aria-required="true"
                 minLength={8}
                 value={newPassword}
                 onChange={(e) => setNewPassword(e.target.value)}
@@ -98,12 +99,13 @@ export default function ResetPasswordPage() {
                 htmlFor="confirm-password"
                 className="text-foreground mb-1.5 block text-sm font-medium"
               >
-                {t('confirmPassword')}
+                {t('confirmPassword')} <span className="text-destructive" aria-hidden="true">*</span>
               </label>
               <input
                 id="confirm-password"
                 type="password"
                 required
+                aria-required="true"
                 minLength={8}
                 value={confirmPassword}
                 onChange={(e) => setConfirmPassword(e.target.value)}

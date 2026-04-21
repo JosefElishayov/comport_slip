@@ -4,6 +4,8 @@ import { Rubik } from 'next/font/google';
 import { StoreProvider } from '@/providers/store-provider';
 import { Header } from '@/components/layout/header';
 import { Footer } from '@/components/layout/footer';
+import { AccessibilityMenu } from '@/components/accessibility/accessibility-menu';
+import { SkipToContent } from '@/components/accessibility/skip-to-content';
 import { getNonce } from '@/lib/nonce';
 import './globals.css';
 
@@ -48,6 +50,7 @@ export default async function RootLayout({
   return (
     <html lang="he" dir="rtl">
       <head>
+        <link rel="preload" href="/hero-video.mp4" as="video" type="video/mp4" />
         <script
           type="application/ld+json"
           nonce={nonce}
@@ -62,11 +65,13 @@ export default async function RootLayout({
       </head>
       <body className={font.className}>
         <StoreProvider>
+          <SkipToContent />
           <div className="min-h-screen flex flex-col">
             <Header />
-            <main className="flex-1">{children}</main>
+            <main id="main-content" tabIndex={-1} className="flex-1">{children}</main>
             <Footer />
           </div>
+          <AccessibilityMenu />
         </StoreProvider>
       </body>
     </html>

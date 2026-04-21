@@ -31,21 +31,26 @@ export function LoginForm({ onSubmit, error, className }: LoginFormProps) {
   }
 
   return (
-    <form onSubmit={handleSubmit} className={cn('space-y-4', className)}>
+    <form onSubmit={handleSubmit} className={cn('space-y-4', className)} noValidate aria-label={t('signIn')}>
       {error && (
-        <div className="bg-destructive/10 border-destructive/20 text-destructive rounded-lg border px-4 py-3 text-sm">
+        <div
+          role="alert"
+          aria-live="assertive"
+          className="bg-destructive/10 border-destructive/20 text-destructive rounded-lg border px-4 py-3 text-sm"
+        >
           {error}
         </div>
       )}
 
       <div>
         <label htmlFor="login-email" className="text-foreground mb-1.5 block text-sm font-medium">
-          {t('email')}
+          {t('email')} <span className="text-destructive" aria-hidden="true">*</span>
         </label>
         <input
           id="login-email"
           type="email"
           required
+          aria-required="true"
           value={email}
           onChange={(e) => setEmail(e.target.value)}
           placeholder={t('emailPlaceholder')}
@@ -59,12 +64,13 @@ export function LoginForm({ onSubmit, error, className }: LoginFormProps) {
           htmlFor="login-password"
           className="text-foreground mb-1.5 block text-sm font-medium"
         >
-          {t('password')}
+          {t('password')} <span className="text-destructive" aria-hidden="true">*</span>
         </label>
         <input
           id="login-password"
           type="password"
           required
+          aria-required="true"
           value={password}
           onChange={(e) => setPassword(e.target.value)}
           placeholder={t('passwordPlaceholder')}

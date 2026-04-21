@@ -49,6 +49,18 @@ export function Footer() {
               >
                 עגלת קניות
               </Link>
+              <Link
+                href="/accessibility"
+                className="text-primary-foreground/70 hover:text-primary-foreground text-sm transition-colors"
+              >
+                הצהרת נגישות
+              </Link>
+              <Link
+                href="/privacy"
+                className="text-primary-foreground/70 hover:text-primary-foreground text-sm transition-colors"
+              >
+                מדיניות פרטיות
+              </Link>
             </nav>
           </div>
 

@@ -42,14 +42,6 @@ export default function HomePage() {
     load();
   }, []);
 
-  if (storeLoading || loading) {
-    return (
-      <div className="flex min-h-[60vh] items-center justify-center">
-        <LoadingSpinner size="lg" />
-      </div>
-    );
-  }
-
   return (
     <div>
       {/* Discount Banners */}
@@ -72,6 +64,7 @@ export default function HomePage() {
           muted
           loop
           playsInline
+          preload="auto"
           poster=""
         >
           <source src="/hero-video.mp4" type="video/mp4" />
@@ -107,6 +100,11 @@ export default function HomePage() {
         </div>
       </section>
 
+      {(storeLoading || loading) ? (
+        <div className="flex min-h-[40vh] items-center justify-center">
+          <LoadingSpinner size="lg" />
+        </div>
+      ) : (<>
       {/* Trust / Benefits Bar */}
       <section className="border-b border-border bg-secondary">
         <div className="mx-auto max-w-7xl px-4 py-6 sm:px-6 lg:px-8">
@@ -211,6 +209,7 @@ export default function HomePage() {
           </div>
         </div>
       </section>
+      </>)}
     </div>
   );
 }

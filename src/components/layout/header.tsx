@@ -238,16 +238,33 @@ export function Header() {
               <button
                 onClick={logout}
                 className="text-muted-foreground hover:text-primary hidden text-sm font-medium transition-colors sm:inline-flex"
+                aria-label={t('logout')}
               >
                 {t('logout')}
               </button>
             ) : (
-              <Link
-                href="/login"
-                className="text-muted-foreground hover:text-primary hidden text-sm font-medium transition-colors sm:inline-flex"
-              >
-                {t('login')}
-              </Link>
+              <>
+                <Link
+                  href="/login"
+                  className="text-muted-foreground hover:text-primary hidden text-sm font-medium transition-colors sm:inline-flex"
+                >
+                  {t('login')}
+                </Link>
+                <Link
+                  href="/login"
+                  className="text-foreground hover:text-primary rounded-full p-2 transition-colors hover:bg-secondary/50 sm:hidden"
+                  aria-label={t('login')}
+                >
+                  <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth={2}
+                      d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"
+                    />
+                  </svg>
+                </Link>
+              </>
             )}
 
             {/* Cart */}

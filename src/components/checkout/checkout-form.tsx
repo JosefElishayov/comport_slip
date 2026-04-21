@@ -143,52 +143,74 @@ export function CheckoutForm({
   const selectClass =
     'bg-background text-foreground focus:ring-primary/20 focus:border-primary h-10 w-full appearance-none rounded border px-3 text-sm focus:outline-none focus:ring-2';
 
+  const errorCount = Object.keys(errors).length;
+
   return (
-    <form onSubmit={handleSubmit} className={cn('space-y-4', className)}>
+    <form onSubmit={handleSubmit} className={cn('space-y-4', className)} noValidate aria-label="טופס פרטי משלוח">
+      {errorCount > 0 && (
+        <div role="alert" aria-live="assertive" className="bg-destructive/10 border-destructive/20 text-destructive rounded-lg border px-4 py-3 text-sm">
+          יש לתקן את השגיאות בטופס לפני המשך.
+        </div>
+      )}
       {/* Email */}
       <div>
         <label htmlFor="email" className="text-foreground mb-1 block text-sm font-medium">
-          {t('email')} <span className="text-destructive">*</span>
+          {t('email')} <span className="text-destructive" aria-hidden="true">*</span>
         </label>
         <input
           id="email"
           type="email"
+          required
+          aria-required="true"
+          aria-invalid={errors.email ? 'true' : 'false'}
+          aria-describedby={errors.email ? 'email-error' : undefined}
+          autoComplete="email"
           value={formData.email}
           onChange={(e) => updateField('email', e.target.value)}
           className={cn(inputClass, errors.email ? 'border-destructive' : 'border-border')}
           placeholder="your@email.com"
         />
-        {errors.email && <p className="text-destructive mt-1 text-xs">{errors.email}</p>}
+        {errors.email && <p id="email-error" role="alert" className="text-destructive mt-1 text-xs">{errors.email}</p>}
       </div>
 
       {/* Name row */}
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
         <div>
           <label htmlFor="firstName" className="text-foreground mb-1 block text-sm font-medium">
-            {t('firstName')} <span className="text-destructive">*</span>
+            {t('firstName')} <span className="text-destructive" aria-hidden="true">*</span>
           </label>
           <input
             id="firstName"
             type="text"
+            required
+            aria-required="true"
+            aria-invalid={errors.firstName ? 'true' : 'false'}
+            aria-describedby={errors.firstName ? 'firstName-error' : undefined}
+            autoComplete="given-name"
             value={formData.firstName}
             onChange={(e) => updateField('firstName', e.target.value)}
             className={cn(inputClass, errors.firstName ? 'border-destructive' : 'border-border')}
           />
-          {errors.firstName && <p className="text-destructive mt-1 text-xs">{errors.firstName}</p>}
+          {errors.firstName && <p id="firstName-error" role="alert" className="text-destructive mt-1 text-xs">{errors.firstName}</p>}
         </div>
 
         <div>
           <label htmlFor="lastName" className="text-foreground mb-1 block text-sm font-medium">
-            {t('lastName')} <span className="text-destructive">*</span>
+            {t('lastName')} <span className="text-destructive" aria-hidden="true">*</span>
           </label>
           <input
             id="lastName"
             type="text"
+            required
+            aria-required="true"
+            aria-invalid={errors.lastName ? 'true' : 'false'}
+            aria-describedby={errors.lastName ? 'lastName-error' : undefined}
+            autoComplete="family-name"
             value={formData.lastName}
             onChange={(e) => updateField('lastName', e.target.value)}
             className={cn(inputClass, errors.lastName ? 'border-destructive' : 'border-border')}
           />
-          {errors.lastName && <p className="text-destructive mt-1 text-xs">{errors.lastName}</p>}
+          {errors.lastName && <p id="lastName-error" role="alert" className="text-destructive mt-1 text-xs">{errors.lastName}</p>}
         </div>
       </div>
 
@@ -198,11 +220,16 @@ export function CheckoutForm({
           <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
             <div>
               <label htmlFor="country" className="text-foreground mb-1 block text-sm font-medium">
-                {t('country')} <span className="text-destructive">*</span>
+                {t('country')} <span className="text-destructive" aria-hidden="true">*</span>
               </label>
               {hasCountryOptions ? (
                 <select
                   id="country"
+                  required
+                  aria-required="true"
+                  aria-invalid={errors.country ? 'true' : 'false'}
+                  aria-describedby={errors.country ? 'country-error' : undefined}
+                  autoComplete="country"
                   value={formData.country}
                   onChange={(e) => updateField('country', e.target.value)}
                   className={cn(
@@ -221,6 +248,11 @@ export function CheckoutForm({
                 <input
                   id="country"
                   type="text"
+                  required
+                  aria-required="true"
+                  aria-invalid={errors.country ? 'true' : 'false'}
+                  aria-describedby={errors.country ? 'country-error' : undefined}
+                  autoComplete="country-name"
                   value={formData.country}
                   onChange={(e) => updateField('country', e.target.value)}
                   className={cn(
@@ -230,7 +262,7 @@ export function CheckoutForm({
                   placeholder={t('countryPlaceholder')}
                 />
               )}
-              {errors.country && <p className="text-destructive mt-1 text-xs">{errors.country}</p>}
+              {errors.country && <p id="country-error" role="alert" className="text-destructive mt-1 text-xs">{errors.country}</p>}
             </div>
 
             <div>
@@ -240,6 +272,7 @@ export function CheckoutForm({
               {hasRegionOptions ? (
                 <select
                   id="region"
+                  autoComplete="address-level1"
                   value={formData.region || ''}
                   onChange={(e) => updateField('region', e.target.value)}
                   className={cn(selectClass, 'border-border')}
@@ -255,6 +288,7 @@ export function CheckoutForm({
                 <input
                   id="region"
                   type="text"
+                  autoComplete="address-level1"
                   value={formData.region || ''}
                   onChange={(e) => updateField('region', e.target.value)}
                   className={cn(inputClass, 'border-border')}
@@ -266,17 +300,22 @@ export function CheckoutForm({
           {/* Address line 1 */}
           <div>
             <label htmlFor="line1" className="text-foreground mb-1 block text-sm font-medium">
-              {t('address')} <span className="text-destructive">*</span>
+              {t('address')} <span className="text-destructive" aria-hidden="true">*</span>
             </label>
             <input
               id="line1"
               type="text"
+              required
+              aria-required="true"
+              aria-invalid={errors.line1 ? 'true' : 'false'}
+              aria-describedby={errors.line1 ? 'line1-error' : undefined}
+              autoComplete="address-line1"
               value={formData.line1}
               onChange={(e) => updateField('line1', e.target.value)}
               className={cn(inputClass, errors.line1 ? 'border-destructive' : 'border-border')}
               placeholder={t('streetAddress')}
             />
-            {errors.line1 && <p className="text-destructive mt-1 text-xs">{errors.line1}</p>}
+            {errors.line1 && <p id="line1-error" role="alert" className="text-destructive mt-1 text-xs">{errors.line1}</p>}
           </div>
 
           {/* Address line 2 */}
@@ -287,6 +326,7 @@ export function CheckoutForm({
             <input
               id="line2"
               type="text"
+              autoComplete="address-line2"
               value={formData.line2 || ''}
               onChange={(e) => updateField('line2', e.target.value)}
               className={cn(inputClass, 'border-border')}
@@ -298,16 +338,21 @@ export function CheckoutForm({
           <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
             <div>
               <label htmlFor="city" className="text-foreground mb-1 block text-sm font-medium">
-                {t('city')} <span className="text-destructive">*</span>
+                {t('city')} <span className="text-destructive" aria-hidden="true">*</span>
               </label>
               <input
                 id="city"
                 type="text"
+                required
+                aria-required="true"
+                aria-invalid={errors.city ? 'true' : 'false'}
+                aria-describedby={errors.city ? 'city-error' : undefined}
+                autoComplete="address-level2"
                 value={formData.city}
                 onChange={(e) => updateField('city', e.target.value)}
                 className={cn(inputClass, errors.city ? 'border-destructive' : 'border-border')}
               />
-              {errors.city && <p className="text-destructive mt-1 text-xs">{errors.city}</p>}
+              {errors.city && <p id="city-error" role="alert" className="text-destructive mt-1 text-xs">{errors.city}</p>}
             </div>
 
             <div>
@@ -315,11 +360,17 @@ export function CheckoutForm({
                 htmlFor="postalCode"
                 className="text-foreground mb-1 block text-sm font-medium"
               >
-                {t('postalCode')} <span className="text-destructive">*</span>
+                {t('postalCode')} <span className="text-destructive" aria-hidden="true">*</span>
               </label>
               <input
                 id="postalCode"
                 type="text"
+                required
+                aria-required="true"
+                aria-invalid={errors.postalCode ? 'true' : 'false'}
+                aria-describedby={errors.postalCode ? 'postalCode-error' : undefined}
+                autoComplete="postal-code"
+                inputMode="numeric"
                 value={formData.postalCode}
                 onChange={(e) => updateField('postalCode', e.target.value)}
                 className={cn(
@@ -328,7 +379,7 @@ export function CheckoutForm({
                 )}
               />
               {errors.postalCode && (
-                <p className="text-destructive mt-1 text-xs">{errors.postalCode}</p>
+                <p id="postalCode-error" role="alert" className="text-destructive mt-1 text-xs">{errors.postalCode}</p>
               )}
             </div>
           </div>
@@ -341,6 +392,8 @@ export function CheckoutForm({
             <input
               id="phone"
               type="tel"
+              autoComplete="tel"
+              inputMode="tel"
               value={formData.phone || ''}
               onChange={(e) => updateField('phone', e.target.value)}
               className={cn(inputClass, 'border-border')}
@@ -356,6 +409,9 @@ export function CheckoutForm({
           <input
             type="checkbox"
             checked={privacyAccepted}
+            aria-required="true"
+            aria-invalid={errors.privacy ? 'true' : 'false'}
+            aria-describedby={errors.privacy ? 'checkout-privacy-error' : undefined}
             onChange={(e) => {
               setPrivacyAccepted(e.target.checked);
               if (e.target.checked && errors.privacy) {
@@ -378,10 +434,12 @@ export function CheckoutForm({
             >
               {t('privacyPolicyLink')}
             </a>{' '}
-            <span className="text-destructive">*</span>
+            <span className="text-destructive" aria-hidden="true">*</span>
           </span>
         </label>
-        {errors.privacy && <p className="text-destructive mt-1 text-xs">{errors.privacy}</p>}
+        {errors.privacy && (
+          <p id="checkout-privacy-error" role="alert" className="text-destructive mt-1 text-xs">{errors.privacy}</p>
+        )}
       </div>
 
       {/* Marketing consent (optional) */}

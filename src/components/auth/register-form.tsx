@@ -76,9 +76,9 @@ export function RegisterForm({ onSubmit, error, className }: RegisterFormProps) 
   }
 
   return (
-    <form onSubmit={handleSubmit} className={cn('space-y-4', className)}>
+    <form onSubmit={handleSubmit} className={cn('space-y-4', className)} noValidate aria-label={t('createAccount')}>
       {error && (
-        <div className="bg-destructive/10 border-destructive/20 text-destructive rounded-lg border px-4 py-3 text-sm">
+        <div role="alert" aria-live="assertive" className="bg-destructive/10 border-destructive/20 text-destructive rounded-lg border px-4 py-3 text-sm">
           {error}
         </div>
       )}
@@ -89,12 +89,13 @@ export function RegisterForm({ onSubmit, error, className }: RegisterFormProps) 
             htmlFor="register-first-name"
             className="text-foreground mb-1.5 block text-sm font-medium"
           >
-            {tf('firstName')}
+            {tf('firstName')} <span className="text-destructive" aria-hidden="true">*</span>
           </label>
           <input
             id="register-first-name"
             type="text"
             required
+            aria-required="true"
             value={firstName}
             onChange={(e) => setFirstName(e.target.value)}
             placeholder={t('firstNamePlaceholder')}
@@ -108,12 +109,13 @@ export function RegisterForm({ onSubmit, error, className }: RegisterFormProps) 
             htmlFor="register-last-name"
             className="text-foreground mb-1.5 block text-sm font-medium"
           >
-            {tf('lastName')}
+            {tf('lastName')} <span className="text-destructive" aria-hidden="true">*</span>
           </label>
           <input
             id="register-last-name"
             type="text"
             required
+            aria-required="true"
             value={lastName}
             onChange={(e) => setLastName(e.target.value)}
             placeholder={t('lastNamePlaceholder')}
@@ -128,12 +130,13 @@ export function RegisterForm({ onSubmit, error, className }: RegisterFormProps) 
           htmlFor="register-email"
           className="text-foreground mb-1.5 block text-sm font-medium"
         >
-          {t('email')}
+          {t('email')} <span className="text-destructive" aria-hidden="true">*</span>
         </label>
         <input
           id="register-email"
           type="email"
           required
+          aria-required="true"
           value={email}
           onChange={(e) => setEmail(e.target.value)}
           placeholder={t('emailPlaceholder')}
@@ -147,12 +150,15 @@ export function RegisterForm({ onSubmit, error, className }: RegisterFormProps) 
           htmlFor="register-password"
           className="text-foreground mb-1.5 block text-sm font-medium"
         >
-          {t('password')}
+          {t('password')} <span className="text-destructive" aria-hidden="true">*</span>
         </label>
         <input
           id="register-password"
           type="password"
           required
+          aria-required="true"
+          aria-invalid={passwordError ? 'true' : 'false'}
+          aria-describedby={passwordError ? 'register-password-error' : 'register-password-strength'}
           minLength={8}
           value={password}
           onChange={(e) => {
@@ -164,7 +170,7 @@ export function RegisterForm({ onSubmit, error, className }: RegisterFormProps) 
           className="border-border bg-background text-foreground placeholder:text-muted-foreground focus:ring-primary/20 focus:border-primary h-10 w-full rounded border px-3 text-sm focus:outline-none focus:ring-2"
         />
         {password.length > 0 && (
-          <div className="mt-2">
+          <div className="mt-2" id="register-password-strength" aria-live="polite">
             <div className="bg-muted h-1.5 w-full overflow-hidden rounded-full">
               <div
                 className={cn(
@@ -181,7 +187,11 @@ export function RegisterForm({ onSubmit, error, className }: RegisterFormProps) 
             </p>
           </div>
         )}
-        {passwordError && <p className="text-destructive mt-1 text-xs">{passwordError}</p>}
+        {passwordError && (
+          <p id="register-password-error" role="alert" className="text-destructive mt-1 text-xs">
+            {passwordError}
+          </p>
+        )}
       </div>
 
       {/* Privacy Policy (required) */}
@@ -190,6 +200,9 @@ export function RegisterForm({ onSubmit, error, className }: RegisterFormProps) 
           <input
             type="checkbox"
             checked={privacyAccepted}
+            aria-required="true"
+            aria-invalid={privacyError ? 'true' : 'false'}
+            aria-describedby={privacyError ? 'register-privacy-error' : undefined}
             onChange={(e) => {
               setPrivacyAccepted(e.target.checked);
               setPrivacyError(false);
@@ -206,10 +219,14 @@ export function RegisterForm({ onSubmit, error, className }: RegisterFormProps) 
             >
               {t('privacyPolicyLink')}
             </a>{' '}
-            <span className="text-destructive">*</span>
+            <span className="text-destructive" aria-hidden="true">*</span>
           </span>
         </label>
-        {privacyError && <p className="text-destructive mt-1 text-xs">{t('privacyRequired')}</p>}
+        {privacyError && (
+          <p id="register-privacy-error" role="alert" className="text-destructive mt-1 text-xs">
+            {t('privacyRequired')}
+          </p>
+        )}
       </div>
 
       {/* Marketing consent (optional) */}

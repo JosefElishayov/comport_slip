@@ -42,14 +42,14 @@ export default function ForgotPasswordPage() {
         </div>
 
         {error && (
-          <div className="bg-destructive/10 border-destructive/20 text-destructive rounded-lg border px-4 py-3 text-sm">
+          <div role="alert" aria-live="assertive" className="bg-destructive/10 border-destructive/20 text-destructive rounded-lg border px-4 py-3 text-sm">
             {error}
           </div>
         )}
 
         {sent ? (
           <div className="space-y-4">
-            <div className="rounded-lg border border-green-200 bg-green-50 px-4 py-3 text-sm text-green-800 dark:border-green-800 dark:bg-green-950/30 dark:text-green-300">
+            <div role="status" aria-live="polite" className="rounded-lg border border-green-200 bg-green-50 px-4 py-3 text-sm text-green-800 dark:border-green-800 dark:bg-green-950/30 dark:text-green-300">
               {t('resetLinkSent')}
             </div>
             <Link
@@ -60,18 +60,19 @@ export default function ForgotPasswordPage() {
             </Link>
           </div>
         ) : (
-          <form onSubmit={handleSubmit} className="space-y-4">
+          <form onSubmit={handleSubmit} className="space-y-4" noValidate aria-label={t('forgotPasswordTitle')}>
             <div>
               <label
                 htmlFor="forgot-email"
                 className="text-foreground mb-1.5 block text-sm font-medium"
               >
-                {t('email')}
+                {t('email')} <span className="text-destructive" aria-hidden="true">*</span>
               </label>
               <input
                 id="forgot-email"
                 type="email"
                 required
+                aria-required="true"
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
                 placeholder={t('emailPlaceholder')}
