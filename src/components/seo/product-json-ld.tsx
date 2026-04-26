@@ -8,31 +8,99 @@ interface ProductJsonLdProps {
   currency?: string;
 }
 
+function stripHtml(input: string): string {
+  return input
+    .replace(/<style[\s\S]*?<\/style>/gi, ' ')
+    .replace(/<script[\s\S]*?<\/script>/gi, ' ')
+    .replace(/<[^>]+>/g, ' ')
+    .replace(/&nbsp;/gi, ' ')
+    .replace(/&amp;/gi, '&')
+    .replace(/&lt;/gi, '<')
+    .replace(/&gt;/gi, '>')
+    .replace(/&quot;/gi, '"')
+    .replace(/&#39;/gi, "'")
+    .replace(/\s+/g, ' ')
+    .trim();
+}
+
 export async function ProductJsonLd({ product, url, currency = 'USD' }: ProductJsonLdProps) {
   const nonce = await getNonce();
   const priceInfo = getProductPriceInfo(product);
-  const imageUrl = product.images?.[0]?.url;
   const baseUrl = process.env.NEXT_PUBLIC_SITE_URL || '';
+  const storeName = process.env.NEXT_PUBLIC_STORE_NAME || undefined;
 
-  const productJsonLd = {
-    '@context': 'https://schema.org',
-    '@type': 'Product',
-    name: product.name,
-    description: product.description || product.name,
-    image: imageUrl,
-    url,
-    sku: product.sku || product.id,
-    offers: {
+  const images = (product.images || []).map((img) => img.url).filter(Boolean);
+  const description = stripHtml(product.description || product.name);
+
+  const inStock = product.inventory?.canPurchase !== false;
+  const availability = inStock
+    ? 'https://schema.org/InStock'
+    : 'https://schema.org/OutOfStock';
+
+  // Default price validity: ~1 year out, common SEO recommendation.
+  const priceValidUntil = new Date(Date.now() + 365 * 24 * 60 * 60 * 1000)
+    .toISOString()
+    .split('T')[0];
+
+  const brandNames =
+    (product as { brands?: Array<{ name: string }> }).brands?.map((b) => b.name) ?? [];
+  const categoryNames = product.categories?.map((c) => c.name) ?? [];
+
+  const seller = storeName ? { '@type': 'Organization', name: storeName } : undefined;
+
+  // Build offers: AggregateOffer for variable products with priced variants, Offer otherwise.
+  const variantPrices = (product.variants || [])
+    .map((v) => {
+      const base = v.price ? parseFloat(v.price) : NaN;
+      const sale = v.salePrice ? parseFloat(v.salePrice) : NaN;
+      const effective = !isNaN(sale) && sale > 0 ? sale : base;
+      return isNaN(effective) ? null : effective;
+    })
+    .filter((n): n is number => n != null);
+
+  let offers: Record<string, unknown>;
+  if (product.type === 'VARIABLE' && variantPrices.length > 0) {
+    offers = {
+      '@type': 'AggregateOffer',
+      priceCurrency: currency,
+      lowPrice: Math.min(...variantPrices),
+      highPrice: Math.max(...variantPrices),
+      offerCount: variantPrices.length,
+      availability,
+      url,
+      ...(seller ? { seller } : {}),
+    };
+  } else {
+    offers = {
       '@type': 'Offer',
       price: priceInfo.price,
       priceCurrency: currency,
-      availability:
-        product.inventory?.canPurchase !== false
-          ? 'https://schema.org/InStock'
-          : 'https://schema.org/OutOfStock',
+      availability,
+      itemCondition: 'https://schema.org/NewCondition',
+      priceValidUntil,
       url,
-    },
+      ...(seller ? { seller } : {}),
+    };
+  }
+
+  const productJsonLd: Record<string, unknown> = {
+    '@context': 'https://schema.org',
+    '@type': 'Product',
+    name: product.name,
+    description,
+    image: images.length > 1 ? images : images[0] || undefined,
+    url,
+    sku: product.sku || product.id,
+    productID: product.id,
+    offers,
   };
+
+  if (brandNames.length > 0) {
+    productJsonLd.brand = { '@type': 'Brand', name: brandNames[0] };
+  }
+  if (categoryNames.length > 0) {
+    productJsonLd.category = categoryNames.join(' > ');
+  }
 
   const breadcrumbJsonLd = {
     '@context': 'https://schema.org',
@@ -41,18 +109,28 @@ export async function ProductJsonLd({ product, url, currency = 'USD' }: ProductJ
       {
         '@type': 'ListItem',
         position: 1,
-        name: 'Home',
+        name: 'דף הבית',
         item: baseUrl || '/',
       },
       {
         '@type': 'ListItem',
         position: 2,
-        name: 'Products',
+        name: 'מוצרים',
         item: `${baseUrl}/products`,
       },
+      ...(categoryNames[0]
+        ? [
+            {
+              '@type': 'ListItem',
+              position: 3,
+              name: categoryNames[0],
+              item: `${baseUrl}/products`,
+            },
+          ]
+        : []),
       {
         '@type': 'ListItem',
-        position: 3,
+        position: categoryNames[0] ? 4 : 3,
         name: product.name,
         item: url,
       },

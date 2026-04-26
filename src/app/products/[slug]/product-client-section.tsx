@@ -232,8 +232,37 @@ export function ProductClientSection({ product: initialProduct }: ProductClientS
     }
   }
 
+  const firstCategoryName = product.categories?.[0]?.name;
+
   return (
-    <div className="mx-auto max-w-7xl px-4 py-12 sm:px-6 lg:px-8">
+    <article className="mx-auto max-w-7xl px-4 py-12 sm:px-6 lg:px-8">
+      <nav aria-label={t('breadcrumb')} className="text-muted-foreground mb-6 text-sm">
+        <ol className="flex flex-wrap items-center gap-1.5">
+          <li>
+            <a href="/" className="hover:text-foreground hover:underline">
+              {t('home')}
+            </a>
+          </li>
+          <li aria-hidden="true">/</li>
+          <li>
+            <a href="/products" className="hover:text-foreground hover:underline">
+              {t('products')}
+            </a>
+          </li>
+          {firstCategoryName && (
+            <>
+              <li aria-hidden="true">/</li>
+              <li>
+                <span>{firstCategoryName}</span>
+              </li>
+            </>
+          )}
+          <li aria-hidden="true">/</li>
+          <li aria-current="page" className="text-foreground font-medium truncate max-w-[200px]">
+            {product.name}
+          </li>
+        </ol>
+      </nav>
       <div className="grid grid-cols-1 gap-10 lg:grid-cols-2 lg:gap-16">
         {/* Image Gallery */}
         <div className="space-y-4">
@@ -325,14 +354,21 @@ export function ProductClientSection({ product: initialProduct }: ProductClientS
           {/* Tags */}
           {product.tags && product.tags.length > 0 && (
               <div className="flex flex-wrap gap-1.5">
-                {product.tags.map((tag) => (
-                  <span
-                    key={tag}
-                    className="border-border text-muted-foreground rounded-full border px-2.5 py-0.5 text-xs"
-                  >
-                    #{tag}
-                  </span>
-                ))}
+                {product.tags.map((tag, idx) => {
+                  const name =
+                    typeof tag === 'string'
+                      ? tag
+                      : (tag as { name?: string })?.name || '';
+                  if (!name) return null;
+                  return (
+                    <span
+                      key={`${name}-${idx}`}
+                      className="border-border text-muted-foreground rounded-full border px-2.5 py-0.5 text-xs"
+                    >
+                      #{name}
+                    </span>
+                  );
+                })}
               </div>
             )}
 
@@ -532,6 +568,6 @@ export function ProductClientSection({ product: initialProduct }: ProductClientS
           className="mt-12"
         />
       )}
-    </div>
+    </article>
   );
 }

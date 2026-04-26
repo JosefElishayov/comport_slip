@@ -87,6 +87,9 @@
   "productDetail": {
     "notFound": "המוצר לא נמצא.",
     "backToProducts": "חזרה למוצרים",
+    "breadcrumb": "ניווט פירורי לחם",
+    "home": "דף הבית",
+    "products": "מוצרים",
     "description": "תיאור",
     "specifications": "מפרט",
     "addToCart": "הוסף לעגלה",
