@@ -1,10 +1,6 @@
 import type { NextConfig } from 'next';
 
 const nextConfig: NextConfig = {
-  // isomorphic-dompurify ships jsdom, which at runtime reads stylesheet files
-  // from its own package directory. Webpack bundling breaks those relative
-  // lookups — loading it externally from node_modules keeps the paths intact.
-  serverExternalPackages: ['isomorphic-dompurify'],
   images: {
     // The storefront is a consumer of the Brainerce API — it has to render
     // whatever image URLs the API returns. In practice those URLs can be on

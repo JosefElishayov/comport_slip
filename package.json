@@ -11,12 +11,12 @@
   },
   "dependencies": {
     "brainerce": "^1.11.0",
+    "clsx": "^2.1.0",
     "next": "^15.0.0",
     "react": "^19.0.0",
     "react-dom": "^19.0.0",
-    "clsx": "^2.1.0",
-    "tailwind-merge": "^2.2.0",
-    "isomorphic-dompurify": "^3.8.0"
+    "sanitize-html": "^2.17.3",
+    "tailwind-merge": "^2.2.0"
   },
   "overrides": {
     "html-encoding-sniffer": "^4.0.0"
@@ -25,6 +25,7 @@
     "@types/node": "^20.0.0",
     "@types/react": "^19.0.0",
     "@types/react-dom": "^19.0.0",
+    "@types/sanitize-html": "^2.16.1",
     "autoprefixer": "^10.4.0",
     "eslint": "^8.57.0",
     "eslint-config-next": "^15.0.0",
