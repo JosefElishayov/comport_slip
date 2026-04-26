@@ -32,7 +32,9 @@ function clamp(text: string, max: number): string {
 
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const { slug, locale } = await params;
-  const canonicalPath = `/products/${encodeURIComponent(slug)}`;
+  // Pass the raw slug — Next.js encodes the path when resolving against
+  // metadataBase. Pre-encoding produces %25-escaped (double-encoded) URLs.
+  const canonicalPath = `/products/${slug}`;
 
   try {
     const client = getServerClient(locale);
@@ -152,6 +154,8 @@ export default async function ProductDetailPage({ params }: Props) {
   }
 
   const baseUrl = process.env.NEXT_PUBLIC_SITE_URL || '';
+  // For absolute URL in JSON-LD we DO need to encode — this is a raw string,
+  // not a Next.js Metadata field.
   const productUrl = `${baseUrl}/products/${encodeURIComponent(slug)}`;
   const currency = process.env.NEXT_PUBLIC_STORE_CURRENCY || 'USD';
 
