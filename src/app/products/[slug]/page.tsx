@@ -32,10 +32,18 @@ function clamp(text: string, max: number): string {
 
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const { slug, locale } = await params;
+  const canonicalPath = `/products/${encodeURIComponent(slug)}`;
 
   try {
     const client = getServerClient(locale);
     const product = await client.getProductBySlug(slug);
+    if (!product) {
+      return {
+        title: 'Product not found',
+        alternates: { canonical: canonicalPath },
+        robots: { index: false, follow: false },
+      };
+    }
 
     const seoTitle = (product as { seoTitle?: string | null }).seoTitle || product.name;
     const rawDescription =
@@ -88,12 +96,12 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
       description: cleanedDescription,
       keywords: keywords.length > 0 ? keywords : undefined,
       alternates: {
-        canonical: `/products/${slug}`,
+        canonical: canonicalPath,
       },
       openGraph: {
         title: seoTitle,
         description: cleanedDescription,
-        url: `/products/${slug}`,
+        url: canonicalPath,
         siteName: process.env.NEXT_PUBLIC_STORE_NAME || undefined,
         images: images.length > 0 ? images : undefined,
         type: 'website',
@@ -118,8 +126,11 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
       other: otherMeta,
     };
   } catch {
+    // Backend down or product fetch failed — still return valid metadata so the
+    // page renders 200 for crawlers instead of throwing and producing a 500.
     return {
-      title: 'Product not found',
+      title: 'Product',
+      alternates: { canonical: canonicalPath },
       robots: { index: false, follow: false },
     };
   }
@@ -133,11 +144,15 @@ export default async function ProductDetailPage({ params }: Props) {
     const client = getServerClient(locale);
     product = await client.getProductBySlug(slug);
   } catch {
+    // Network/backend error — let Next show 404 rather than 500 to crawlers.
+    notFound();
+  }
+  if (!product) {
     notFound();
   }
 
   const baseUrl = process.env.NEXT_PUBLIC_SITE_URL || '';
-  const productUrl = `${baseUrl}/products/${slug}`;
+  const productUrl = `${baseUrl}/products/${encodeURIComponent(slug)}`;
   const currency = process.env.NEXT_PUBLIC_STORE_CURRENCY || 'USD';
 
   return (

@@ -23,7 +23,17 @@ function stripHtml(input: string): string {
     .trim();
 }
 
-export async function ProductJsonLd({ product, url, currency = 'USD' }: ProductJsonLdProps) {
+export async function ProductJsonLd(props: ProductJsonLdProps) {
+  try {
+    return await renderProductJsonLd(props);
+  } catch {
+    // Never let JSON-LD failure (bad data shape, missing field, etc.) take
+    // down the whole page — crawlers should still get a 200.
+    return null;
+  }
+}
+
+async function renderProductJsonLd({ product, url, currency = 'USD' }: ProductJsonLdProps) {
   const nonce = await getNonce();
   const priceInfo = getProductPriceInfo(product);
   const baseUrl = process.env.NEXT_PUBLIC_SITE_URL || '';
