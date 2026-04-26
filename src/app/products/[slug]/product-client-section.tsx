@@ -2,6 +2,7 @@
 
 import { useEffect, useState, useMemo, useRef } from 'react';
 import Image from 'next/image';
+import Link from 'next/link';
 import type {
   Product,
   ProductVariant,
@@ -239,15 +240,15 @@ export function ProductClientSection({ product: initialProduct }: ProductClientS
       <nav aria-label={t('breadcrumb')} className="text-muted-foreground mb-6 text-sm">
         <ol className="flex flex-wrap items-center gap-1.5">
           <li>
-            <a href="/" className="hover:text-foreground hover:underline">
+            <Link href="/" className="hover:text-foreground hover:underline">
               {t('home')}
-            </a>
+            </Link>
           </li>
           <li aria-hidden="true">/</li>
           <li>
-            <a href="/products" className="hover:text-foreground hover:underline">
+            <Link href="/products" className="hover:text-foreground hover:underline">
               {t('products')}
-            </a>
+            </Link>
           </li>
           {firstCategoryName && (
             <>
