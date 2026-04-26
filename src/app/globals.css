@@ -134,12 +134,66 @@ html {
 
 /* Product card hover effects */
 .product-card-comfort {
+  isolation: isolate;
+  background:
+    linear-gradient(180deg, hsl(30 25% 99%) 0%, hsl(30 25% 98%) 100%);
+  box-shadow: 0 10px 30px -24px rgba(18, 28, 45, 0.42);
   transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
+.product-card-comfort::before {
+  content: "";
+  position: absolute;
+  inset-inline: 18px;
+  top: 0;
+  height: 3px;
+  border-radius: 0 0 999px 999px;
+  background: linear-gradient(90deg, hsl(var(--accent)), hsl(var(--primary)));
+  opacity: 0;
+  transform: scaleX(0.45);
+  transform-origin: center;
+  transition: opacity 0.35s ease, transform 0.35s ease;
+  z-index: 2;
+}
+
 .product-card-comfort:hover {
-  transform: translateY(-4px);
-  box-shadow: 0 20px 40px -12px rgba(0, 0, 0, 0.08);
+  border-color: hsl(var(--primary) / 0.22);
+  transform: translateY(-6px);
+  box-shadow:
+    0 24px 52px -28px rgba(18, 28, 45, 0.34),
+    0 8px 22px -18px rgba(35, 49, 76, 0.28);
+}
+
+.product-card-comfort:hover::before {
+  opacity: 1;
+  transform: scaleX(1);
+}
+
+.product-card-image {
+  background:
+    radial-gradient(circle at 50% 18%, hsl(0 0% 100%) 0%, hsl(30 25% 97%) 44%, hsl(220 25% 96%) 100%);
+}
+
+.product-card-image::after {
+  content: "";
+  position: absolute;
+  inset: auto 12% 0;
+  height: 16%;
+  border-radius: 999px 999px 0 0;
+  background: linear-gradient(180deg, transparent, rgba(18, 28, 45, 0.06));
+  opacity: 0;
+  transform: translateY(12px);
+  transition: opacity 0.45s ease, transform 0.45s ease;
+  pointer-events: none;
+}
+
+.product-card-comfort:hover .product-card-image::after {
+  opacity: 1;
+  transform: translateY(0);
+}
+
+.product-card-title {
+  text-wrap: balance;
 }
 
 /* Soft section backgrounds */

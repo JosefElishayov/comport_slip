@@ -30,7 +30,7 @@ function VariantPriceRange({ product }: { product: Product }) {
   const max = Math.max(...prices);
 
   return (
-    <span className="text-foreground text-sm font-semibold">
+    <span className="text-foreground text-sm font-semibold transition-colors group-hover:text-primary">
       {min === max
         ? (formatPrice(min, { currency }) as string)
         : `${formatPrice(min, { currency })} – ${formatPrice(max, { currency })}`}
@@ -118,20 +118,20 @@ export function ProductCard({ product, className }: ProductCardProps) {
   return (
     <div
       className={cn(
-        'product-card-comfort border-border bg-background group flex flex-col overflow-hidden rounded-2xl border',
+        'product-card-comfort border-border/70 bg-background group relative flex flex-col overflow-hidden rounded-2xl border',
         className
       )}
     >
       {/* Image — clickable */}
       <Link href={`/products/${slug}`} className="block">
-        <div ref={imageRef} className="bg-secondary/30 relative aspect-square overflow-hidden">
+        <div ref={imageRef} className="product-card-image bg-secondary/25 relative aspect-square overflow-hidden">
           {imageUrl ? (
             <Image
               src={imageUrl}
               alt={mainImage?.alt || product.name}
               fill
               sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 25vw"
-              className="object-contain p-4 transition-transform duration-500 group-hover:scale-105"
+              className="object-contain p-5 transition duration-700 ease-out group-hover:scale-[1.07]"
             />
           ) : (
             <div className="text-muted-foreground absolute inset-0 flex items-center justify-center">
@@ -147,13 +147,13 @@ export function ProductCard({ product, className }: ProductCardProps) {
           )}
 
           {/* Badges */}
-          <div className="absolute start-3 top-3 flex flex-col gap-1.5">
+          <div className="absolute start-3 top-3 z-10 flex flex-col gap-1.5">
             {/* Categories */}
             {product.categories && product.categories.length > 0 && (
               product.categories.slice(0, 1).map((cat) => (
                 <span
                   key={cat.id}
-                  className="bg-background/90 backdrop-blur-sm text-foreground rounded-full px-3 py-1 text-xs font-medium shadow-sm border border-border"
+                  className="border-border/70 bg-background/90 text-foreground rounded-full border px-3 py-1 text-xs font-semibold shadow-sm backdrop-blur-md transition-colors group-hover:border-primary/25 group-hover:text-primary"
                 >
                   {cat.name}
                 </span>
@@ -175,16 +175,16 @@ export function ProductCard({ product, className }: ProductCardProps) {
       </Link>
 
       {/* Content */}
-      <div className="flex flex-1 flex-col p-4">
+      <div className="relative flex flex-1 flex-col p-4 pt-4">
         {/* Name — clickable */}
         <Link href={`/products/${slug}`}>
-          <h3 className="text-foreground hover:text-primary line-clamp-2 text-sm font-bold transition-colors">
+          <h3 className="product-card-title text-foreground line-clamp-2 min-h-[2.5rem] text-sm font-bold leading-5 transition-colors duration-300 group-hover:text-primary">
             {product.name}
           </h3>
         </Link>
 
         {/* Price */}
-        <div className="mt-2">
+        <div className="mt-2 transition-transform duration-300 group-hover:translate-x-0.5">
           {isVariable ? (
             <VariantPriceRange product={product} />
           ) : (
@@ -202,16 +202,16 @@ export function ProductCard({ product, className }: ProductCardProps) {
 
         {/* Action Buttons */}
         {(isVariable || canPurchase) && (
-          <div className="mt-3 flex gap-2">
+          <div className="mt-4 flex gap-2">
             {/* Add to Cart */}
             <button
               onClick={handleAddToCart}
               disabled={adding}
               className={cn(
-                'flex flex-1 items-center justify-center gap-1.5 rounded-xl border border-border py-2.5 text-xs font-semibold transition-all',
+                'flex min-h-10 flex-1 items-center justify-center gap-1.5 rounded-xl border px-3 py-2.5 text-xs font-semibold transition-all duration-300',
                 added
-                  ? 'bg-green-500 text-white border-green-500'
-                  : 'bg-background text-foreground hover:bg-secondary/50'
+                  ? 'border-green-500 bg-green-500 text-white shadow-sm'
+                  : 'border-border/80 bg-background text-foreground hover:border-primary/25 hover:bg-primary/5 hover:text-primary'
               )}
             >
               {added ? (
@@ -237,7 +237,7 @@ export function ProductCard({ product, className }: ProductCardProps) {
             <button
               onClick={handleBuyNow}
               disabled={adding}
-              className="flex flex-1 items-center justify-center rounded-xl bg-accent text-accent-foreground py-2.5 text-xs font-semibold shadow-sm transition-all hover:brightness-110 disabled:opacity-50"
+              className="flex min-h-10 flex-1 items-center justify-center rounded-xl bg-accent px-3 py-2.5 text-xs font-semibold text-accent-foreground shadow-sm transition-all duration-300 hover:-translate-y-0.5 hover:brightness-110 hover:shadow-md disabled:opacity-50"
             >
               {tProd('buyNow')}
             </button>

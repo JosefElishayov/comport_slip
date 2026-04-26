@@ -6,6 +6,7 @@ import { Header } from '@/components/layout/header';
 import { Footer } from '@/components/layout/footer';
 import { AccessibilityMenu } from '@/components/accessibility/accessibility-menu';
 import { SkipToContent } from '@/components/accessibility/skip-to-content';
+import { CookieConsentBanner } from '@/components/cookie-consent/cookie-consent-banner';
 import { getNonce } from '@/lib/nonce';
 import './globals.css';
 
@@ -72,6 +73,7 @@ export default async function RootLayout({
             <Footer />
           </div>
           <AccessibilityMenu />
+          <CookieConsentBanner />
         </StoreProvider>
       </body>
     </html>
