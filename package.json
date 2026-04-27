@@ -10,7 +10,7 @@
     "setup": "node scripts/fetch-store-info.mjs"
   },
   "dependencies": {
-    "brainerce": "^1.11.0",
+    "brainerce": "^1.22.0",
     "clsx": "^2.1.0",
     "next": "^15.0.0",
     "react": "^19.0.0",

@@ -29,12 +29,9 @@ export default function PrivacyPage() {
         <section>
           <h2 className="text-xl font-bold mb-2">2. בעל מאגר המידע</h2>
           <ul className="list-disc pr-6 space-y-1">
-            <li><strong>שם העסק:</strong> [למילוי על ידי בעל האתר]</li>
-            <li><strong>ח.פ / ע.מ:</strong> [למילוי]</li>
-            <li><strong>כתובת:</strong> [למילוי]</li>
-            <li><strong>דוא&quot;ל לפניות בנושא פרטיות:</strong> [למילוי]</li>
-            <li><strong>טלפון:</strong> [למילוי]</li>
-            <li><strong>מספר מאגר רשום ברשם מאגרי המידע:</strong> [למילוי אם חל]</li>
+            <li><strong>שם העסק:</strong> אברהם וויס</li>
+            <li><strong>כתובת:</strong> רש&quot;י 30, בני ברק</li>
+            <li><strong>טלפון לפניות בנושא פרטיות:</strong> 03-5794542</li>
           </ul>
         </section>
 

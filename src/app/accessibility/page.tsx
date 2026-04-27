@@ -72,10 +72,9 @@ export default function AccessibilityPage() {
             בכל בקשה, הצעה או תלונה בנושא נגישות:
           </p>
           <ul className="space-y-1">
-            <li><strong>שם:</strong> [למילוי על ידי בעל האתר]</li>
-            <li><strong>טלפון:</strong> [למילוי על ידי בעל האתר]</li>
-            <li><strong>דוא&quot;ל:</strong> [למילוי על ידי בעל האתר]</li>
-            <li><strong>כתובת:</strong> [למילוי על ידי בעל האתר]</li>
+            <li><strong>שם:</strong> אברהם וויס</li>
+            <li><strong>טלפון:</strong> 03-5794542</li>
+            <li><strong>כתובת:</strong> רש&quot;י 30, בני ברק</li>
             <li><strong>שעות מענה:</strong> ימים א&#39;-ה&#39;, 09:00-17:00</li>
           </ul>
           <p className="mt-3 text-sm text-muted-foreground">

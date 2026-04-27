@@ -28,12 +28,13 @@ export function Header() {
 
   const currency = storeInfo?.currency || 'USD';
 
-  // Track scroll position for header transparency
+  // Track scroll position for shrinking header effect
   useEffect(() => {
     function handleScroll() {
-      setScrolled(window.scrollY > 50);
+      setScrolled(window.scrollY > 80);
     }
-    window.addEventListener('scroll', handleScroll);
+    handleScroll();
+    window.addEventListener('scroll', handleScroll, { passive: true });
     return () => window.removeEventListener('scroll', handleScroll);
   }, []);
 
@@ -89,19 +90,32 @@ export function Header() {
   return (
     <>
     <header
-      className={`sticky top-0 z-50 transition-all duration-300 ${
-        scrolled
-          ? 'bg-background/95 shadow-sm backdrop-blur-md border-b border-border'
-          : 'bg-background border-b border-border'
+      className={`sticky top-0 z-50 ${
+        scrolled ? 'pt-3' : 'border-b border-border bg-background'
       }`}
     >
-      <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
-        <div className="flex h-16 items-center justify-between gap-4">
+      <div
+        className={`mx-auto backdrop-blur-md transition-[max-width,border-radius,box-shadow,background-color,padding] duration-500 ease-[cubic-bezier(0.22,1,0.36,1)] ${
+          scrolled
+            ? 'max-w-5xl rounded-2xl border border-border/60 bg-background/85 px-4 shadow-xl sm:px-6'
+            : 'max-w-7xl border-transparent px-4 sm:px-6 lg:px-8'
+        }`}
+      >
+        <div
+          className={`flex items-center justify-between gap-4 transition-all duration-500 ease-[cubic-bezier(0.22,1,0.36,1)] ${
+            scrolled ? 'h-16' : 'h-20'
+          }`}
+        >
           {/* Logo / Store Name */}
-          <Link href="/" className="flex-shrink-0 flex items-center gap-2">
-            <span className="text-primary text-xl font-bold tracking-tight">
-              {storeInfo?.name || process.env.NEXT_PUBLIC_STORE_NAME || tc('store')}
-            </span>
+          <Link href="/" className="flex-shrink-0 flex items-center" aria-label={storeInfo?.name || tc('store')}>
+            <Image
+              src="/logo.png"
+              alt={storeInfo?.name || process.env.NEXT_PUBLIC_STORE_NAME || tc('store')}
+              width={738}
+              height={447}
+              priority
+              className={`w-auto transition-all duration-500 ${scrolled ? 'h-14' : 'h-16'}`}
+            />
           </Link>
 
           {/* Desktop Navigation */}

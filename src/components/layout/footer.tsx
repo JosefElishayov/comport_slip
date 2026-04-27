@@ -50,6 +50,18 @@ export function Footer() {
                 עגלת קניות
               </Link>
               <Link
+                href="/about"
+                className="text-primary-foreground/70 hover:text-primary-foreground text-sm transition-colors"
+              >
+                קצת עלינו
+              </Link>
+              <Link
+                href="/contact"
+                className="text-primary-foreground/70 hover:text-primary-foreground text-sm transition-colors"
+              >
+                צור קשר
+              </Link>
+              <Link
                 href="/accessibility"
                 className="text-primary-foreground/70 hover:text-primary-foreground text-sm transition-colors"
               >
@@ -70,6 +82,19 @@ export function Footer() {
             <div className="flex flex-col gap-2 text-sm text-primary-foreground/70">
               <span>שירות לקוחות זמין עבורכם</span>
               <span>בימים א׳-ה׳ 09:00-18:00</span>
+              <a
+                href="tel:+97235794542"
+                className="text-primary-foreground/90 hover:text-primary-foreground"
+              >
+                03-5794542
+              </a>
+              <span>רחוב רש&quot;י 30, בני ברק</span>
+              <Link
+                href="/contact"
+                className="mt-2 inline-flex items-center gap-1 text-primary-foreground hover:underline"
+              >
+                שליחת פנייה →
+              </Link>
             </div>
           </div>
         </div>
