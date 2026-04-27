@@ -81,7 +81,9 @@ export function Footer() {
             <h4 className="text-sm font-semibold mb-3">צרו קשר</h4>
             <div className="flex flex-col gap-2 text-sm text-primary-foreground/70">
               <span>שירות לקוחות זמין עבורכם</span>
-              <span>בימים א׳-ה׳ 09:00-18:00</span>
+              <span>א׳, ב׳, ד׳, ה׳: 11:00–14:00, 17:00–21:00</span>
+              <span>ג׳: 11:00–14:00 (אחה״צ סגור)</span>
+              <span>ו׳–ש׳: סגור</span>
               <a
                 href="tel:+97235794542"
                 className="text-primary-foreground/90 hover:text-primary-foreground"

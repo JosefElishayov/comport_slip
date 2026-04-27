@@ -46,7 +46,11 @@ export default function ContactPage() {
                 <dl className="mt-4 space-y-3 text-sm">
                   <div>
                     <dt className="text-muted-foreground">שעות פעילות</dt>
-                    <dd className="mt-0.5 text-foreground">ימים א׳–ה׳, 09:00–18:00</dd>
+                    <dd className="mt-0.5 text-foreground">
+                      <div>א׳, ב׳, ד׳, ה׳: 11:00–14:00, 17:00–21:00</div>
+                      <div>ג׳: 11:00–14:00 (אחה״צ סגור)</div>
+                      <div>ו׳–ש׳: סגור</div>
+                    </dd>
                   </div>
                   <div>
                     <dt className="text-muted-foreground">חנות</dt>

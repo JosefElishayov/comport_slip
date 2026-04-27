@@ -75,7 +75,7 @@ export default function AccessibilityPage() {
             <li><strong>שם:</strong> אברהם וויס</li>
             <li><strong>טלפון:</strong> 03-5794542</li>
             <li><strong>כתובת:</strong> רש&quot;י 30, בני ברק</li>
-            <li><strong>שעות מענה:</strong> ימים א&#39;-ה&#39;, 09:00-17:00</li>
+            <li><strong>שעות מענה:</strong> א&#39;, ב&#39;, ד&#39;, ה&#39; 11:00-14:00 ו-17:00-21:00; ג&#39; 11:00-14:00; ו&#39;-ש&#39; סגור</li>
           </ul>
           <p className="mt-3 text-sm text-muted-foreground">
             אנו מתחייבים לטפל בכל פנייה בנושא נגישות בתוך 45 ימים ממועד קבלתה, בהתאם להוראות החוק.
