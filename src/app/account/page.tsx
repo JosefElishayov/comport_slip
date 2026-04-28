@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from 'react';
 import { useRouter } from '@/lib/navigation';
-import type { CustomerProfile, Order } from 'brainerce';
+import type { CustomerProfile, CustomerAddress, Order } from 'brainerce';
 import { getClient } from '@/lib/brainerce';
 import { useAuth } from '@/providers/store-provider';
 import { LoadingSpinner } from '@/components/shared/loading-spinner';
@@ -17,6 +17,7 @@ export default function AccountPage() {
   const t = useTranslations('account');
   const tc = useTranslations('common');
   const [profile, setProfile] = useState<CustomerProfile | null>(null);
+  const [addresses, setAddresses] = useState<CustomerAddress[]>([]);
   const [orders, setOrders] = useState<Order[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -32,8 +33,9 @@ export default function AccountPage() {
     async function loadAccountData() {
       try {
         const client = getClient();
-        const [profileResult, ordersResult] = await Promise.allSettled([
+        const [profileResult, addressesResult, ordersResult] = await Promise.allSettled([
           client.getMyProfile(),
+          client.getMyAddresses(),
           client.getMyOrders({ limit: 20 }),
         ]);
 
@@ -41,6 +43,12 @@ export default function AccountPage() {
           setProfile(profileResult.value);
         } else {
           setError('Failed to load profile.');
+        }
+
+        if (addressesResult.status === 'fulfilled') {
+          setAddresses(addressesResult.value);
+        } else if (profileResult.status === 'fulfilled') {
+          setAddresses(profileResult.value.addresses ?? []);
         }
 
         if (ordersResult.status === 'fulfilled') {
@@ -111,7 +119,7 @@ export default function AccountPage() {
           </div>
           <div className="dashboard-card p-5 text-center">
             <div className="text-3xl font-bold text-primary">
-              {profile?.addresses?.length || 0}
+              {addresses.length}
             </div>
             <div className="text-muted-foreground mt-1 text-sm">{t('addressBook')}</div>
           </div>
@@ -141,8 +149,8 @@ export default function AccountPage() {
         {/* Address Book */}
         {profile && (
           <AddressBook
-            addresses={profile.addresses ?? []}
-            onUpdate={(updated) => setProfile((p) => (p ? { ...p, addresses: updated } : p))}
+            addresses={addresses}
+            onUpdate={setAddresses}
             className="mb-8"
           />
         )}

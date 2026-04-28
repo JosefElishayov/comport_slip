@@ -17,6 +17,7 @@
     "shipping": "משלוח",
     "pickup": "איסוף",
     "tax": "מע\"מ",
+    "includesTax": "כולל מע\"מ",
     "sale": "מבצע",
     "remove": "הסרה",
     "removing": "מסיר...",

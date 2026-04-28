@@ -21,7 +21,6 @@ import { ShippingStep } from '@/components/checkout/shipping-step';
 import { PaymentStep } from '@/components/checkout/payment-step';
 import { PickupStep } from '@/components/checkout/pickup-step';
 import { CustomFieldsStep } from '@/components/checkout/custom-fields-step';
-import { TaxDisplay } from '@/components/checkout/tax-display';
 import { OrderBumpCard } from '@/components/checkout/order-bump-card';
 import { CouponInput } from '@/components/cart/coupon-input';
 import { ReservationCountdown } from '@/components/cart/reservation-countdown';
@@ -893,12 +892,6 @@ function CheckoutContent() {
                   </div>
                 )}
 
-                <TaxDisplay
-                  addressSet={!!checkout.shippingAddress}
-                  taxAmount={checkout.taxAmount}
-                  taxBreakdown={checkout.taxBreakdown}
-                />
-
                 {/* Custom field surcharges (one line per applied surcharge) */}
                 {checkout.appliedSurcharges && checkout.appliedSurcharges.length > 0 && (
                   <>
@@ -920,6 +913,9 @@ function CheckoutContent() {
                       {formatPrice(parseFloat(checkout.total), { currency }) as string}
                     </span>
                   </div>
+                  <p className="text-muted-foreground mt-1 text-end text-xs">
+                    {tc('includesTax')}
+                  </p>
                 </div>
               </div>
             )}
