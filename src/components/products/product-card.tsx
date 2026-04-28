@@ -13,6 +13,7 @@ import { useCart, useStoreInfo } from '@/providers/store-provider';
 import { cn } from '@/lib/utils';
 import { flyToCart } from '@/lib/fly-to-cart';
 import { LoadingSpinner } from '@/components/shared/loading-spinner';
+import { ProductShareButton } from '@/components/shared/product-share-button';
 
 interface ProductCardProps {
   product: Product;
@@ -203,6 +204,14 @@ export function ProductCard({ product, className }: ProductCardProps) {
         {/* Action Buttons */}
         {(isVariable || canPurchase) && (
           <div className="mt-4 flex gap-2">
+            <ProductShareButton
+              path={`/products/${slug}`}
+              title={product.name}
+              shareText={product.description || product.name}
+              imageUrl={imageUrl}
+              iconOnly
+            />
+
             {/* Add to Cart */}
             <button
               onClick={handleAddToCart}

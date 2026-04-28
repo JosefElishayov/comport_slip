@@ -19,6 +19,7 @@ import { VariantSelector } from '@/components/products/variant-selector';
 import { StockBadge } from '@/components/products/stock-badge';
 import { RecommendationSection } from '@/components/products/recommendation-section';
 import { FrequentlyBoughtTogether } from '@/components/products/frequently-bought-together';
+import { ProductShareButton } from '@/components/shared/product-share-button';
 import { useTranslations } from '@/lib/translations';
 import { cn } from '@/lib/utils';
 import { sanitizeProductHtml } from '@/lib/sanitize-html';
@@ -396,6 +397,13 @@ export function ProductClientSection({ product: initialProduct }: ProductClientS
           ) : (
             <StockBadge inventory={inventory} lowStockThreshold={5} />
           )}
+
+          <ProductShareButton
+            path={`/products/${product.slug || product.id}`}
+            title={product.name}
+            shareText={product.description || product.name}
+            imageUrl={mainImageUrl}
+          />
 
           {/* Downloadable files info */}
           {product.isDownloadable && product.downloads && product.downloads.length > 0 && (

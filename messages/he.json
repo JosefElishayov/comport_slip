@@ -118,7 +118,11 @@
     "addSelectedToCart": "הוסף הנבחרים לעגלה",
     "totalPrice": "סה\"כ: {price}",
     "addingAll": "מוסיף...",
-    "by": "מאת"
+    "by": "מאת",
+    "shareProduct": "שתף מוצר",
+    "shared": "שותף",
+    "linkCopied": "הקישור הועתק",
+    "shareFailed": "לא ניתן לשתף"
   },
   "cart": {
     "pageTitle": "עגלת קניות",
