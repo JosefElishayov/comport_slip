@@ -26,7 +26,7 @@
 
   body {
     @apply bg-background text-foreground antialiased;
-    overflow-x: clip;
+    overflow-x: hidden;
   }
 }
 

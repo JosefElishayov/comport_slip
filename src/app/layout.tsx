@@ -17,15 +17,15 @@ const baseUrl = process.env.NEXT_PUBLIC_SITE_URL || 'https://example.com';
 export const metadata: Metadata = {
   metadataBase: new URL(baseUrl),
   title: {
-    default: "קומפורט סליפ חדש",
-    template: "%s | קומפורט סליפ חדש",
+    default: "קומפורט סליפ",
+    template: "%s | קומפורט סליפ",
   },
-  description: "קומפורט סליפ חדש",
+  description: "קומפורט סליפ",
   alternates: {
     canonical: '/',
   },
   openGraph: {
-    siteName: "קומפורט סליפ חדש",
+    siteName: "קומפורט סליפ",
     locale: 'he_IL',
     type: 'website',
   },
@@ -38,7 +38,7 @@ export const metadata: Metadata = {
 const organizationJsonLd = {
   '@context': 'https://schema.org',
   '@type': 'Organization',
-  name: "קומפורט סליפ חדש",
+  name: "קומפורט סליפ",
   url: baseUrl,
 };
 
@@ -69,7 +69,7 @@ export default async function RootLayout({
           <SkipToContent />
           <div className="min-h-screen flex flex-col">
             <Header />
-            <main id="main-content" tabIndex={-1} className="flex-1">{children}</main>
+            <main id="main-content" tabIndex={-1} className="flex-1 overflow-x-hidden">{children}</main>
             <Footer />
           </div>
           <AccessibilityMenu />
