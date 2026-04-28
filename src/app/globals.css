@@ -39,8 +39,16 @@ html {
   position: relative;
   width: 100%;
   height: 100vh;
-  min-height: 600px;
+  height: 100svh;
+  height: 100dvh;
+  min-height: 560px;
   overflow: hidden;
+}
+
+@media (max-width: 640px) {
+  .hero-video-section {
+    min-height: 0;
+  }
 }
 
 .hero-video-section video {
