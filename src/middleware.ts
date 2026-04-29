@@ -27,8 +27,8 @@ function buildCsp(nonce: string): string {
     "style-src 'self' 'unsafe-inline' https://cdn.meshulam.co.il",
     "img-src 'self' data: blob: https:",
     "font-src 'self' data:",
-    "frame-src 'self' https://meshulam.co.il https://*.meshulam.co.il https://grow.link https://*.grow.link https://grow.security https://*.grow.security https://creditguard.co.il https://*.creditguard.co.il https://js.stripe.com https://hooks.stripe.com https://pay.google.com https://secure.cardcom.solutions https://checkout.stripe.com https://www.paypal.com https://www.sandbox.paypal.com",
-    "connect-src 'self' https://*.meshulam.co.il https://grow.link https://*.grow.link https://*.grow.security https://pay.google.com https://*.stripe.com https://*.creditguard.co.il",
+    "frame-src 'self' https://brainerce.com https://*.brainerce.com https://meshulam.co.il https://*.meshulam.co.il https://grow.link https://*.grow.link https://grow.security https://*.grow.security https://creditguard.co.il https://*.creditguard.co.il https://js.stripe.com https://hooks.stripe.com https://pay.google.com https://secure.cardcom.solutions https://checkout.stripe.com https://www.paypal.com https://www.sandbox.paypal.com",
+    "connect-src 'self' https://brainerce.com https://*.brainerce.com https://*.meshulam.co.il https://grow.link https://*.grow.link https://*.grow.security https://pay.google.com https://*.stripe.com https://*.creditguard.co.il",
     "worker-src 'self' blob:",
     // 'self' (not 'none') so iframe-based payment providers (e.g. Cardcom)
     // can redirect the iframe back to /payment-complete on the storefront
