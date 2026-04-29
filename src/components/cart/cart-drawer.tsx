@@ -129,19 +129,23 @@ export function CartDrawer() {
               </div>
 
               {/* Bundle offers */}
-              {bundles?.bundles && bundles.bundles.length > 0 && (
-                <div className="mt-4 space-y-2">
-                  <h3 className="text-foreground text-sm font-semibold">{tCart('bundleOffers')}</h3>
-                  {bundles.bundles.map((offer) => (
-                    <CartBundleOfferCard
-                      key={offer.id}
-                      offer={offer}
-                      cartId={cart.id}
-                      onAdd={refreshCart}
-                    />
-                  ))}
-                </div>
-              )}
+              {(() => {
+                const validBundles = bundles?.bundles?.filter((o) => o?.bundleProduct) ?? [];
+                if (validBundles.length === 0) return null;
+                return (
+                  <div className="mt-4 space-y-2">
+                    <h3 className="text-foreground text-sm font-semibold">{tCart('bundleOffers')}</h3>
+                    {validBundles.map((offer) => (
+                      <CartBundleOfferCard
+                        key={offer.id}
+                        offer={offer}
+                        cartId={cart.id}
+                        onAdd={refreshCart}
+                      />
+                    ))}
+                  </div>
+                );
+              })()}
             </>
           )}
         </div>

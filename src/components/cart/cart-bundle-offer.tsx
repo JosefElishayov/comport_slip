@@ -23,7 +23,7 @@ export function CartBundleOfferCard({ offer, cartId, onAdd, className }: CartBun
   const [selectedVariantId, setSelectedVariantId] = useState<string | null>(null);
 
   const product = offer.bundleProduct;
-  const variants = product.variants;
+  const variants = product?.variants;
   const requiresSelection = offer.requiresVariantSelection && variants && variants.length > 0;
 
   // Build attribute groups from variants
@@ -112,7 +112,7 @@ export function CartBundleOfferCard({ offer, cartId, onAdd, className }: CartBun
       ? Object.values(offer.lockedVariant.attributes).join(' / ')
       : null);
 
-  const firstImage = product.images?.[0];
+  const firstImage = product?.images?.[0];
   const imageUrl = firstImage
     ? typeof firstImage === 'string'
       ? firstImage
