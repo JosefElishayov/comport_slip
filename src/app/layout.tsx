@@ -40,6 +40,7 @@ const organizationJsonLd = {
   '@type': 'Organization',
   name: "קומפורט סליפ",
   url: baseUrl,
+  logo: `${baseUrl}/logo.png`,
 };
 
 export default async function RootLayout({

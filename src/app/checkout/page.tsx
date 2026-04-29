@@ -64,6 +64,7 @@ function CheckoutContent() {
   const [customFieldsLoading, setCustomFieldsLoading] = useState(false);
   const [shippingOpen, setShippingOpen] = useState(false);
   const [paymentOpen, setPaymentOpen] = useState(false);
+  const [paymentStarted, setPaymentStarted] = useState(false);
 
   // Check for returning from canceled payment
   const canceled = searchParams.get('canceled') === 'true';
@@ -87,6 +88,11 @@ function CheckoutContent() {
   useEffect(() => {
     if (shippingDone) setPaymentOpen(true);
   }, [shippingDone]);
+
+  // Reset payment if a prior step changes — forces re-click after edits
+  useEffect(() => {
+    if (!shippingDone) setPaymentStarted(false);
+  }, [shippingDone, deliveryType, selectedRateId]);
 
   // Pre-fill address and customer data from profile when logged in
   useEffect(() => {
@@ -465,12 +471,29 @@ function CheckoutContent() {
     );
   }
 
+  // Filter fields by visibility for the current delivery type.
+  // 'shipping' and 'pickup' visibility scopes are mutually exclusive — digital-only
+  // checkouts have no delivery, so only 'always' fields apply there.
+  const productIdsInCart = new Set(cart?.items.map((i) => i.productId) ?? []);
+  const visibleCustomFields = customFields.filter((f) => {
+    const show = f.visibility?.show ?? 'always';
+    if (show === 'always') return true;
+    if (isAllDigital) return false;
+    if (show === 'shipping') return deliveryType === 'shipping';
+    if (show === 'pickup') return deliveryType === 'pickup';
+    if (show === 'products') {
+      const ids = f.visibility?.productIds ?? [];
+      return ids.some((id) => productIdsInCart.has(id));
+    }
+    return true;
+  });
+
   // Custom fields inline renderer (rendered inside CheckoutForm as children)
   const customFieldsInline =
-    customFields.length > 0 ? (
+    visibleCustomFields.length > 0 ? (
       <div className="border-border border-t pt-4">
         <CustomFieldsStep
-          fields={customFields}
+          fields={visibleCustomFields}
           values={customFieldValues}
           onChange={(key, value) =>
             setCustomFieldValues((prev) => ({ ...prev, [key]: value }))
@@ -709,7 +732,17 @@ function CheckoutContent() {
               <div className="overflow-hidden">
                 <div className="px-6 pb-6">
                   {shippingDone && checkout ? (
-                    <PaymentStep checkoutId={checkout.id} />
+                    paymentStarted ? (
+                      <PaymentStep checkoutId={checkout.id} />
+                    ) : (
+                      <button
+                        type="button"
+                        onClick={() => setPaymentStarted(true)}
+                        className="bg-primary text-primary-foreground hover:opacity-90 inline-flex w-full items-center justify-center rounded-md px-6 py-3 text-sm font-semibold transition-opacity"
+                      >
+                        {t('continueToPayment')}
+                      </button>
+                    )
                   ) : (
                     <p className="text-muted-foreground py-4 text-center text-sm">
                       {t('completeAboveSteps')}

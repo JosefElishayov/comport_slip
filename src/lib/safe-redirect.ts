@@ -9,6 +9,7 @@ const ALLOWED_PAYMENT_HOSTS: readonly string[] = [
   'grow.link',
   'grow.security',
   'creditguard.co.il',
+  'brainerce.com',
 ];
 
 export function isAllowedPaymentUrl(url: string): boolean {
