@@ -51,7 +51,6 @@ export default async function RootLayout({
   return (
     <html lang="he" dir="rtl">
       <head>
-        <link rel="preload" href="/hero-video.mp4" as="video" type="video/mp4" />
         <script
           type="application/ld+json"
           nonce={nonce}
