@@ -69,8 +69,9 @@ html {
   inset: 0;
   background: linear-gradient(
     to bottom,
-    rgba(20, 30, 50, 0.3) 0%,
-    rgba(20, 30, 50, 0.5) 50%,
+    rgba(10, 15, 30, 0.55) 0%,
+    rgba(10, 15, 30, 0.35) 20%,
+    rgba(20, 30, 50, 0.45) 50%,
     rgba(20, 30, 50, 0.7) 100%
   );
   display: flex;

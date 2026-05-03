@@ -19,8 +19,8 @@ function buildCsp(nonce: string): string {
   // Next dev uses webpack's eval-source-map devtool, which requires 'unsafe-eval'
   // to execute module code. Prod builds never eval, so this only loosens dev.
   const scriptSrc = isDev
-    ? `script-src 'self' 'nonce-${nonce}' 'strict-dynamic' 'unsafe-eval'`
-    : `script-src 'self' 'nonce-${nonce}' 'strict-dynamic'`;
+    ? `script-src 'self' 'nonce-${nonce}' 'strict-dynamic' 'unsafe-eval' https://static.cloudflareinsights.com`
+    : `script-src 'self' 'nonce-${nonce}' 'strict-dynamic' https://static.cloudflareinsights.com`;
   return [
     "default-src 'self'",
     scriptSrc,
@@ -28,7 +28,7 @@ function buildCsp(nonce: string): string {
     "img-src 'self' data: blob: https:",
     "font-src 'self' data:",
     "frame-src 'self' https://brainerce.com https://*.brainerce.com https://meshulam.co.il https://*.meshulam.co.il https://grow.link https://*.grow.link https://grow.security https://*.grow.security https://creditguard.co.il https://*.creditguard.co.il https://js.stripe.com https://hooks.stripe.com https://pay.google.com https://secure.cardcom.solutions https://checkout.stripe.com https://www.paypal.com https://www.sandbox.paypal.com",
-    "connect-src 'self' https://brainerce.com https://*.brainerce.com https://*.meshulam.co.il https://grow.link https://*.grow.link https://*.grow.security https://pay.google.com https://*.stripe.com https://*.creditguard.co.il",
+    "connect-src 'self' https://brainerce.com https://*.brainerce.com https://*.meshulam.co.il https://grow.link https://*.grow.link https://*.grow.security https://pay.google.com https://*.stripe.com https://*.creditguard.co.il https://cloudflareinsights.com https://*.cloudflareinsights.com",
     "worker-src 'self' blob:",
     // 'self' (not 'none') so iframe-based payment providers (e.g. Cardcom)
     // can redirect the iframe back to /payment-complete on the storefront

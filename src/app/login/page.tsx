@@ -27,7 +27,7 @@ export default function LoginPage() {
 
       // Cookie was set by the proxy; refresh auth state
       await auth.login();
-      router.push('/');
+      router.push('/account');
     } catch (err) {
       const message = err instanceof Error ? err.message : 'Login failed. Please try again.';
       setError(message);

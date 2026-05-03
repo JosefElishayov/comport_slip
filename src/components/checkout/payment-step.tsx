@@ -79,6 +79,8 @@ export function PaymentStep({ checkoutId, className }: PaymentStepProps) {
   const [sdkReady, setSdkReady] = useState(false);
   const walletOpenRef = useRef(false);
   const initialized = useRef(false);
+  const successHandledRef = useRef(false);
+  const iframeRef = useRef<HTMLIFrameElement>(null);
 
   // Stable refs for SDK event callbacks (avoids stale closures in onload)
   const cbRef = useRef({
@@ -92,6 +94,8 @@ export function PaymentStep({ checkoutId, className }: PaymentStepProps) {
 
   const handleSuccess = useCallback(
     async (response: unknown) => {
+      if (successHandledRef.current) return;
+      successHandledRef.current = true;
       console.info('Payment SDK success:', JSON.stringify(response));
       try {
         const client = getClient();
@@ -107,6 +111,33 @@ export function PaymentStep({ checkoutId, className }: PaymentStepProps) {
     },
     [checkoutId]
   );
+
+  // Backup mechanism: detect iframe navigation to /payment-complete via onLoad.
+  // Covers the case where postMessage is lost (e.g. React Strict Mode cleanup).
+  const handleIframeLoad = useCallback(() => {
+    try {
+      const contentWindow = iframeRef.current?.contentWindow;
+      if (!contentWindow) return;
+      const href = contentWindow.location.href;
+      if (!href.includes('/payment-complete')) return;
+
+      const params = new URLSearchParams(contentWindow.location.search);
+      if (params.get('failed') === 'true') {
+        setError(t('paymentError'));
+        return;
+      }
+
+      const data: Record<string, string> = {};
+      params.forEach((value, key) => { data[key] = value; });
+      const lowProfileCode = data.lowprofilecode || data.LowProfileCode;
+      const normalized: Record<string, unknown> = { ...data };
+      if (lowProfileCode) normalized.paymentIntentId = lowProfileCode;
+
+      handleSuccess(normalized);
+    } catch {
+      // Cross-origin (Cardcom page) — SecurityError expected, ignore
+    }
+  }, [handleSuccess, t]);
 
   cbRef.current = {
     onSuccess: handleSuccess,
@@ -561,82 +592,55 @@ export function PaymentStep({ checkoutId, className }: PaymentStepProps) {
       currency: paymentIntent.currency,
     }) as string;
     return (
-      <>
-        {/* Modal overlay */}
-        <div className="fixed inset-0 z-50 flex items-start justify-center overflow-y-auto bg-black/50 py-6 backdrop-blur-sm">
-          <div className="bg-background relative mx-4 flex w-full max-w-2xl flex-col overflow-hidden rounded-2xl shadow-2xl">
-            {/* Header */}
-            <div className="border-border flex items-center justify-between gap-4 border-b px-5 py-4">
-              <div className="flex min-w-0 flex-col">
-                <span className="text-foreground truncate text-sm font-semibold">
-                  {storeInfo?.name}
-                </span>
-                <span className="text-muted-foreground text-xs">{t('payment')}</span>
-              </div>
-              <div className="flex items-baseline gap-1.5">
-                <span className="text-foreground text-lg font-bold tabular-nums">
-                  {formattedAmount}
-                </span>
-                <span className="text-muted-foreground text-xs uppercase">
-                  {paymentIntent.currency}
-                </span>
-              </div>
-              <button
-                onClick={() => {
-                  window.location.href = `/checkout?checkout_id=${checkoutId}&canceled=true`;
-                }}
-                className="text-muted-foreground hover:bg-secondary hover:text-foreground flex h-8 w-8 shrink-0 items-center justify-center rounded-full transition-colors"
-                aria-label="Close"
-              >
-                <svg
-                  width="14"
-                  height="14"
-                  viewBox="0 0 14 14"
-                  fill="none"
-                  stroke="currentColor"
-                  strokeWidth="2"
-                  strokeLinecap="round"
-                >
-                  <path d="M1 1l12 12M13 1L1 13" />
-                </svg>
-              </button>
-            </div>
-            {/* Iframe body */}
-            <iframe
-              src={paymentIntent.clientSecret}
-              className="w-full border-0"
-              style={{ height: '80vh' }}
-              title={t('payment')}
-              allow="payment"
-            />
-            {/* Footer */}
-            <div className="border-border bg-secondary/30 text-muted-foreground flex items-center justify-center gap-2 border-t px-5 py-3 text-xs">
-              <svg
-                width="14"
-                height="14"
-                viewBox="0 0 24 24"
-                fill="none"
-                stroke="currentColor"
-                strokeWidth="2"
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                aria-hidden="true"
-              >
-                <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z" />
-                <path d="m9 12 2 2 4-4" />
-              </svg>
-              <span>
-                {t('securePayment')} · <span className="font-medium">Brainerce</span>
-              </span>
-            </div>
+      <div className={cn('border-border overflow-hidden rounded-2xl border shadow-sm', className)}>
+        {/* Header */}
+        <div className="border-border flex items-center justify-between gap-4 border-b px-5 py-4">
+          <div className="flex min-w-0 flex-col">
+            <span className="text-foreground truncate text-sm font-semibold">
+              {storeInfo?.name}
+            </span>
+            <span className="text-muted-foreground text-xs">{t('payment')}</span>
+          </div>
+          <div className="flex items-baseline gap-1.5">
+            <span className="text-foreground text-lg font-bold tabular-nums">
+              {formattedAmount}
+            </span>
+            <span className="text-muted-foreground text-xs uppercase">
+              {paymentIntent.currency}
+            </span>
           </div>
         </div>
-        {/* Placeholder so the checkout layout doesn't collapse */}
-        <div className={cn('flex flex-col items-center justify-center py-12', className)}>
-          <LoadingSpinner size="lg" />
-          <p className="text-muted-foreground mt-4 text-sm">{t('preparingPayment')}</p>
+        {/* Iframe body — embedded inline, no modal */}
+        <iframe
+          ref={iframeRef}
+          src={paymentIntent.clientSecret}
+          onLoad={handleIframeLoad}
+          className="w-full border-0"
+          style={{ height: '600px' }}
+          title={t('payment')}
+          allow="payment"
+        />
+        {/* Footer */}
+        <div className="border-border bg-secondary/30 text-muted-foreground flex items-center justify-center gap-2 border-t px-5 py-3 text-xs">
+          <svg
+            width="14"
+            height="14"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            strokeWidth="2"
+            strokeLinecap="round"
+            strokeLinejoin="round"
+            aria-hidden="true"
+          >
+            <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z" />
+            <path d="m9 12 2 2 4-4" />
+          </svg>
+          <span>
+            {t('securePayment')} · <span className="font-medium">Brainerce</span>
+          </span>
         </div>
-      </>
+      </div>
     );
   }
 

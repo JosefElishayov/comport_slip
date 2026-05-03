@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useRef, useCallback } from 'react';
 import { Link, useRouter } from '@/lib/navigation';
+import { usePathname } from 'next/navigation';
 import Image from 'next/image';
 import type { SearchSuggestions, ProductSuggestion } from 'brainerce';
 import { formatPrice } from 'brainerce';
@@ -18,13 +19,19 @@ export function Header() {
   const { itemCount, openCartDrawer } = useCart();
   const router = useRouter();
 
+  const pathname = usePathname();
+  const isHeroPage = pathname === '/';
+
   const [searchQuery, setSearchQuery] = useState('');
   const [suggestions, setSuggestions] = useState<SearchSuggestions | null>(null);
   const [showSuggestions, setShowSuggestions] = useState(false);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [scrolled, setScrolled] = useState(false);
+  const [scrollY, setScrollY] = useState(0);
   const searchRef = useRef<HTMLDivElement>(null);
   const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  const isTransparent = isHeroPage && !scrolled;
 
   const currency = storeInfo?.currency || 'USD';
 
@@ -32,6 +39,7 @@ export function Header() {
   useEffect(() => {
     function handleScroll() {
       setScrolled(window.scrollY > 80);
+      setScrollY(window.scrollY);
     }
     handleScroll();
     window.addEventListener('scroll', handleScroll, { passive: true });
@@ -90,14 +98,14 @@ export function Header() {
   return (
     <>
     <header
-      className={`sticky top-0 z-50 ${
-        scrolled ? 'pt-3' : 'border-b border-border bg-background'
+      className={`${isHeroPage ? 'fixed' : 'sticky'} top-0 z-50 w-full ${
+        scrolled ? 'pt-3' : isTransparent ? '' : 'border-b border-border bg-background'
       }`}
     >
       <div
-        className={`mx-auto backdrop-blur-md transition-[max-width,border-radius,box-shadow,background-color,padding] duration-500 ease-[cubic-bezier(0.22,1,0.36,1)] ${
+        className={`mx-auto transition-[max-width,border-radius,box-shadow,background-color,padding] duration-500 ease-[cubic-bezier(0.22,1,0.36,1)] ${
           scrolled
-            ? 'max-w-5xl rounded-2xl border border-border/60 bg-background/85 px-4 shadow-xl sm:px-6'
+            ? 'backdrop-blur-md max-w-5xl rounded-2xl border border-border/60 bg-background/85 px-4 shadow-xl sm:px-6'
             : 'max-w-7xl border-transparent px-4 sm:px-6 lg:px-8'
         }`}
       >
@@ -114,7 +122,11 @@ export function Header() {
               width={738}
               height={447}
               priority
-              className={`w-auto transition-all duration-500 ${scrolled ? 'h-14' : 'h-16'}`}
+              className={`w-auto transition-all duration-700 ${scrolled ? 'h-14' : 'h-16'}`}
+              style={{
+                filter: isTransparent ? 'brightness(0) invert(1)' : 'none',
+                transition: 'filter 0.6s ease',
+              }}
             />
           </Link>
 
@@ -122,14 +134,14 @@ export function Header() {
           <nav className="hidden items-center gap-8 md:flex">
             <Link
               href="/products"
-              className="text-muted-foreground hover:text-primary text-sm font-medium transition-colors"
+              className={`text-sm font-medium transition-colors ${isTransparent ? 'text-white/90 hover:text-white' : 'text-muted-foreground hover:text-primary'}`}
             >
               {t('products')}
             </Link>
             {isLoggedIn && (
               <Link
                 href="/account"
-                className="text-muted-foreground hover:text-primary text-sm font-medium transition-colors"
+                className={`text-sm font-medium transition-colors ${isTransparent ? 'text-white/90 hover:text-white' : 'text-muted-foreground hover:text-primary'}`}
               >
                 {t('account')}
               </Link>
@@ -152,11 +164,11 @@ export function Header() {
                   }
                 }}
                 placeholder={t('searchPlaceholder')}
-                className="border-border bg-secondary/50 text-foreground placeholder:text-muted-foreground focus:ring-primary/20 focus:border-primary h-10 w-full rounded-full border px-4 pe-10 text-sm focus:outline-none focus:ring-2 transition-all"
+                className={`h-10 w-full rounded-full border px-4 pe-10 text-sm focus:outline-none focus:ring-2 transition-all ${isTransparent ? 'border-white/40 bg-white/10 text-white placeholder:text-white/60 focus:ring-white/20 focus:border-white/70' : 'border-border bg-secondary/50 text-foreground placeholder:text-muted-foreground focus:ring-primary/20 focus:border-primary'}`}
               />
               <button
                 type="submit"
-                className="text-muted-foreground hover:text-primary absolute end-0 top-0 flex h-10 w-10 items-center justify-center transition-colors"
+                className={`absolute end-0 top-0 flex h-10 w-10 items-center justify-center transition-colors ${isTransparent ? 'text-white/70 hover:text-white' : 'text-muted-foreground hover:text-primary'}`}
                 aria-label={t('search')}
               >
                 <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -251,7 +263,7 @@ export function Header() {
             {isLoggedIn ? (
               <button
                 onClick={logout}
-                className="text-muted-foreground hover:text-primary hidden text-sm font-medium transition-colors sm:inline-flex"
+                className={`hidden text-sm font-medium transition-colors sm:inline-flex ${isTransparent ? 'text-white/90 hover:text-white' : 'text-muted-foreground hover:text-primary'}`}
                 aria-label={t('logout')}
               >
                 {t('logout')}
@@ -260,13 +272,13 @@ export function Header() {
               <>
                 <Link
                   href="/login"
-                  className="text-muted-foreground hover:text-primary hidden text-sm font-medium transition-colors sm:inline-flex"
+                  className={`hidden text-sm font-medium transition-colors sm:inline-flex ${isTransparent ? 'text-white/90 hover:text-white' : 'text-muted-foreground hover:text-primary'}`}
                 >
                   {t('login')}
                 </Link>
                 <Link
                   href="/login"
-                  className="text-foreground hover:text-primary rounded-full p-2 transition-colors hover:bg-secondary/50 sm:hidden"
+                  className={`rounded-full p-2 transition-colors sm:hidden ${isTransparent ? 'text-white hover:bg-white/10' : 'text-foreground hover:text-primary hover:bg-secondary/50'}`}
                   aria-label={t('login')}
                 >
                   <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -286,7 +298,7 @@ export function Header() {
               type="button"
               onClick={openCartDrawer}
               data-cart-icon
-              className="text-foreground hover:text-primary relative rounded-full p-2 transition-colors hover:bg-secondary/50"
+              className={`relative rounded-full p-2 transition-colors ${isTransparent ? 'text-white hover:bg-white/10' : 'text-foreground hover:text-primary hover:bg-secondary/50'}`}
               aria-label={`${itemCount} ${itemCount === 1 ? tc('item') : tc('items')}`}
             >
               <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -308,7 +320,7 @@ export function Header() {
             <button
               type="button"
               onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
-              className="text-foreground rounded-full p-2 hover:bg-secondary/50 md:hidden transition-colors"
+              className={`rounded-full p-2 md:hidden transition-colors ${isTransparent ? 'text-white hover:bg-white/10' : 'text-foreground hover:bg-secondary/50'}`}
               aria-label={t('menu')}
             >
               <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -334,11 +346,11 @@ export function Header() {
 
         {/* Mobile Menu */}
         {mobileMenuOpen && (
-          <div className="border-border space-y-1 border-t py-3 md:hidden">
+          <div className={`space-y-1 border-t py-3 md:hidden ${isTransparent ? 'border-white/20 bg-black/60 backdrop-blur-md rounded-b-2xl px-2' : 'border-border'}`}>
             <Link
               href="/products"
               onClick={() => setMobileMenuOpen(false)}
-              className="text-foreground hover:bg-secondary/50 block rounded-lg px-3 py-2.5 text-sm font-medium transition-colors"
+              className={`block rounded-lg px-3 py-2.5 text-sm font-medium transition-colors ${isTransparent ? 'text-white hover:bg-white/10' : 'text-foreground hover:bg-secondary/50'}`}
             >
               {t('products')}
             </Link>
@@ -346,7 +358,7 @@ export function Header() {
               <Link
                 href="/account"
                 onClick={() => setMobileMenuOpen(false)}
-                className="text-foreground hover:bg-secondary/50 block rounded-lg px-3 py-2.5 text-sm font-medium transition-colors"
+                className={`block rounded-lg px-3 py-2.5 text-sm font-medium transition-colors ${isTransparent ? 'text-white hover:bg-white/10' : 'text-foreground hover:bg-secondary/50'}`}
               >
                 {t('account')}
               </Link>
@@ -357,7 +369,7 @@ export function Header() {
                   logout();
                   setMobileMenuOpen(false);
                 }}
-                className="text-foreground hover:bg-secondary/50 block w-full rounded-lg px-3 py-2.5 text-start text-sm font-medium transition-colors"
+                className={`block w-full rounded-lg px-3 py-2.5 text-start text-sm font-medium transition-colors ${isTransparent ? 'text-white hover:bg-white/10' : 'text-foreground hover:bg-secondary/50'}`}
               >
                 {t('logout')}
               </button>
@@ -365,7 +377,7 @@ export function Header() {
               <Link
                 href="/login"
                 onClick={() => setMobileMenuOpen(false)}
-                className="text-foreground hover:bg-secondary/50 block rounded-lg px-3 py-2.5 text-sm font-medium transition-colors"
+                className={`block rounded-lg px-3 py-2.5 text-sm font-medium transition-colors ${isTransparent ? 'text-white hover:bg-white/10' : 'text-foreground hover:bg-secondary/50'}`}
               >
                 {t('login')}
               </Link>
@@ -378,7 +390,7 @@ export function Header() {
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
                 placeholder={t('searchPlaceholder')}
-                className="border-border bg-secondary/50 text-foreground placeholder:text-muted-foreground focus:ring-primary/20 focus:border-primary h-10 w-full rounded-full border px-4 text-sm focus:outline-none focus:ring-2 transition-all"
+                className={`h-10 w-full rounded-full border px-4 text-sm focus:outline-none focus:ring-2 transition-all ${isTransparent ? 'border-white/40 bg-white/10 text-white placeholder:text-white/60 focus:ring-white/20 focus:border-white/70' : 'border-border bg-secondary/50 text-foreground placeholder:text-muted-foreground focus:ring-primary/20 focus:border-primary'}`}
               />
             </form>
           </div>

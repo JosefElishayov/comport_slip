@@ -24,7 +24,7 @@ export function CartBundleOfferCard({ offer, cartId, onAdd, className }: CartBun
 
   const product = offer.bundleProduct;
   const variants = product?.variants;
-  const requiresSelection = offer.requiresVariantSelection && variants && variants.length > 0;
+  const requiresSelection = !offer.lockedVariant && !!variants && variants.length > 0;
 
   // Build attribute groups from variants
   const attributeGroups = useMemo(() => {
