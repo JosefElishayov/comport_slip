@@ -1,6 +1,5 @@
 import type { Product } from 'brainerce';
 import { getProductPriceInfo } from 'brainerce';
-import { getNonce } from '@/lib/nonce';
 
 interface ProductJsonLdProps {
   product: Product;
@@ -34,7 +33,6 @@ export async function ProductJsonLd(props: ProductJsonLdProps) {
 }
 
 async function renderProductJsonLd({ product, url, currency = 'USD' }: ProductJsonLdProps) {
-  const nonce = await getNonce();
   const priceInfo = getProductPriceInfo(product);
   const baseUrl = process.env.NEXT_PUBLIC_SITE_URL || '';
   const storeName = process.env.NEXT_PUBLIC_STORE_NAME || undefined;
@@ -151,14 +149,10 @@ async function renderProductJsonLd({ product, url, currency = 'USD' }: ProductJs
     <>
       <script
         type="application/ld+json"
-        nonce={nonce}
-        suppressHydrationWarning
         dangerouslySetInnerHTML={{ __html: serializeJsonLd(productJsonLd) }}
       />
       <script
         type="application/ld+json"
-        nonce={nonce}
-        suppressHydrationWarning
         dangerouslySetInnerHTML={{ __html: serializeJsonLd(breadcrumbJsonLd) }}
       />
     </>

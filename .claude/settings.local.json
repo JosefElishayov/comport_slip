@@ -12,7 +12,8 @@
       "Bash(git add *)",
       "Bash(git commit -m ' *)",
       "Bash(git push *)",
-      "Bash(npm view *)"
+      "Bash(npm view *)",
+      "Bash(xargs grep *)"
     ],
     "additionalDirectories": [
       "D:\\Users\\User\\Downloads"

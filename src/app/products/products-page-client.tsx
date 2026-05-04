@@ -147,8 +147,7 @@ function CategoryDropdownItems({
   );
 }
 
-// Note: CategoryChip kept for parity with previous file; currently unused.
-// eslint-disable-next-line @typescript-eslint/no-unused-vars
+// eslint-disable-next-line no-unused-vars
 function CategoryChip({
   category,
   selectedId,
