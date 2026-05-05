@@ -14,11 +14,13 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   try {
     const client = getServerClient();
     const { data: products } = await client.getProducts({ limit: 1000 });
-    const productPages: MetadataRoute.Sitemap = products.map((product) => ({
-      url: `${baseUrl}/products/${encodeURIComponent(product.slug)}`,
-      lastModified: product.updatedAt ? new Date(product.updatedAt) : new Date(),
-      priority: 0.8,
-    }));
+    const productPages: MetadataRoute.Sitemap = products
+      .filter((product) => !!product.slug)
+      .map((product) => ({
+        url: `${baseUrl}/products/${encodeURIComponent(product.slug!)}`,
+        lastModified: product.updatedAt ? new Date(product.updatedAt) : new Date(),
+        priority: 0.8,
+      }));
 
     return [...staticPages, ...productPages];
   } catch {
