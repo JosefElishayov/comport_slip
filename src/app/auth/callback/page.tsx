@@ -32,7 +32,7 @@ function OAuthCallbackContent() {
     if (oauthSuccess === 'true') {
       // Cookie was already set by the API route; refresh auth state
       auth.login().then(() => {
-        router.push('/');
+        router.push('/account');
       });
     } else {
       setError(t('authFailedDesc'));

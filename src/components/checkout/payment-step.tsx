@@ -77,6 +77,7 @@ export function PaymentStep({ checkoutId, className }: PaymentStepProps) {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [sdkReady, setSdkReady] = useState(false);
+  const [confirming, setConfirming] = useState(false);
   const walletOpenRef = useRef(false);
   const initialized = useRef(false);
   const successHandledRef = useRef(false);
@@ -96,7 +97,8 @@ export function PaymentStep({ checkoutId, className }: PaymentStepProps) {
     async (response: unknown) => {
       if (successHandledRef.current) return;
       successHandledRef.current = true;
-      console.info('Payment SDK success:', JSON.stringify(response));
+      console.info('Payment SDK success:', response);
+      setConfirming(true);
       try {
         const client = getClient();
         const resp = response as Record<string, unknown>;
@@ -481,6 +483,15 @@ export function PaymentStep({ checkoutId, className }: PaymentStepProps) {
     return (
       <div className={cn('border-destructive/50 rounded-md border p-4', className)}>
         <p className="text-destructive text-sm">{t('paymentError')}</p>
+      </div>
+    );
+  }
+
+  if (confirming) {
+    return (
+      <div className={cn('flex flex-col items-center justify-center py-12', className)}>
+        <LoadingSpinner size="lg" />
+        <p className="text-muted-foreground mt-4 text-sm">{t('confirmingPayment')}</p>
       </div>
     );
   }

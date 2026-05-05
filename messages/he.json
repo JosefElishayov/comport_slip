@@ -184,6 +184,7 @@
     "payment": "תשלום",
     "securePayment": "תשלום מאובטח",
     "preparingPayment": "מכין תשלום...",
+    "confirmingPayment": "מאשר תשלום, אנא המתן...",
     "loadingPaymentOptions": "טוען אפשרויות תשלום...",
     "paymentNotConfigured": "תשלום לא מוגדר",
     "paymentNotConfiguredDesc": "התשלום עדיין לא הוגדר לחנות זו. אנא פנו לבעל החנות.",

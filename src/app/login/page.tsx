@@ -25,9 +25,10 @@ export default function LoginPage() {
         return;
       }
 
-      // Cookie was set by the proxy; refresh auth state
+      // Cookie was set by the proxy; full reload ensures middleware sees it
+      // and StoreProvider reinitializes with the correct auth state
       await auth.login();
-      router.push('/account');
+      window.location.href = '/account';
     } catch (err) {
       const message = err instanceof Error ? err.message : 'Login failed. Please try again.';
       setError(message);

@@ -53,7 +53,7 @@ function VerifyEmailContent() {
           // Refresh auth state (cookie already set)
           await auth.login();
           setSuccess('Email verified successfully! Redirecting...');
-          setTimeout(() => router.push('/'), 1500);
+          setTimeout(() => { window.location.href = '/account'; }, 1500);
         } else {
           setError(result.message || 'Verification failed. Please try again.');
         }
