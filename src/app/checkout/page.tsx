@@ -63,8 +63,7 @@ function CheckoutContent() {
   const [customFieldValues, setCustomFieldValues] = useState<Record<string, unknown>>({});
   const [customFieldsLoading, setCustomFieldsLoading] = useState(false);
   const [shippingOpen, setShippingOpen] = useState(false);
-  const [paymentOpen, setPaymentOpen] = useState(false);
-  const [paymentStarted, setPaymentStarted] = useState(false);
+  const [step, setStep] = useState<'details' | 'payment'>('details');
 
   // Check for returning from canceled payment
   const canceled = searchParams.get('canceled') === 'true';
@@ -84,15 +83,10 @@ function CheckoutContent() {
     if (addressDone) setShippingOpen(true);
   }, [addressDone]);
 
-  // Auto-open payment drawer when shipping is done
+  // Return to details if a prior step becomes incomplete
   useEffect(() => {
-    if (shippingDone) setPaymentOpen(true);
-  }, [shippingDone]);
-
-  // Reset payment if a prior step changes — forces re-click after edits
-  useEffect(() => {
-    if (!shippingDone) setPaymentStarted(false);
-  }, [shippingDone, deliveryType, selectedRateId]);
+    if (!addressDone || !shippingDone) setStep('details');
+  }, [addressDone, shippingDone, deliveryType, selectedRateId]);
 
   // Pre-fill address and customer data from profile when logged in
   useEffect(() => {
@@ -410,6 +404,8 @@ function CheckoutContent() {
       setCheckout(updated);
       // Also submit custom fields
       await submitCustomFields(updated.id);
+      // Pickup details complete — proceed directly to payment
+      setStep('payment');
     } catch (err) {
       const message = err instanceof Error ? err.message : t('failedToSelectPickup');
       setError(message);
@@ -530,9 +526,44 @@ function CheckoutContent() {
       )}
 
       <div className="grid grid-cols-1 gap-8 lg:grid-cols-3">
-        {/* Main content — all sections visible */}
+        {/* Main content — step-based navigation */}
         <div className="space-y-6 lg:col-span-2">
 
+          {/* Step indicator */}
+          <div className="flex items-center gap-3 text-sm">
+            <button
+              type="button"
+              onClick={() => step === 'payment' && setStep('details')}
+              className={cn(
+                'flex items-center gap-2 transition-colors',
+                step === 'details'
+                  ? 'text-foreground font-semibold'
+                  : 'text-muted-foreground hover:text-foreground cursor-pointer'
+              )}
+            >
+              <span className={cn(
+                'flex h-6 w-6 items-center justify-center rounded-full text-xs font-bold',
+                step === 'details' ? 'bg-foreground text-background' : 'bg-muted text-muted-foreground'
+              )}>1</span>
+              {t('stepDetails')}
+            </button>
+            <svg className="text-muted-foreground h-4 w-4 rtl:rotate-180" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+            </svg>
+            <span className={cn(
+              'flex items-center gap-2',
+              step === 'payment' ? 'text-foreground font-semibold' : 'text-muted-foreground'
+            )}>
+              <span className={cn(
+                'flex h-6 w-6 items-center justify-center rounded-full text-xs font-bold',
+                step === 'payment' ? 'bg-foreground text-background' : 'bg-muted text-muted-foreground'
+              )}>2</span>
+              {t('stepPayment')}
+            </span>
+          </div>
+
+          {step === 'details' && (
+            <>
           {/* === DELIVERY METHOD TOGGLE === */}
           {!isAllDigital && pickupLocations.length > 0 && (
             <div className="border-border rounded-lg border p-6">
@@ -698,60 +729,37 @@ function CheckoutContent() {
             </div>
           )}
 
-          {/* === PAYMENT (collapsible) === */}
-          <div
-            className={cn(
-              'border-border rounded-lg border transition-opacity',
-              !shippingDone && 'pointer-events-none opacity-40'
-            )}
-          >
-            <button
-              type="button"
-              onClick={() => shippingDone && setPaymentOpen((v) => !v)}
-              className="flex w-full items-center justify-between p-6"
-            >
-              <h2 className="text-foreground text-lg font-semibold">{t('payment')}</h2>
-              <svg
-                className={cn(
-                  'text-muted-foreground h-5 w-5 transition-transform duration-200',
-                  paymentOpen && 'rotate-180'
-                )}
-                fill="none"
-                viewBox="0 0 24 24"
-                stroke="currentColor"
-              >
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
-              </svg>
-            </button>
-            <div
-              className={cn(
-                'grid transition-[grid-template-rows] duration-300 ease-in-out',
-                paymentOpen ? 'grid-rows-[1fr]' : 'grid-rows-[0fr]'
+              {/* Continue to Payment button — shown for shipping/digital only; pickup auto-navigates */}
+              {addressDone && shippingDone && checkout && deliveryType !== 'pickup' && (
+                <button
+                  type="button"
+                  onClick={() => setStep('payment')}
+                  className="bg-primary text-primary-foreground hover:bg-primary/90 w-full rounded-lg px-6 py-4 text-base font-semibold transition-colors"
+                >
+                  {t('continueToPayment')}
+                </button>
               )}
-            >
-              <div className="overflow-hidden">
-                <div className="px-6 pb-6">
-                  {shippingDone && checkout ? (
-                    paymentStarted ? (
-                      <PaymentStep checkoutId={checkout.id} />
-                    ) : (
-                      <button
-                        type="button"
-                        onClick={() => setPaymentStarted(true)}
-                        className="bg-primary text-primary-foreground hover:opacity-90 inline-flex w-full items-center justify-center rounded-md px-6 py-3 text-sm font-semibold transition-opacity"
-                      >
-                        {t('continueToPayment')}
-                      </button>
-                    )
-                  ) : (
-                    <p className="text-muted-foreground py-4 text-center text-sm">
-                      {t('completeAboveSteps')}
-                    </p>
-                  )}
-                </div>
+            </>
+          )}
+
+          {step === 'payment' && checkout && (
+            <>
+              <button
+                type="button"
+                onClick={() => setStep('details')}
+                className="text-muted-foreground hover:text-foreground flex items-center gap-2 text-sm font-medium transition-colors"
+              >
+                <svg className="h-4 w-4 rtl:rotate-180" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+                </svg>
+                {t('backToDelivery')}
+              </button>
+              <div className="border-border rounded-lg border p-6">
+                <h2 className="text-foreground mb-4 text-lg font-semibold">{t('payment')}</h2>
+                <PaymentStep checkoutId={checkout.id} />
               </div>
-            </div>
-          </div>
+            </>
+          )}
         </div>
 
         {/* Order summary sidebar */}
@@ -764,7 +772,8 @@ function CheckoutContent() {
               <div className="mb-4 space-y-3">
                 {checkout.lineItems.map((item) => {
                   const imageUrl = item.product.images?.[0]?.url || null;
-                  const name = item.variant?.name || item.product.name;
+                  const productName = item.product.name;
+                  const variantName = item.variant?.name;
                   const lineTotal = parseFloat(item.unitPrice) * item.quantity;
 
                   return (
@@ -773,7 +782,7 @@ function CheckoutContent() {
                         {imageUrl ? (
                           <Image
                             src={imageUrl}
-                            alt={name}
+                            alt={productName}
                             fill
                             sizes="48px"
                             className="object-cover"
@@ -798,7 +807,10 @@ function CheckoutContent() {
                       </div>
 
                       <div className="min-w-0 flex-1">
-                        <p className="text-foreground truncate text-sm">{name}</p>
+                        <p className="text-foreground truncate text-sm font-medium">{productName}</p>
+                        {variantName && (
+                          <p className="text-muted-foreground truncate text-xs">{variantName}</p>
+                        )}
                         <p className="text-muted-foreground text-xs">
                           {tc('qty')} {item.quantity}
                         </p>

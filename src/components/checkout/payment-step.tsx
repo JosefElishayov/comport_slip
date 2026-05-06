@@ -99,17 +99,30 @@ export function PaymentStep({ checkoutId, className }: PaymentStepProps) {
       successHandledRef.current = true;
       console.info('Payment SDK success:', response);
       setConfirming(true);
+
+      const resp = response as Record<string, unknown>;
+      const data = (resp?.data && typeof resp.data === 'object' ? resp.data : resp) as
+        | Record<string, string>
+        | undefined;
+
       try {
         const client = getClient();
-        const resp = response as Record<string, unknown>;
-        const data = (resp?.data && typeof resp.data === 'object' ? resp.data : resp) as
-          | Record<string, unknown>
-          | undefined;
-        await client.confirmSdkPayment(checkoutId, data || undefined);
+        // Race against 10s timeout so a stalled API call never blocks the redirect
+        await Promise.race([
+          client.confirmSdkPayment(checkoutId, data || undefined),
+          new Promise<void>((resolve) => setTimeout(resolve, 10_000)),
+        ]);
       } catch (err) {
         console.warn('Failed to confirm payment with backend:', err);
       }
-      window.location.href = `/order-confirmation?checkout_id=${checkoutId}`;
+
+      // Pass lowprofilecode to order-confirmation so it can retry server-side
+      // verification if the confirmSdkPayment above timed out or failed
+      const lowProfileCode = data?.paymentIntentId || data?.lowprofilecode || data?.LowProfileCode;
+      const qs = lowProfileCode
+        ? `checkout_id=${checkoutId}&lowprofilecode=${encodeURIComponent(lowProfileCode)}`
+        : `checkout_id=${checkoutId}`;
+      window.location.href = `/order-confirmation?${qs}`;
     },
     [checkoutId]
   );
