@@ -82,8 +82,19 @@ export function OAuthButtons({ className }: OAuthButtonsProps) {
 
     try {
       setRedirecting(provider);
+
+      // Obtain a server-generated state nonce (stored in httpOnly cookie).
+      // The nonce travels through the OAuth flow in the redirect URL and is
+      // verified in /api/auth/oauth-callback to prevent login-CSRF.
+      const initRes = await fetch('/api/auth/oauth-init', {
+        method: 'POST',
+        headers: { 'x-requested-with': 'brainerce' },
+      });
+      if (!initRes.ok) throw new Error('OAuth init failed');
+      const { state } = await initRes.json();
+
       const client = getClient();
-      const redirectUrl = window.location.origin + '/api/auth/oauth-callback';
+      const redirectUrl = `${window.location.origin}/api/auth/oauth-callback?state=${state}`;
       const result = await client.getOAuthAuthorizeUrl(provider, { redirectUrl });
       window.location.href = result.authorizationUrl;
     } catch (err) {

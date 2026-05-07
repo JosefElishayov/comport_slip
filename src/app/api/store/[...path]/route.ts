@@ -18,8 +18,8 @@ const LOGGED_IN_COOKIE = 'brainerce_logged_in';
 const COOKIE_MAX_AGE = 7 * 24 * 60 * 60; // 7 days
 const BACKEND_TIMEOUT_MS = 15_000;
 
-/** Auth endpoints whose responses contain tokens to intercept */
-const AUTH_ENDPOINTS = ['customers/login', 'customers/register', 'customers/verify-email'];
+/** Auth endpoints whose responses contain a new auth token to intercept and store as httpOnly cookie */
+const AUTH_ENDPOINTS = ['customers/login', 'customers/register'];
 
 function isAuthEndpoint(path: string): boolean {
   return AUTH_ENDPOINTS.some((ep) => path.endsWith(ep));
