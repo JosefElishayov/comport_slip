@@ -23,6 +23,38 @@ export default function HomePageClient({ initialProducts, initialBanners }: Home
   const skipInitialFetch = useRef(initialProducts.length > 0 || initialBanners.length > 0);
   const t = useTranslations('home');
   const tc = useTranslations('common');
+  const heroRef = useRef<HTMLElement>(null);
+  const heroOverlayRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    const handleScroll = () => {
+      const hero = heroRef.current;
+      const overlay = heroOverlayRef.current;
+      if (!hero) return;
+
+      const scrollY = window.scrollY;
+      const vh = window.innerHeight;
+      // shrink animation completes over first 55vh of scroll
+      const progress = Math.min(scrollY / (vh * 0.55), 1);
+
+      const scale = 1 - progress * 0.2;
+      const radius = progress * 28;
+
+      hero.style.transform = `scale(${scale})`;
+      hero.style.borderRadius = `${radius}px`;
+
+      // hide completely once content scrolls over it — no bleed-through
+      hero.style.visibility = scrollY >= vh * 0.85 ? 'hidden' : 'visible';
+
+      if (overlay) {
+        overlay.style.opacity = String(Math.max(0, 1 - progress * 2.2));
+      }
+    };
+
+    window.addEventListener('scroll', handleScroll, { passive: true });
+    handleScroll();
+    return () => window.removeEventListener('scroll', handleScroll);
+  }, []);
 
   useEffect(() => {
     if (skipInitialFetch.current) {
@@ -68,20 +100,13 @@ export default function HomePageClient({ initialProducts, initialBanners }: Home
         </div>
       )}
 
-      {/* Full-Screen Video Hero */}
-      <section className="hero-video-section">
-        <video
-          autoPlay
-          muted
-          loop
-          playsInline
-          preload="auto"
-          poster=""
-        >
+      {/* Fixed video — shrinks on scroll, content slides over it */}
+      <section ref={heroRef} className="hero-video-section">
+        <video autoPlay muted loop playsInline preload="auto" poster="">
           <source src="/hero-video.mp4" type="video/mp4" />
         </video>
 
-        <div className="hero-video-overlay">
+        <div ref={heroOverlayRef} className="hero-video-overlay">
           <div className="mx-auto max-w-3xl">
             <h1 className="animate-fade-in-up text-4xl font-bold tracking-tight text-white sm:text-5xl md:text-6xl lg:text-7xl">
               {t('heroTitle')}
@@ -105,7 +130,6 @@ export default function HomePageClient({ initialProducts, initialBanners }: Home
             </div>
           </div>
 
-          {/* Scroll indicator */}
           <div className="scroll-indicator">
             <svg className="h-8 w-8 text-white/70" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
               <path strokeLinecap="round" strokeLinejoin="round" d="M19 14l-7 7m0 0l-7-7m7 7V3" />
@@ -114,16 +138,22 @@ export default function HomePageClient({ initialProducts, initialBanners }: Home
         </div>
       </section>
 
+      {/* Spacer — scroll space so content starts below the video */}
+      <div className="hero-spacer" aria-hidden="true" />
+
+      {/* All page content scrolls over the fixed video */}
+      <div className="hero-content-layer">
+
       {loading ? (
-        <div className="flex min-h-[40vh] items-center justify-center">
+        <div className="flex min-h-[40vh] items-center justify-center bg-background">
           <LoadingSpinner size="lg" />
         </div>
       ) : (<>
       {/* Strength Points */}
-      <section className="border-b border-border bg-secondary">
+      <section className="strength-section border-b border-border bg-secondary">
         <div className="mx-auto max-w-6xl px-4 py-12 sm:px-6 sm:py-14 lg:px-8">
           <div className="grid gap-6 sm:grid-cols-3 sm:gap-8">
-            <Reveal variant="up" delay={1} className="strength-card flex flex-col items-center gap-3 text-center">
+            <Reveal variant="up" delay={1} className="strength-card strength-card--spring flex flex-col items-center gap-3 text-center">
               <div className="strength-icon flex h-14 w-14 items-center justify-center rounded-2xl bg-accent/15 text-accent">
                 <svg className="h-7 w-7" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.7}>
                   <path strokeLinecap="round" strokeLinejoin="round" d="M11.48 3.499a.562.562 0 011.04 0l2.125 5.111a.563.563 0 00.475.345l5.518.442c.499.04.701.663.321.988l-4.204 3.602a.563.563 0 00-.182.557l1.285 5.385a.562.562 0 01-.84.61l-4.725-2.885a.563.563 0 00-.586 0L6.982 20.54a.562.562 0 01-.84-.61l1.285-5.386a.562.562 0 00-.182-.557l-4.204-3.602a.562.562 0 01.321-.988l5.518-.442a.563.563 0 00.475-.345L11.48 3.5z" />
@@ -132,7 +162,7 @@ export default function HomePageClient({ initialProducts, initialBanners }: Home
               <h3 className="text-lg font-bold text-foreground">{t('strengthBrandsTitle')}</h3>
               <p className="text-sm leading-relaxed text-muted-foreground">{t('strengthBrandsBody')}</p>
             </Reveal>
-            <Reveal variant="up" delay={2} className="strength-card flex flex-col items-center gap-3 text-center">
+            <Reveal variant="up" delay={2} className="strength-card strength-card--spring flex flex-col items-center gap-3 text-center">
               <div className="strength-icon flex h-14 w-14 items-center justify-center rounded-2xl bg-accent/15 text-accent">
                 <svg className="h-7 w-7" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.7}>
                   <path strokeLinecap="round" strokeLinejoin="round" d="M12 6v6h4.5m4.5 0a9 9 0 11-18 0 9 9 0 0118 0z" />
@@ -141,7 +171,7 @@ export default function HomePageClient({ initialProducts, initialBanners }: Home
               <h3 className="text-lg font-bold text-foreground">{t('strengthExperienceTitle')}</h3>
               <p className="text-sm leading-relaxed text-muted-foreground">{t('strengthExperienceBody')}</p>
             </Reveal>
-            <Reveal variant="up" delay={3} className="strength-card flex flex-col items-center gap-3 text-center">
+            <Reveal variant="up" delay={3} className="strength-card strength-card--spring flex flex-col items-center gap-3 text-center">
               <div className="strength-icon flex h-14 w-14 items-center justify-center rounded-2xl bg-accent/15 text-accent">
                 <svg className="h-7 w-7" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.7}>
                   <path strokeLinecap="round" strokeLinejoin="round" d="M2.25 12l8.954-8.955c.44-.439 1.152-.439 1.591 0L21.75 12M4.5 9.75v10.125c0 .621.504 1.125 1.125 1.125H9.75v-4.875c0-.621.504-1.125 1.125-1.125h2.25c.621 0 1.125.504 1.125 1.125V21h4.125c.621 0 1.125-.504 1.125-1.125V9.75M8.25 21h8.25" />
@@ -155,25 +185,23 @@ export default function HomePageClient({ initialProducts, initialBanners }: Home
       </section>
 
       {/* Featured Products */}
-      <section className="section-warm">
-        <div className="mx-auto max-w-7xl px-4 py-20 sm:px-6 lg:px-8">
-          <Reveal variant="up" className="mb-12 text-center">
-            <h2 className="text-foreground text-3xl font-bold sm:text-4xl">{t('featuredProducts')}</h2>
-            <p className="text-muted-foreground mx-auto mt-3 max-w-lg text-lg">{t('featuredSubtitle')}</p>
-          </Reveal>
-          <Reveal variant="up" delay={1}>
-            <ProductGrid products={products} />
-          </Reveal>
-          <Reveal variant="up" delay={2} className="mt-12 text-center">
+      <section className="bg-[var(--bg)]">
+        <div className="mx-auto max-w-7xl px-4 pt-16 pb-20 sm:px-6 lg:px-8">
+          {/* Header row: title right, button left */}
+          <Reveal variant="up" className="mb-10 flex items-center justify-between gap-4">
+            <h2 className="text-foreground text-2xl font-bold sm:text-3xl">{t('featuredProducts')}</h2>
             <Link
               href="/products"
-              className="btn-shimmer inline-flex items-center gap-2 rounded-full border-2 border-primary px-8 py-3 font-semibold text-primary transition-all hover:-translate-y-0.5 hover:bg-primary hover:text-primary-foreground hover:shadow-lg"
+              className="inline-flex items-center gap-1.5 rounded-full border border-border px-5 py-2 text-sm font-medium text-foreground transition-all hover:border-primary hover:text-primary"
             >
               {tc('viewAll')}
               <svg className="h-4 w-4 rtl:rotate-180" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
                 <path strokeLinecap="round" strokeLinejoin="round" d="M14 5l7 7m0 0l-7 7m7-7H3" />
               </svg>
             </Link>
+          </Reveal>
+          <Reveal variant="up" delay={1}>
+            <ProductGrid products={products} />
           </Reveal>
         </div>
       </section>
@@ -242,6 +270,7 @@ export default function HomePageClient({ initialProducts, initialBanners }: Home
         </div>
       </section>
       </>)}
+      </div>{/* end hero-content-layer */}
     </div>
   );
 }

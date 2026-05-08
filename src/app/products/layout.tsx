@@ -1,14 +1,14 @@
 import type { Metadata } from 'next';
 
 export const metadata: Metadata = {
-  title: 'Products',
-  description: 'Browse our full collection of products.',
+  title: 'כל המוצרים',
+  description: 'גלה את המבחר המלא של מוצרי קומפורט סליפ — מזרנים, בסיסים, כריות ואביזרי שינה איכותיים.',
   alternates: {
     canonical: '/products',
   },
   openGraph: {
-    title: 'Products',
-    description: 'Browse our full collection of products.',
+    title: 'כל המוצרים',
+    description: 'גלה את המבחר המלא של מוצרי קומפורט סליפ — מזרנים, בסיסים, כריות ואביזרי שינה איכותיים.',
     type: 'website',
   },
 };

@@ -7,7 +7,7 @@ export const revalidate = 300;
 export default async function HomePage() {
   const client = getServerClient();
   const [productsRes, bannersRes] = await Promise.allSettled([
-    client.getProducts({ limit: 8, sortBy: 'createdAt', sortOrder: 'desc' }),
+    client.getProducts({ limit: 4, sortBy: 'createdAt', sortOrder: 'desc' }),
     client.getDiscountBanners(),
   ]);
 

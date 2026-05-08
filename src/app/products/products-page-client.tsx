@@ -344,11 +344,21 @@ export default function ProductsPageClient({
     loadProducts(1, false);
   }, [loadProducts]);
 
-  function handleLoadMore() {
-    if (page < totalPages && !loadingMore) {
-      loadProducts(page + 1, true);
-    }
-  }
+  const sentinelRef = useRef<HTMLDivElement>(null);
+  useEffect(() => {
+    const el = sentinelRef.current;
+    if (!el) return;
+    const observer = new IntersectionObserver(
+      (entries) => {
+        if (entries[0].isIntersecting && page < totalPages && !loadingMore) {
+          loadProducts(page + 1, true);
+        }
+      },
+      { rootMargin: '200px' }
+    );
+    observer.observe(el);
+    return () => observer.disconnect();
+  }, [page, totalPages, loadingMore, loadProducts]);
 
   function updateParam(key: string, value: string) {
     const params = new URLSearchParams(searchParams.toString());
@@ -466,8 +476,8 @@ export default function ProductsPageClient({
         </div>
       </div>
 
-    <div className="section-warm">
-    <div className="mx-auto max-w-7xl px-4 py-10 sm:px-6 lg:px-8">
+    <div className="bg-white">
+    <div className="mx-auto max-w-7xl px-4 py-8 sm:px-6 lg:px-8">
       {loading ? (
         <div className="flex items-center justify-center py-20">
           <LoadingSpinner size="lg" />
@@ -476,25 +486,11 @@ export default function ProductsPageClient({
         <>
           <ProductGrid products={products} />
 
-          {page < totalPages && (
-            <div className="mt-10 flex justify-center">
-              <button
-                onClick={handleLoadMore}
-                disabled={loadingMore}
-                className="bg-accent text-accent-foreground inline-flex items-center gap-2 rounded-full px-8 py-3 font-semibold shadow-sm transition-all hover:brightness-110 hover:shadow-md disabled:opacity-50"
-              >
-                {loadingMore ? (
-                  <>
-                    <LoadingSpinner
-                      size="sm"
-                      className="border-primary-foreground/30 border-t-primary-foreground"
-                    />
-                    {tc('loading')}
-                  </>
-                ) : (
-                  t('loadMore')
-                )}
-              </button>
+          {/* Infinite scroll sentinel */}
+          <div ref={sentinelRef} className="h-4" />
+          {loadingMore && (
+            <div className="flex justify-center py-8">
+              <LoadingSpinner size="lg" />
             </div>
           )}
         </>
