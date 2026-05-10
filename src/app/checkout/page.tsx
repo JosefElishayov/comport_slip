@@ -865,13 +865,13 @@ function CheckoutContent() {
                 <div className="flex items-center justify-between">
                   <span className="text-muted-foreground">{tc('subtotal')}</span>
                   <span className="text-foreground">
-                    {formatPrice(parseFloat(checkout.subtotal), { currency }) as string}
+                    {formatPrice(parseFloat(cart?.subtotal || checkout.subtotal), { currency }) as string}
                   </span>
                 </div>
 
                 {(() => {
-                  const totalDiscount = parseFloat(checkout.discountAmount);
-                  const ruleAmt = parseFloat(checkout.ruleDiscountAmount || '0');
+                  const totalDiscount = parseFloat(cart?.discountAmount || '0');
+                  const ruleAmt = parseFloat(cart?.ruleDiscountAmount || '0');
                   const couponAmt = totalDiscount - ruleAmt;
                   const rules = cart?.appliedDiscounts;
                   if (totalDiscount <= 0) return null;
@@ -899,17 +899,17 @@ function CheckoutContent() {
                               </span>
                             </div>
                           )}
-                      {checkout.couponCode && couponAmt > 0 && (
+                      {cart?.couponCode && couponAmt > 0 && (
                         <div className="flex items-center justify-between">
                           <span className="text-muted-foreground">
-                            {tc('couponDiscount')} ({checkout.couponCode})
+                            {tc('couponDiscount')} ({cart.couponCode})
                           </span>
                           <span className="text-destructive">
                             -{formatPrice(couponAmt, { currency }) as string}
                           </span>
                         </div>
                       )}
-                      {!checkout.couponCode && ruleAmt <= 0 && (!rules || rules.length === 0) && (
+                      {!cart?.couponCode && ruleAmt <= 0 && (!rules || rules.length === 0) && (
                         <div className="flex items-center justify-between">
                           <span className="text-muted-foreground">{tc('discount')}</span>
                           <span className="text-destructive">
@@ -955,7 +955,14 @@ function CheckoutContent() {
                   <div className="flex items-center justify-between">
                     <span className="text-foreground font-semibold">{tc('total')}</span>
                     <span className="text-foreground text-base font-semibold">
-                      {formatPrice(parseFloat(checkout.total), { currency }) as string}
+                      {formatPrice(
+                        parseFloat(cart?.subtotal || checkout.subtotal) -
+                          parseFloat(cart?.discountAmount || '0') +
+                          parseFloat(checkout.shippingAmount || '0') +
+                          parseFloat(checkout.taxAmount || '0') +
+                          parseFloat(checkout.surchargeAmount || '0'),
+                        { currency },
+                      ) as string}
                     </span>
                   </div>
                   <p className="text-muted-foreground mt-1 text-end text-xs">

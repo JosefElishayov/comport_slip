@@ -19,6 +19,7 @@ function OrderConfirmationContent() {
   const [result, setResult] = useState<WaitForOrderResult | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [polling, setPolling] = useState(false);
 
   useEffect(() => {
     if (!checkoutId) {
@@ -56,6 +57,7 @@ function OrderConfirmationContent() {
           maxWaitMs: 30000,
         });
         setResult(orderResult);
+        if (!orderResult.success) setPolling(true);
       } catch (err) {
         const message = err instanceof Error ? err.message : 'Failed to confirm order';
         setError(message);
@@ -66,6 +68,30 @@ function OrderConfirmationContent() {
 
     waitForOrder();
   }, [checkoutId, refreshCart]);
+
+  useEffect(() => {
+    if (!polling || !checkoutId) return;
+    let cancelled = false;
+
+    async function poll() {
+      while (!cancelled) {
+        await new Promise((r) => setTimeout(r, 8000));
+        if (cancelled) break;
+        try {
+          const client = getClient();
+          const res = await client.waitForOrder(checkoutId!, { maxWaitMs: 10000 });
+          if (res.success && !cancelled) {
+            setResult(res);
+            setPolling(false);
+            return;
+          }
+        } catch {}
+      }
+    }
+
+    poll();
+    return () => { cancelled = true; };
+  }, [polling, checkoutId]);
 
   if (loading) {
     return (
