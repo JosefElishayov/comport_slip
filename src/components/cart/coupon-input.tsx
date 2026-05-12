@@ -1,7 +1,7 @@
 'use client';
 
 import { useState } from 'react';
-import type { Cart } from 'brainerce';
+import type { Cart, Checkout } from 'brainerce';
 import { getClient } from '@/lib/brainerce';
 import { useTranslations } from '@/lib/translations';
 import { LoadingSpinner } from '@/components/shared/loading-spinner';
@@ -9,11 +9,12 @@ import { cn } from '@/lib/utils';
 
 interface CouponInputProps {
   cart: Cart;
-  onUpdate: () => void;
+  checkoutId?: string;
+  onUpdate: (checkout?: Checkout) => void;
   className?: string;
 }
 
-export function CouponInput({ cart, onUpdate, className }: CouponInputProps) {
+export function CouponInput({ cart, checkoutId, onUpdate, className }: CouponInputProps) {
   const t = useTranslations('coupon');
   const tc = useTranslations('common');
   const [code, setCode] = useState('');
@@ -31,9 +32,15 @@ export function CouponInput({ cart, onUpdate, className }: CouponInputProps) {
       setApplying(true);
       setError(null);
       const client = getClient();
-      await client.applyCoupon(cart.id, trimmed);
-      setCode('');
-      onUpdate();
+      if (checkoutId) {
+        const updated = await client.applyCheckoutCoupon(checkoutId, trimmed);
+        setCode('');
+        onUpdate(updated);
+      } else {
+        await client.applyCoupon(cart.id, trimmed);
+        setCode('');
+        onUpdate();
+      }
     } catch (err) {
       const message = err instanceof Error ? err.message : t('invalidCode');
       setError(message);
@@ -49,8 +56,13 @@ export function CouponInput({ cart, onUpdate, className }: CouponInputProps) {
       setRemoving(true);
       setError(null);
       const client = getClient();
-      await client.removeCoupon(cart.id);
-      onUpdate();
+      if (checkoutId) {
+        const updated = await client.removeCheckoutCoupon(checkoutId);
+        onUpdate(updated);
+      } else {
+        await client.removeCoupon(cart.id);
+        onUpdate();
+      }
     } catch (err) {
       console.error('Failed to remove coupon:', err);
     } finally {

@@ -130,7 +130,7 @@ export function CartDrawer() {
 
               {/* Bundle offers */}
               {(() => {
-                const validBundles = bundles?.bundles?.filter((o) => o?.bundleProduct) ?? [];
+                const validBundles = bundles?.bundles?.filter((o) => o?.offeredProducts?.length > 0) ?? [];
                 if (validBundles.length === 0) return null;
                 return (
                   <div className="mt-4 space-y-2">

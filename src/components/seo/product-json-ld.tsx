@@ -54,6 +54,36 @@ async function renderProductJsonLd({ product, url, currency = 'USD' }: ProductJs
     (product as { brands?: Array<{ name: string }> }).brands?.map((b) => b.name) ?? [];
   const categoryNames = product.categories?.map((c) => c.name) ?? [];
 
+  // Aggregate rating: prefer SDK-native avgRating/reviewCount; fall back to legacy
+  // metafield keys (average_rating / rating_average, review_count / rating_count)
+  // for stores still managing ratings outside the reviews surface.
+  const sdkRating = typeof product.avgRating === 'number' ? product.avgRating : NaN;
+  const sdkReviewCount = typeof product.reviewCount === 'number' ? product.reviewCount : NaN;
+
+  const metafields = product.metafields ?? [];
+  const findMeta = (...keys: string[]) =>
+    metafields.find((m) => keys.includes(m.definitionKey))?.value ?? null;
+
+  const ratingValueRaw = findMeta('average_rating', 'rating_average');
+  const reviewCountRaw = findMeta('review_count', 'rating_count');
+  const metaRating = ratingValueRaw ? parseFloat(ratingValueRaw) : NaN;
+  const metaReviewCount = reviewCountRaw ? parseInt(reviewCountRaw, 10) : NaN;
+
+  const ratingValue = !isNaN(sdkRating) && sdkRating > 0 ? sdkRating : metaRating;
+  const reviewCount =
+    !isNaN(sdkReviewCount) && sdkReviewCount > 0 ? sdkReviewCount : metaReviewCount;
+
+  const aggregateRating =
+    !isNaN(ratingValue) && ratingValue > 0 && !isNaN(reviewCount) && reviewCount > 0
+      ? {
+          '@type': 'AggregateRating',
+          ratingValue,
+          reviewCount,
+          bestRating: 5,
+          worstRating: 1,
+        }
+      : null;
+
   const seller = storeName ? { '@type': 'Organization', name: storeName } : undefined;
 
   // Build offers: AggregateOffer for variable products with priced variants, Offer otherwise.
@@ -108,6 +138,9 @@ async function renderProductJsonLd({ product, url, currency = 'USD' }: ProductJs
   }
   if (categoryNames.length > 0) {
     productJsonLd.category = categoryNames.join(' > ');
+  }
+  if (aggregateRating) {
+    productJsonLd.aggregateRating = aggregateRating;
   }
 
   const breadcrumbJsonLd = {

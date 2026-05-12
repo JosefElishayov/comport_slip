@@ -14,6 +14,7 @@ import { cn } from '@/lib/utils';
 import { flyToCart } from '@/lib/fly-to-cart';
 import { LoadingSpinner } from '@/components/shared/loading-spinner';
 import { ProductShareButton } from '@/components/shared/product-share-button';
+import { RatingSummary } from '@/components/products/star-rating';
 
 interface ProductCardProps {
   product: Product;
@@ -265,6 +266,17 @@ export function ProductCard({ product, className }: ProductCardProps) {
             </p>
           )}
         </Link>
+
+        {/* Rating */}
+        {product.reviewCount && product.reviewCount > 0 ? (
+          <div className="mt-1.5">
+            <RatingSummary
+              avgRating={product.avgRating}
+              reviewCount={product.reviewCount}
+              size="sm"
+            />
+          </div>
+        ) : null}
 
         {/* Price */}
         <div className="mt-2">

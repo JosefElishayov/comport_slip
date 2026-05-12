@@ -20,6 +20,8 @@ import { StockBadge } from '@/components/products/stock-badge';
 import { RecommendationSection } from '@/components/products/recommendation-section';
 import { FrequentlyBoughtTogether } from '@/components/products/frequently-bought-together';
 import { ProductShareButton } from '@/components/shared/product-share-button';
+import { RatingSummary } from '@/components/products/star-rating';
+import { ProductReviews } from '@/components/products/product-reviews';
 import { useTranslations } from '@/lib/translations';
 import { cn } from '@/lib/utils';
 import { sanitizeProductHtml } from '@/lib/sanitize-html';
@@ -353,6 +355,17 @@ export function ProductClientSection({ product: initialProduct }: ProductClientS
           {/* Title */}
           <h1 className="text-foreground text-3xl font-bold sm:text-4xl leading-tight">{product.name}</h1>
 
+          {/* Rating */}
+          {product.reviewCount && product.reviewCount > 0 ? (
+            <a href="#product-reviews-heading" className="inline-block">
+              <RatingSummary
+                avgRating={product.avgRating}
+                reviewCount={product.reviewCount}
+                size="md"
+              />
+            </a>
+          ) : null}
+
           {/* Tags */}
           {product.tags && product.tags.length > 0 && (
               <div className="flex flex-wrap gap-1.5">
@@ -550,6 +563,14 @@ export function ProductClientSection({ product: initialProduct }: ProductClientS
           )}
         </div>
       </div>
+
+      {/* Reviews */}
+      <ProductReviews
+        productId={product.id}
+        initialAvgRating={product.avgRating}
+        initialReviewCount={product.reviewCount}
+        className="mt-12"
+      />
 
       {/* Frequently Bought Together (cross-sells) */}
       {recommendations?.crossSells && recommendations.crossSells.length > 0 && (

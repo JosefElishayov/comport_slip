@@ -414,19 +414,15 @@ function CheckoutContent() {
     }
   }
 
-  // Refresh cart and checkout after coupon apply/remove
-  const handleCouponUpdate = useCallback(async () => {
+  // Called by CouponInput after apply/remove — receives the updated checkout
+  // directly from applyCheckoutCoupon / removeCheckoutCoupon so totals and
+  // couponCode are immediately correct without any extra fetch.
+  const handleCouponUpdate = useCallback(async (updatedCheckout?: import('brainerce').Checkout) => {
     await refreshCart();
-    if (checkout) {
-      try {
-        const client = getClient();
-        const updated = await client.getCheckout(checkout.id);
-        setCheckout(updated);
-      } catch (err) {
-        console.error('Failed to refresh checkout after coupon update:', err);
-      }
+    if (updatedCheckout) {
+      setCheckout(updatedCheckout);
     }
-  }, [checkout, refreshCart]);
+  }, [refreshCart]);
 
   if (initializing) {
     return (
@@ -756,7 +752,7 @@ function CheckoutContent() {
               </button>
               <div className="border-border rounded-lg border p-6">
                 <h2 className="text-foreground mb-4 text-lg font-semibold">{t('payment')}</h2>
-                <PaymentStep checkoutId={checkout.id} />
+                <PaymentStep key={`${checkout.id}-${checkout.couponCode ?? ''}`} checkoutId={checkout.id} />
               </div>
             </>
           )}
@@ -855,7 +851,7 @@ function CheckoutContent() {
             {/* Coupon input */}
             {cart && (
               <div className="border-border border-t pt-4">
-                <CouponInput cart={cart} onUpdate={handleCouponUpdate} />
+                <CouponInput cart={cart} checkoutId={checkout?.id} onUpdate={handleCouponUpdate} />
               </div>
             )}
 
@@ -865,13 +861,13 @@ function CheckoutContent() {
                 <div className="flex items-center justify-between">
                   <span className="text-muted-foreground">{tc('subtotal')}</span>
                   <span className="text-foreground">
-                    {formatPrice(parseFloat(cart?.subtotal || checkout.subtotal), { currency }) as string}
+                    {formatPrice(parseFloat(checkout.subtotal), { currency }) as string}
                   </span>
                 </div>
 
                 {(() => {
-                  const totalDiscount = parseFloat(cart?.discountAmount || '0');
-                  const ruleAmt = parseFloat(cart?.ruleDiscountAmount || '0');
+                  const totalDiscount = parseFloat(checkout.discountAmount);
+                  const ruleAmt = parseFloat(checkout.ruleDiscountAmount || '0');
                   const couponAmt = totalDiscount - ruleAmt;
                   const rules = cart?.appliedDiscounts;
                   if (totalDiscount <= 0) return null;
@@ -899,17 +895,17 @@ function CheckoutContent() {
                               </span>
                             </div>
                           )}
-                      {cart?.couponCode && couponAmt > 0 && (
+                      {checkout.couponCode && couponAmt > 0 && (
                         <div className="flex items-center justify-between">
                           <span className="text-muted-foreground">
-                            {tc('couponDiscount')} ({cart.couponCode})
+                            {tc('couponDiscount')} ({checkout.couponCode})
                           </span>
                           <span className="text-destructive">
                             -{formatPrice(couponAmt, { currency }) as string}
                           </span>
                         </div>
                       )}
-                      {!cart?.couponCode && ruleAmt <= 0 && (!rules || rules.length === 0) && (
+                      {!checkout.couponCode && ruleAmt <= 0 && (!rules || rules.length === 0) && (
                         <div className="flex items-center justify-between">
                           <span className="text-muted-foreground">{tc('discount')}</span>
                           <span className="text-destructive">
@@ -955,14 +951,7 @@ function CheckoutContent() {
                   <div className="flex items-center justify-between">
                     <span className="text-foreground font-semibold">{tc('total')}</span>
                     <span className="text-foreground text-base font-semibold">
-                      {formatPrice(
-                        parseFloat(cart?.subtotal || checkout.subtotal) -
-                          parseFloat(cart?.discountAmount || '0') +
-                          parseFloat(checkout.shippingAmount || '0') +
-                          parseFloat(checkout.taxAmount || '0') +
-                          parseFloat(checkout.surchargeAmount || '0'),
-                        { currency },
-                      ) as string}
+                      {formatPrice(parseFloat(checkout.total), { currency }) as string}
                     </span>
                   </div>
                   <p className="text-muted-foreground mt-1 text-end text-xs">

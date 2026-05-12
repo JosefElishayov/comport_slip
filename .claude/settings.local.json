@@ -13,10 +13,16 @@
       "Bash(git commit -m ' *)",
       "Bash(git push *)",
       "Bash(npm view *)",
-      "Bash(xargs grep *)"
+      "Bash(xargs grep *)",
+      "Bash(npm update *)",
+      "Bash(cat d:/Users/User/Desktop/stores/comport_slip/src/app/api/store/\\\\\\\\[...path\\\\\\\\]/route.ts)",
+      "Read(//c/Users/User/.claude/**)",
+      "Bash(python3 -c \"import json,sys; d=json.load\\(sys.stdin\\); print\\(json.dumps\\(list\\(d.keys\\(\\)\\), indent=2\\)\\)\")",
+      "Bash(git ls-tree *)"
     ],
     "additionalDirectories": [
-      "D:\\Users\\User\\Downloads"
+      "D:\\Users\\User\\Downloads",
+      "d:\\Users\\User\\Desktop\\stores\\brainerce-skill"
     ]
   }
 }

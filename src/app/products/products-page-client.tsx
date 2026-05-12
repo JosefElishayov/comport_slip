@@ -147,7 +147,6 @@ function CategoryDropdownItems({
   );
 }
 
-// eslint-disable-next-line no-unused-vars
 function CategoryChip({
   category,
   selectedId,
@@ -370,6 +369,10 @@ export default function ProductsPageClient({
     router.push(`/products?${params.toString()}`);
   }
 
+  function handleCategorySelect(id: string) {
+    updateParam('category', id);
+  }
+
   return (
     <div className="min-h-screen">
       {/* Hero Banner with Filters */}
@@ -443,7 +446,9 @@ export default function ProductsPageClient({
                 />
               )}
 
-              <div className="h-8 w-px bg-gray-200" />
+              {(categories.length > 0 || brands.length > 0 || tags.length > 0) && (
+                <div className="h-8 w-px bg-gray-200" />
+              )}
 
               <CustomSelect
                 label={tc('sortBy')}
