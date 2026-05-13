@@ -248,6 +248,7 @@
     "customFieldsApplying": "מעדכן…",
     "customFieldsFailed": "שגיאה בשמירת הבחירות",
     "customFieldsRequired": "חובה",
+    "customFieldsMissingRequired": "יש למלא את כל השדות המסומנים בחובה לפני המשך",
     "customFieldsSelectPlaceholder": "— בחר —",
     "customFieldsImageUpload": "לחץ להעלאת תמונה",
     "customFieldsImageRemove": "הסר",

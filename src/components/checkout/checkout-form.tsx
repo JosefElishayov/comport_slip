@@ -27,7 +27,6 @@ export function CheckoutForm({
   onSubmit,
   loading = false,
   initialValues,
-  destinations,
   className,
   showSaveDetails = false,
   emailOnly = false,
@@ -43,7 +42,7 @@ export function CheckoutForm({
     city: initialValues?.city || '',
     region: initialValues?.region || '',
     postalCode: initialValues?.postalCode || '',
-    country: initialValues?.country || '',
+    country: initialValues?.country || 'IL',
     phone: initialValues?.phone || '',
   });
   const [errors, setErrors] = useState<Record<string, string>>({});
@@ -67,14 +66,10 @@ export function CheckoutForm({
       city: initialValues.city || prev.city,
       region: initialValues.region || prev.region || '',
       postalCode: initialValues.postalCode || prev.postalCode,
-      country: initialValues.country || prev.country,
+      country: initialValues.country || prev.country || 'IL',
       phone: initialValues.phone || prev.phone || '',
     }));
   }, [initialValues]);
-
-  const hasCountryOptions = destinations && destinations.countries.length > 0;
-  const countryRegions = destinations?.regions[formData.country];
-  const hasRegionOptions = countryRegions && countryRegions.length > 0;
 
   function validate(): boolean {
     const newErrors: Record<string, string> = {};
@@ -100,9 +95,6 @@ export function CheckoutForm({
       }
       if (!formData.postalCode.trim()) {
         newErrors.postalCode = t('postalCodeRequired');
-      }
-      if (!formData.country.trim()) {
-        newErrors.country = t('countryRequired');
       }
     }
     if (!privacyAccepted) {
@@ -140,8 +132,6 @@ export function CheckoutForm({
 
   const inputClass =
     'bg-background text-foreground placeholder:text-muted-foreground focus:ring-primary/20 focus:border-primary h-10 w-full rounded border px-3 text-sm focus:outline-none focus:ring-2';
-  const selectClass =
-    'bg-background text-foreground focus:ring-primary/20 focus:border-primary h-10 w-full appearance-none rounded border px-3 text-sm focus:outline-none focus:ring-2';
 
   const errorCount = Object.keys(errors).length;
 
@@ -216,87 +206,6 @@ export function CheckoutForm({
 
       {!emailOnly && (
         <>
-          {/* Country + Region row */}
-          <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-            <div>
-              <label htmlFor="country" className="text-foreground mb-1 block text-sm font-medium">
-                {t('country')} <span className="text-destructive" aria-hidden="true">*</span>
-              </label>
-              {hasCountryOptions ? (
-                <select
-                  id="country"
-                  required
-                  aria-required="true"
-                  aria-invalid={errors.country ? 'true' : 'false'}
-                  aria-describedby={errors.country ? 'country-error' : undefined}
-                  autoComplete="country"
-                  value={formData.country}
-                  onChange={(e) => updateField('country', e.target.value)}
-                  className={cn(
-                    selectClass,
-                    errors.country ? 'border-destructive' : 'border-border'
-                  )}
-                >
-                  <option value="">{t('selectCountry')}</option>
-                  {destinations.countries.map((c) => (
-                    <option key={c.code} value={c.code}>
-                      {c.name}
-                    </option>
-                  ))}
-                </select>
-              ) : (
-                <input
-                  id="country"
-                  type="text"
-                  required
-                  aria-required="true"
-                  aria-invalid={errors.country ? 'true' : 'false'}
-                  aria-describedby={errors.country ? 'country-error' : undefined}
-                  autoComplete="country-name"
-                  value={formData.country}
-                  onChange={(e) => updateField('country', e.target.value)}
-                  className={cn(
-                    inputClass,
-                    errors.country ? 'border-destructive' : 'border-border'
-                  )}
-                  placeholder={t('countryPlaceholder')}
-                />
-              )}
-              {errors.country && <p id="country-error" role="alert" className="text-destructive mt-1 text-xs">{errors.country}</p>}
-            </div>
-
-            <div>
-              <label htmlFor="region" className="text-foreground mb-1 block text-sm font-medium">
-                {t('stateRegion')}
-              </label>
-              {hasRegionOptions ? (
-                <select
-                  id="region"
-                  autoComplete="address-level1"
-                  value={formData.region || ''}
-                  onChange={(e) => updateField('region', e.target.value)}
-                  className={cn(selectClass, 'border-border')}
-                >
-                  <option value="">{t('selectRegion')}</option>
-                  {countryRegions.map((r) => (
-                    <option key={r.code} value={r.code}>
-                      {r.name}
-                    </option>
-                  ))}
-                </select>
-              ) : (
-                <input
-                  id="region"
-                  type="text"
-                  autoComplete="address-level1"
-                  value={formData.region || ''}
-                  onChange={(e) => updateField('region', e.target.value)}
-                  className={cn(inputClass, 'border-border')}
-                />
-              )}
-            </div>
-          </div>
-
           {/* Address line 1 */}
           <div>
             <label htmlFor="line1" className="text-foreground mb-1 block text-sm font-medium">

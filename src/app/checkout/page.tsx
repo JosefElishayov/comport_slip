@@ -63,6 +63,7 @@ function CheckoutContent() {
   const [customFieldValues, setCustomFieldValues] = useState<Record<string, unknown>>({});
   const [customFieldsLoading, setCustomFieldsLoading] = useState(false);
   const [shippingOpen, setShippingOpen] = useState(false);
+  const [addressOpen, setAddressOpen] = useState(true);
   const [step, setStep] = useState<'details' | 'payment'>('details');
 
   // Check for returning from canceled payment
@@ -78,9 +79,14 @@ function CheckoutContent() {
       : !!checkout?.shippingAddress;
   const shippingDone = isAllDigital || deliveryType === 'pickup' || !!selectedRateId;
 
-  // Auto-open shipping drawer when address is done
+  // Auto-open shipping drawer & collapse address drawer when address is done
   useEffect(() => {
-    if (addressDone) setShippingOpen(true);
+    if (addressDone) {
+      setShippingOpen(true);
+      setAddressOpen(false);
+    } else {
+      setAddressOpen(true);
+    }
   }, [addressDone]);
 
   // Return to details if a prior step becomes incomplete
@@ -254,6 +260,35 @@ function CheckoutContent() {
     }
   }
 
+  // Filter custom fields by visibility for the current delivery type.
+  // 'shipping' and 'pickup' visibility scopes are mutually exclusive — digital-only
+  // checkouts have no delivery, so only 'always' fields apply there.
+  const productIdsInCart = new Set(cart?.items.map((i) => i.productId) ?? []);
+  const visibleCustomFields = customFields.filter((f) => {
+    const show = f.visibility?.show ?? 'always';
+    if (show === 'always') return true;
+    if (isAllDigital) return false;
+    if (show === 'shipping') return deliveryType === 'shipping';
+    if (show === 'pickup') return deliveryType === 'pickup';
+    if (show === 'products') {
+      const ids = f.visibility?.productIds ?? [];
+      return ids.some((id) => productIdsInCart.has(id));
+    }
+    return true;
+  });
+
+  // Required visible custom fields that have not been filled.
+  // BOOLEAN required = must be checked (true). Others = must have a non-empty value.
+  const missingRequiredKeys = visibleCustomFields
+    .filter((f) => f.required)
+    .filter((f) => {
+      const v = customFieldValues[f.key];
+      if ((f.type as string) === 'BOOLEAN') return v !== true;
+      return v === undefined || v === null || v === '';
+    })
+    .map((f) => f.key);
+  const hasMissingRequiredCustomFields = missingRequiredKeys.length > 0;
+
   // Submit custom fields helper
   async function submitCustomFields(checkoutId: string) {
     if (customFields.length === 0) return;
@@ -279,6 +314,10 @@ function CheckoutContent() {
     consent: { acceptsMarketing: boolean; saveDetails: boolean }
   ) {
     if (!checkout) return;
+    if (hasMissingRequiredCustomFields) {
+      setError(t('customFieldsMissingRequired'));
+      return;
+    }
 
     try {
       setLoading(true);
@@ -388,6 +427,10 @@ function CheckoutContent() {
     customerInfo: { email: string; firstName?: string; lastName?: string; phone?: string }
   ) {
     if (!checkout) return;
+    if (hasMissingRequiredCustomFields) {
+      setError(t('customFieldsMissingRequired'));
+      return;
+    }
 
     try {
       setLoading(true);
@@ -463,22 +506,6 @@ function CheckoutContent() {
     );
   }
 
-  // Filter fields by visibility for the current delivery type.
-  // 'shipping' and 'pickup' visibility scopes are mutually exclusive — digital-only
-  // checkouts have no delivery, so only 'always' fields apply there.
-  const productIdsInCart = new Set(cart?.items.map((i) => i.productId) ?? []);
-  const visibleCustomFields = customFields.filter((f) => {
-    const show = f.visibility?.show ?? 'always';
-    if (show === 'always') return true;
-    if (isAllDigital) return false;
-    if (show === 'shipping') return deliveryType === 'shipping';
-    if (show === 'pickup') return deliveryType === 'pickup';
-    if (show === 'products') {
-      const ids = f.visibility?.productIds ?? [];
-      return ids.some((id) => productIdsInCart.has(id));
-    }
-    return true;
-  });
 
   // Custom fields inline renderer (rendered inside CheckoutForm as children)
   const customFieldsInline =
@@ -602,14 +629,71 @@ function CheckoutContent() {
           )}
 
           {/* === ADDRESS / CONTACT / PICKUP + CUSTOM FIELDS === */}
-          <div className="border-border rounded-lg border p-6">
-            <h2 className="text-foreground mb-4 text-lg font-semibold">
-              {isAllDigital
+          <div className="border-border rounded-lg border">
+            {(() => {
+              const sectionTitle = isAllDigital
                 ? t('contactInfo')
                 : deliveryType === 'pickup'
                   ? t('pickupLocation')
-                  : t('shippingAddress')}
-            </h2>
+                  : t('shippingAddress');
+              const collapsible = addressDone && deliveryType !== 'pickup';
+              const addr = checkout?.shippingAddress;
+              const summary = collapsible
+                ? isAllDigital
+                  ? checkout?.email || ''
+                  : addr
+                    ? [
+                        `${addr.firstName} ${addr.lastName}`.trim(),
+                        [addr.line1, addr.line2].filter(Boolean).join(' '),
+                        [addr.city, addr.postalCode].filter(Boolean).join(', '),
+                      ]
+                        .filter(Boolean)
+                        .join(' • ')
+                    : ''
+                : '';
+              return (
+                <button
+                  type="button"
+                  onClick={() => collapsible && setAddressOpen((v) => !v)}
+                  disabled={!collapsible}
+                  className={cn(
+                    'flex w-full items-start justify-between gap-4 p-6 text-start',
+                    collapsible ? 'cursor-pointer' : 'cursor-default'
+                  )}
+                >
+                  <div className="min-w-0 flex-1">
+                    <h2 className="text-foreground text-lg font-semibold">{sectionTitle}</h2>
+                    {collapsible && !addressOpen && summary && (
+                      <p className="text-muted-foreground mt-1 truncate text-sm">{summary}</p>
+                    )}
+                  </div>
+                  {collapsible && (
+                    <svg
+                      className={cn(
+                        'text-muted-foreground mt-1 h-5 w-5 flex-shrink-0 transition-transform duration-200',
+                        addressOpen && 'rotate-180'
+                      )}
+                      fill="none"
+                      viewBox="0 0 24 24"
+                      stroke="currentColor"
+                    >
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+                    </svg>
+                  )}
+                </button>
+              );
+            })()}
+
+            <div
+              className={cn(
+                'grid transition-[grid-template-rows] duration-300 ease-in-out',
+                (addressOpen || !(addressDone && deliveryType !== 'pickup'))
+                  ? 'grid-rows-[1fr]'
+                  : 'grid-rows-[0fr]'
+              )}
+            >
+              <div className="overflow-hidden">
+                <div className="px-6 pb-6">
 
             {deliveryType === 'pickup' && !isAllDigital ? (
               /* Pickup form with custom fields */
@@ -671,6 +755,10 @@ function CheckoutContent() {
                 {customFieldsInline}
               </CheckoutForm>
             )}
+
+                </div>
+              </div>
+            </div>
           </div>
 
           {/* === SHIPPING METHOD (collapsible) === */}
@@ -727,13 +815,30 @@ function CheckoutContent() {
 
               {/* Continue to Payment button — shown for shipping/digital only; pickup auto-navigates */}
               {addressDone && shippingDone && checkout && deliveryType !== 'pickup' && (
-                <button
-                  type="button"
-                  onClick={() => setStep('payment')}
-                  className="bg-primary text-primary-foreground hover:bg-primary/90 w-full rounded-lg px-6 py-4 text-base font-semibold transition-colors"
-                >
-                  {t('continueToPayment')}
-                </button>
+                <>
+                  {hasMissingRequiredCustomFields && (
+                    <div
+                      role="alert"
+                      className="bg-destructive/10 border-destructive/20 text-destructive rounded-lg border px-4 py-3 text-sm"
+                    >
+                      {t('customFieldsMissingRequired')}
+                    </div>
+                  )}
+                  <button
+                    type="button"
+                    onClick={() => {
+                      if (hasMissingRequiredCustomFields) {
+                        setError(t('customFieldsMissingRequired'));
+                        return;
+                      }
+                      setStep('payment');
+                    }}
+                    disabled={hasMissingRequiredCustomFields}
+                    className="bg-primary text-primary-foreground hover:bg-primary/90 w-full rounded-lg px-6 py-4 text-base font-semibold transition-colors disabled:cursor-not-allowed disabled:opacity-60"
+                  >
+                    {t('continueToPayment')}
+                  </button>
+                </>
               )}
             </>
           )}
