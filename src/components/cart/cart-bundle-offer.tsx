@@ -90,7 +90,7 @@ export function CartBundleOfferCard({ offer, cartId, onAdd, className }: CartBun
     // Parent basePrice is 0 (variable product) — fall back to selected variant price
     const variant = selectedVariants[product.id];
     if (!variant) return { original: 0, discounted: 0 };
-    const base = parseFloat(variant.price) || 0;
+    const base = variant.price ? parseFloat(variant.price) || 0 : 0;
     const sale = variant.salePrice ? parseFloat(variant.salePrice) : null;
     const original = sale != null && sale < base ? sale : base;
     const discounted =
