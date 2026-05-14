@@ -440,6 +440,36 @@ export function PaymentStep({ checkoutId, className }: PaymentStepProps) {
         };
         window.addEventListener('message', handleMessage);
         cleanups.push(() => window.removeEventListener('message', handleMessage));
+
+        // Backend-status fallback: some providers (e.g. CardCom) finish the
+        // payment via webhook but don't redirect the iframe to our callback,
+        // or postMessage gets lost. Poll the order endpoint — when the order
+        // shows up server-side we know payment succeeded and can redirect.
+        let pollCancelled = false;
+        const startPollDelayMs = 8000; // give the normal flow a head start
+        const pollIntervalMs = 3000;
+
+        const pollOrderStatus = async () => {
+          while (!pollCancelled && !successHandledRef.current) {
+            try {
+              const res = await client.waitForOrder(checkoutId, { maxWaitMs: 2500 });
+              if (pollCancelled || successHandledRef.current) return;
+              if (res.success) {
+                handleSuccess({});
+                return;
+              }
+            } catch {
+              // ignore — keep polling
+            }
+            await new Promise((r) => setTimeout(r, pollIntervalMs));
+          }
+        };
+
+        const pollStartId = setTimeout(pollOrderStatus, startPollDelayMs);
+        cleanups.push(() => {
+          pollCancelled = true;
+          clearTimeout(pollStartId);
+        });
         return;
       }
 

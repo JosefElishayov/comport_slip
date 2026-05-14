@@ -131,12 +131,24 @@ export function Header() {
           </Link>
 
           {/* Desktop Navigation */}
-          <nav className="hidden items-center gap-8 md:flex">
+          <nav className="hidden items-center gap-6 md:flex">
             <Link
               href="/products"
               className={`text-sm font-medium transition-colors ${isTransparent ? 'text-white/90 hover:text-white' : 'text-muted-foreground hover:text-primary'}`}
             >
               {t('products')}
+            </Link>
+            <Link
+              href="/about"
+              className={`text-sm font-medium transition-colors ${isTransparent ? 'text-white/90 hover:text-white' : 'text-muted-foreground hover:text-primary'}`}
+            >
+              {t('about')}
+            </Link>
+            <Link
+              href="/contact"
+              className={`text-sm font-medium transition-colors ${isTransparent ? 'text-white/90 hover:text-white' : 'text-muted-foreground hover:text-primary'}`}
+            >
+              {t('contact')}
             </Link>
             {isLoggedIn && (
               <Link
@@ -149,7 +161,7 @@ export function Header() {
           </nav>
 
           {/* Search */}
-          <div ref={searchRef} className="relative hidden max-w-md flex-1 sm:block">
+          <div ref={searchRef} className="relative hidden w-56 flex-shrink-0 lg:w-64 sm:block">
             <form onSubmit={handleSearchSubmit}>
               <input
                 type="text"
@@ -210,13 +222,16 @@ export function Header() {
                         )}
                         <div className="min-w-0 flex-1">
                           <p className="text-foreground truncate text-sm">{product.name}</p>
-                          <p className="text-muted-foreground text-xs">
-                            {
-                              formatPrice(product.salePrice || product.price, {
-                                currency,
-                              }) as string
-                            }
-                          </p>
+                          {(() => {
+                            const raw = product.salePrice || product.price;
+                            const num = parseFloat(raw);
+                            if (!num || num <= 0) return null;
+                            return (
+                              <p className="text-muted-foreground text-xs">
+                                {formatPrice(raw, { currency }) as string}
+                              </p>
+                            );
+                          })()}
                         </div>
                       </button>
                     ))}
@@ -353,6 +368,20 @@ export function Header() {
               className={`block rounded-lg px-3 py-2.5 text-sm font-medium transition-colors ${isTransparent ? 'text-white hover:bg-white/10' : 'text-foreground hover:bg-secondary/50'}`}
             >
               {t('products')}
+            </Link>
+            <Link
+              href="/about"
+              onClick={() => setMobileMenuOpen(false)}
+              className={`block rounded-lg px-3 py-2.5 text-sm font-medium transition-colors ${isTransparent ? 'text-white hover:bg-white/10' : 'text-foreground hover:bg-secondary/50'}`}
+            >
+              {t('about')}
+            </Link>
+            <Link
+              href="/contact"
+              onClick={() => setMobileMenuOpen(false)}
+              className={`block rounded-lg px-3 py-2.5 text-sm font-medium transition-colors ${isTransparent ? 'text-white hover:bg-white/10' : 'text-foreground hover:bg-secondary/50'}`}
+            >
+              {t('contact')}
             </Link>
             {isLoggedIn && (
               <Link

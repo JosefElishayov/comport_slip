@@ -47,7 +47,9 @@
     "searchPlaceholder": "חיפוש מוצרים...",
     "categories": "קטגוריות",
     "search": "חיפוש",
-    "menu": "תפריט"
+    "menu": "תפריט",
+    "about": "אודות",
+    "contact": "צור קשר"
   },
   "home": {
     "pageTitle": "דף הבית",

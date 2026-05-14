@@ -1,4 +1,5 @@
 import { Suspense } from 'react';
+import type { Metadata } from 'next';
 import type { Product, ProductQueryParams } from 'brainerce';
 import { getServerClient } from '@/lib/brainerce';
 import { LoadingSpinner } from '@/components/shared/loading-spinner';
@@ -6,6 +7,20 @@ import { sortOptions } from './sort-options';
 import ProductsPageClient, { type CategoryNode } from './products-page-client';
 
 const PAGE_SIZE = 20;
+
+export const metadata: Metadata = {
+  title: 'כל המוצרים — מזרנים, מיטות ובסיסים',
+  description:
+    'מבחר רחב של מזרנים אורתופדיים, מיטות, בסיסים ומוצרי שינה מהמותגים המובילים — עמינח, פולירון, סימונס ועוד. סינון לפי קטגוריה, מותג ומחיר. משלוח חינם והחזרה תוך 30 יום.',
+  alternates: { canonical: '/products' },
+  openGraph: {
+    title: 'כל המוצרים | קומפורט סליפ',
+    description: 'מזרנים, מיטות ובסיסים מהמותגים המובילים — משלוח חינם והחזרה תוך 30 יום.',
+    url: '/products',
+    type: 'website',
+    locale: 'he_IL',
+  },
+};
 
 interface ProductsPageProps {
   searchParams: Promise<{
