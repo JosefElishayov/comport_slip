@@ -98,7 +98,8 @@ export function Header() {
   return (
     <>
     <header
-      className={`${isHeroPage ? 'fixed' : 'sticky'} top-0 z-50 w-full ${
+      style={{ top: 'var(--banner-h, 0px)' }}
+      className={`${isHeroPage ? 'fixed' : 'sticky'} z-50 w-full ${
         scrolled ? 'pt-3' : isTransparent ? '' : 'border-b border-border bg-background'
       }`}
     >

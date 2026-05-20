@@ -19,12 +19,32 @@ export default function HomePageClient({ initialProducts, initialBanners }: Home
   useStoreInfo();
   const [products, setProducts] = useState<Product[]>(initialProducts);
   const [banners, setBanners] = useState<DiscountBanner[]>(initialBanners);
+  const [bannerDismissed, setBannerDismissed] = useState(false);
   const [loading, setLoading] = useState(initialProducts.length === 0 && initialBanners.length === 0);
   const skipInitialFetch = useRef(initialProducts.length > 0 || initialBanners.length > 0);
   const t = useTranslations('home');
   const tc = useTranslations('common');
   const heroRef = useRef<HTMLElement>(null);
   const heroOverlayRef = useRef<HTMLDivElement>(null);
+  const bannerRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    const el = bannerRef.current;
+    if (!el) {
+      document.documentElement.style.setProperty('--banner-h', '0px');
+      return;
+    }
+    const apply = () => {
+      document.documentElement.style.setProperty('--banner-h', `${el.offsetHeight}px`);
+    };
+    apply();
+    const ro = new ResizeObserver(apply);
+    ro.observe(el);
+    return () => {
+      ro.disconnect();
+      document.documentElement.style.setProperty('--banner-h', '0px');
+    };
+  }, [banners.length, bannerDismissed]);
 
   useEffect(() => {
     const handleScroll = () => {
@@ -87,15 +107,28 @@ export default function HomePageClient({ initialProducts, initialBanners }: Home
 
   return (
     <div>
-      {/* Discount Banners */}
-      {banners.length > 0 && (
-        <div className="bg-primary text-primary-foreground">
-          <div className="mx-auto max-w-7xl px-4 py-2 sm:px-6 lg:px-8">
+      {/* Discount Banners — fixed announcement bar above header & hero video */}
+      {banners.length > 0 && !bannerDismissed && (
+        <div
+          ref={bannerRef}
+          className="fixed top-0 left-0 right-0 z-[60] bg-primary text-primary-foreground"
+        >
+          <div className="relative mx-auto max-w-7xl px-4 py-2 pe-10 sm:px-6 sm:pe-12 lg:px-8 lg:pe-14">
             <div className="flex items-center justify-center gap-4 overflow-x-auto text-sm font-medium">
               {banners.map((banner) => (
                 <span key={banner.ruleId}>{banner.text}</span>
               ))}
             </div>
+            <button
+              type="button"
+              onClick={() => setBannerDismissed(true)}
+              aria-label="סגור"
+              className="absolute end-2 top-1/2 -translate-y-1/2 inline-flex h-7 w-7 items-center justify-center rounded-full text-primary-foreground/80 transition hover:bg-white/10 hover:text-primary-foreground focus:outline-none focus-visible:ring-2 focus-visible:ring-white/60"
+            >
+              <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                <path strokeLinecap="round" strokeLinejoin="round" d="M6 6l12 12M6 18L18 6" />
+              </svg>
+            </button>
           </div>
         </div>
       )}

@@ -51,11 +51,11 @@ html {
 /* Hero video section — fixed so content slides over it */
 .hero-video-section {
   position: fixed;
-  top: 0;
+  top: var(--banner-h, 0px);
   left: 0;
   right: 0;
-  height: 100vh;
-  height: 100dvh;
+  height: calc(100vh - var(--banner-h, 0px));
+  height: calc(100dvh - var(--banner-h, 0px));
   z-index: 1;
   overflow: hidden;
   will-change: transform, border-radius;
