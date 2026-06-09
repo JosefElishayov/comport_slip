@@ -8,6 +8,7 @@ import { AccessibilityMenu } from '@/components/accessibility/accessibility-menu
 import { SkipToContent } from '@/components/accessibility/skip-to-content';
 import { CookieConsentBanner } from '@/components/cookie-consent/cookie-consent-banner';
 import { ShabbatOverlay } from '@/components/shared/shabbat-overlay';
+import { BrainerceBot } from '@/components/shared/brainerce-bot';
 import { getNonce } from '@/lib/nonce';
 import './globals.css';
 
@@ -138,6 +139,7 @@ export default async function RootLayout({
           <AccessibilityMenu />
           <CookieConsentBanner />
           <ShabbatOverlay />
+          <BrainerceBot />
         </StoreProvider>
       </body>
     </html>
