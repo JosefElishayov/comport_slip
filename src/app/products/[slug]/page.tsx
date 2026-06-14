@@ -1,6 +1,7 @@
 import type { Metadata } from 'next';
 import { notFound } from 'next/navigation';
 import { getServerClient } from '@/lib/brainerce';
+import { getServerLocale } from '@/lib/locale-server';
 import { ProductJsonLd } from '@/components/seo/product-json-ld';
 import { ProductClientSection } from './product-client-section';
 
@@ -31,7 +32,8 @@ function clamp(text: string, max: number): string {
 }
 
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
-  const { slug, locale } = await params;
+  const { slug, locale: paramLocale } = await params;
+  const locale = paramLocale ?? (await getServerLocale());
   // Pass the raw slug — Next.js encodes the path when resolving against
   // metadataBase. Pre-encoding produces %25-escaped (double-encoded) URLs.
   const canonicalPath = `/products/${slug}`;
@@ -139,7 +141,8 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
 }
 
 export default async function ProductDetailPage({ params }: Props) {
-  const { slug, locale } = await params;
+  const { slug, locale: paramLocale } = await params;
+  const locale = paramLocale ?? (await getServerLocale());
 
   let product;
   try {

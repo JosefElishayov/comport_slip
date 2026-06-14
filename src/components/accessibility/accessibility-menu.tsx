@@ -1,6 +1,7 @@
 'use client';
 
 import { useCallback, useEffect, useRef, useState } from 'react';
+import { useTranslations } from '@/lib/translations';
 
 type ContrastMode = 'none' | 'high' | 'inverted' | 'monochrome' | 'light';
 
@@ -62,6 +63,7 @@ function applySettings(s: A11ySettings) {
 }
 
 export function AccessibilityMenu() {
+  const t = useTranslations('a11y');
   const [open, setOpen] = useState(false);
   const [settings, setSettings] = useState<A11ySettings>(DEFAULTS);
   const [mounted, setMounted] = useState(false);
@@ -156,7 +158,7 @@ export function AccessibilityMenu() {
         ref={buttonRef}
         type="button"
         onClick={() => setOpen((o) => !o)}
-        aria-label="פתיחת תפריט נגישות"
+        aria-label={t('openMenu')}
         aria-expanded={open}
         aria-controls="a11y-panel"
         className="fixed bottom-4 left-4 z-[9998] flex h-14 w-14 items-center justify-center rounded-full bg-primary text-primary-foreground shadow-lg outline-none ring-accent transition-transform hover:scale-110 focus-visible:ring-4"
@@ -187,17 +189,17 @@ export function AccessibilityMenu() {
         id="a11y-panel"
         role="dialog"
         aria-modal="true"
-        aria-label="תפריט נגישות"
+        aria-label={t('title')}
         className={`fixed bottom-0 left-0 top-0 z-[9999] flex w-[22rem] max-w-[90vw] flex-col bg-background text-foreground shadow-2xl transition-transform duration-300 ${
           open ? 'translate-x-0' : '-translate-x-full'
         }`}
       >
         <div className="flex items-center justify-between border-b border-border bg-primary px-4 py-3 text-primary-foreground">
-          <h2 className="text-lg font-bold">תפריט נגישות</h2>
+          <h2 className="text-lg font-bold">{t('title')}</h2>
           <button
             type="button"
             onClick={() => setOpen(false)}
-            aria-label="סגירת תפריט נגישות"
+            aria-label={t('close')}
             className="rounded p-1 outline-none hover:bg-primary-foreground/10 focus-visible:ring-2 focus-visible:ring-accent"
           >
             <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="h-6 w-6" aria-hidden="true">
@@ -210,14 +212,14 @@ export function AccessibilityMenu() {
           {/* Font size */}
           <section aria-labelledby="a11y-font-title" className="mb-5">
             <h3 id="a11y-font-title" className="mb-2 text-sm font-semibold">
-              גודל גופן ({Math.round(settings.fontScale * 100)}%)
+              {t('fontSize')} ({Math.round(settings.fontScale * 100)}%)
             </h3>
             <div className="flex gap-2">
               <button
                 type="button"
                 onClick={() => changeFont(-STEP)}
                 disabled={settings.fontScale <= MIN_SCALE}
-                aria-label="הקטנת גופן"
+                aria-label={t('decreaseFont')}
                 className="flex-1 rounded border border-border bg-secondary px-3 py-2 text-lg font-bold hover:bg-muted disabled:opacity-50 focus-visible:ring-2 focus-visible:ring-accent"
               >
                 A-
@@ -225,7 +227,7 @@ export function AccessibilityMenu() {
               <button
                 type="button"
                 onClick={() => update('fontScale', 1)}
-                aria-label="איפוס גודל גופן"
+                aria-label={t('resetFont')}
                 className="flex-1 rounded border border-border bg-secondary px-3 py-2 hover:bg-muted focus-visible:ring-2 focus-visible:ring-accent"
               >
                 A
@@ -234,7 +236,7 @@ export function AccessibilityMenu() {
                 type="button"
                 onClick={() => changeFont(STEP)}
                 disabled={settings.fontScale >= MAX_SCALE}
-                aria-label="הגדלת גופן"
+                aria-label={t('increaseFont')}
                 className="flex-1 rounded border border-border bg-secondary px-3 py-2 text-lg font-bold hover:bg-muted disabled:opacity-50 focus-visible:ring-2 focus-visible:ring-accent"
               >
                 A+
@@ -245,15 +247,15 @@ export function AccessibilityMenu() {
           {/* Contrast */}
           <section aria-labelledby="a11y-contrast-title" className="mb-5">
             <h3 id="a11y-contrast-title" className="mb-2 text-sm font-semibold">
-              ניגודיות וצבעים
+              {t('contrastTitle')}
             </h3>
             <div className="grid grid-cols-2 gap-2">
               {[
-                { key: 'none', label: 'רגיל' },
-                { key: 'high', label: 'ניגודיות גבוהה' },
-                { key: 'inverted', label: 'ניגודיות הפוכה' },
-                { key: 'monochrome', label: 'מונוכרום' },
-                { key: 'light', label: 'רקע בהיר' },
+                { key: 'none', label: t('contrastNormal') },
+                { key: 'high', label: t('contrastHigh') },
+                { key: 'inverted', label: t('contrastInverted') },
+                { key: 'monochrome', label: t('contrastMonochrome') },
+                { key: 'light', label: t('contrastLight') },
               ].map((opt) => (
                 <button
                   key={opt.key}
@@ -275,26 +277,26 @@ export function AccessibilityMenu() {
           {/* Toggles */}
           <section aria-labelledby="a11y-tools-title" className="mb-5">
             <h3 id="a11y-tools-title" className="mb-2 text-sm font-semibold">
-              כלי קריאה וניווט
+              {t('toolsTitle')}
             </h3>
             <div className="flex flex-col gap-2">
               {[
-                { key: 'highlightLinks' as const, label: 'הדגשת קישורים' },
-                { key: 'highlightHeadings' as const, label: 'הדגשת כותרות' },
-                { key: 'readableFont' as const, label: 'גופן קריא' },
-                { key: 'letterSpacing' as const, label: 'ריווח אותיות מוגדל' },
-                { key: 'lineHeight' as const, label: 'ריווח שורות מוגדל' },
-                { key: 'stopAnimations' as const, label: 'עצירת אנימציות' },
-                { key: 'bigCursor' as const, label: 'סמן גדול' },
-                { key: 'readingGuide' as const, label: 'מצביע קריאה' },
-                { key: 'hideImages' as const, label: 'הסתרת תמונות' },
+                { key: 'highlightLinks' as const, label: t('highlightLinks') },
+                { key: 'highlightHeadings' as const, label: t('highlightHeadings') },
+                { key: 'readableFont' as const, label: t('readableFont') },
+                { key: 'letterSpacing' as const, label: t('letterSpacing') },
+                { key: 'lineHeight' as const, label: t('lineHeight') },
+                { key: 'stopAnimations' as const, label: t('stopAnimations') },
+                { key: 'bigCursor' as const, label: t('bigCursor') },
+                { key: 'readingGuide' as const, label: t('readingGuide') },
+                { key: 'hideImages' as const, label: t('hideImages') },
               ].map((opt) => (
                 <button
                   key={opt.key}
                   type="button"
                   onClick={() => toggle(opt.key)}
                   aria-pressed={Boolean(settings[opt.key])}
-                  className={`flex items-center justify-between rounded border px-3 py-2 text-right text-sm transition focus-visible:ring-2 focus-visible:ring-accent ${
+                  className={`flex items-center justify-between rounded border px-3 py-2 text-start text-sm transition focus-visible:ring-2 focus-visible:ring-accent ${
                     settings[opt.key]
                       ? 'border-primary bg-primary text-primary-foreground'
                       : 'border-border bg-secondary hover:bg-muted'
@@ -302,7 +304,7 @@ export function AccessibilityMenu() {
                 >
                   <span>{opt.label}</span>
                   <span aria-hidden="true" className="text-xs">
-                    {settings[opt.key] ? 'פעיל' : 'כבוי'}
+                    {settings[opt.key] ? t('on') : t('off')}
                   </span>
                 </button>
               ))}
@@ -316,18 +318,18 @@ export function AccessibilityMenu() {
               onClick={reset}
               className="rounded border border-destructive bg-destructive/10 px-3 py-2 text-sm font-semibold text-destructive hover:bg-destructive/20 focus-visible:ring-2 focus-visible:ring-accent"
             >
-              איפוס הגדרות נגישות
+              {t('resetAll')}
             </button>
             <a
               href="/accessibility"
               className="rounded border border-border bg-secondary px-3 py-2 text-center text-sm hover:bg-muted focus-visible:ring-2 focus-visible:ring-accent"
             >
-              הצהרת נגישות
+              {t('statement')}
             </a>
           </section>
 
           <p className="text-xs text-muted-foreground">
-            אתר זה עומד בדרישות תקן ישראלי 5568 ברמה AA, בהתאם לתקנות שוויון זכויות לאנשים עם מוגבלות (התאמות נגישות לשירות), התשע&quot;ג-2013, ובהתאם לתיקון 16 לחוק.
+            {t('compliance')}
           </p>
         </div>
       </div>

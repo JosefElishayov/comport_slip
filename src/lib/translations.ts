@@ -1,10 +1,12 @@
+'use client';
 
-import { messages } from '@/i18n';
+import type { Messages } from '@/i18n';
+import { useLocaleMessages } from '@/providers/locale-provider';
 
-type Messages = typeof messages;
 type Namespace = keyof Messages;
 
 export function useTranslations<N extends Namespace>(namespace: N) {
+  const messages = useLocaleMessages();
   const ns = messages[namespace] as Record<string, string>;
   return function t(key: string, values?: Record<string, string>): string {
     let result = ns[key] || `${String(namespace)}.${key}`;
@@ -16,4 +18,3 @@ export function useTranslations<N extends Namespace>(namespace: N) {
     return result;
   };
 }
-

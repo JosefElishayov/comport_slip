@@ -2,7 +2,7 @@
   "name": "Comfort Sleep",
   "description": "Calming, warm design with soft navy and cream tones for a mattress store",
   "font": {
-    "family": "Rubik",
+    "family": "Assistant",
     "import": "next/font/google"
   },
   "colors": {

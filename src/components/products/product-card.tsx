@@ -6,6 +6,7 @@ import Image from 'next/image';
 import type { Product } from 'brainerce';
 import { getProductPriceInfo, getVariantPrice, formatPrice } from 'brainerce';
 import { useTranslations } from '@/lib/translations';
+import { useAttributeLabel } from '@/lib/attribute-i18n';
 import { PriceDisplay } from '@/components/shared/price-display';
 import { StockBadge } from '@/components/products/stock-badge';
 import { DiscountBadge } from '@/components/products/discount-badge';
@@ -25,6 +26,7 @@ export function ProductCard({ product, className }: ProductCardProps) {
   const t = useTranslations('common');
   const tp = useTranslations('productDetail');
   const tProd = useTranslations('products');
+  const attrLabel = useAttributeLabel();
   const router = useRouter();
   const { refreshCart, openCartDrawer } = useCart();
   const { storeInfo } = useStoreInfo();
@@ -317,7 +319,7 @@ export function ProductCard({ product, className }: ProductCardProps) {
           <div className="mt-2 flex flex-col gap-2">
             {attrKeys.map((attrName) => (
               <div key={attrName}>
-                <p className="mb-1 text-[11px] font-medium text-muted-foreground">{attrName}</p>
+                <p className="mb-1 text-[11px] font-medium text-muted-foreground">{attrLabel(attrName)}</p>
                 <div className="flex flex-wrap gap-1">
                   {attributeGroups[attrName].map((value) => {
                     const isSelected = selectedAttributes[attrName] === value;
@@ -340,7 +342,7 @@ export function ProductCard({ product, className }: ProductCardProps) {
                         )}
                         disabled={isAvailable === false}
                       >
-                        {value}
+                        {attrLabel(value)}
                       </button>
                     );
                   })}

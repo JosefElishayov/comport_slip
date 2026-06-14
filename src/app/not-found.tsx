@@ -1,11 +1,35 @@
 import Link from 'next/link';
+import { cookies } from 'next/headers';
+import { LOCALE_COOKIE, normalizeLocale, type Locale } from '@/lib/locale';
 
-export default function NotFound() {
+const CONTENT = {
+  he: {
+    headlinePre: 'כנראה שיש לך',
+    headlineEm: '404 סיבות',
+    headlinePost: 'למצוא את המזרן המועדף עליך',
+    sub1: 'הדף שחיפשת הלך לישון ולא קם.',
+    sub2: 'אל תדאג — אנחנו כאן כדי שתישן טוב.',
+    cta: 'לחנות המזרנים',
+    trust: ['✓ משלוח חינם מ-₪299', '✓ החזרה בתוך 30 יום', '✓ תשלום מאובטח'],
+  },
+  en: {
+    headlinePre: 'Looks like you have',
+    headlineEm: '404 reasons',
+    headlinePost: 'to find your favorite mattress',
+    sub1: 'The page you were looking for went to sleep and didn’t wake up.',
+    sub2: 'Don’t worry — we’re here to help you sleep well.',
+    cta: 'To the mattress store',
+    trust: ['✓ Free shipping over ₪299', '✓ 30-day returns', '✓ Secure checkout'],
+  },
+} as const;
+
+export default async function NotFound() {
+  const locale: Locale = normalizeLocale((await cookies()).get(LOCALE_COOKIE)?.value);
+  const c = CONTENT[locale];
+  const isRtl = locale === 'he';
+
   return (
-    <div
-      className="flex flex-col items-center justify-center min-h-[70vh] px-6 text-center"
-      dir="rtl"
-    >
+    <div className="flex flex-col items-center justify-center min-h-[70vh] px-6 text-center">
       {/* 404 number */}
       <div className="relative select-none mb-2">
         <span
@@ -33,9 +57,9 @@ export default function NotFound() {
         className="text-[clamp(1.5rem,4vw,2.5rem)] font-bold mb-4 leading-snug max-w-xl"
         style={{ color: 'var(--text, #1a1916)', fontFamily: 'inherit' }}
       >
-        כנראה שיש לך{' '}
-        <span style={{ color: 'var(--sale, #dc2626)' }}>404 סיבות</span>{' '}
-        למצוא את המזרן המועדף עליך
+        {c.headlinePre}{' '}
+        <span style={{ color: 'var(--sale, #dc2626)' }}>{c.headlineEm}</span>{' '}
+        {c.headlinePost}
       </h1>
 
       {/* Sub-text */}
@@ -43,9 +67,9 @@ export default function NotFound() {
         className="text-[15px] leading-relaxed max-w-sm mb-10"
         style={{ color: 'var(--text-2, #6b6a66)' }}
       >
-        הדף שחיפשת הלך לישון ולא קם.
+        {c.sub1}
         <br />
-        אל תדאג — אנחנו כאן כדי שתישן טוב.
+        {c.sub2}
       </p>
 
       {/* CTA */}
@@ -57,8 +81,14 @@ export default function NotFound() {
           color: 'var(--accent-fg, #fafaf8)',
         }}
       >
-        לחנות המזרנים
-        <span aria-hidden="true" className="text-base" style={{ transform: 'scaleX(-1)', display: 'inline-block' }}>→</span>
+        {c.cta}
+        <span
+          aria-hidden="true"
+          className="text-base"
+          style={{ transform: isRtl ? 'scaleX(-1)' : 'none', display: 'inline-block' }}
+        >
+          →
+        </span>
       </Link>
 
       {/* Trust signals */}
@@ -66,9 +96,9 @@ export default function NotFound() {
         className="flex flex-wrap justify-center gap-x-5 gap-y-2 mt-10 text-[13px]"
         style={{ color: 'var(--text-2, #6b6a66)' }}
       >
-        <span>✓ משלוח חינם מ-₪299</span>
-        <span>✓ החזרה בתוך 30 יום</span>
-        <span>✓ תשלום מאובטח</span>
+        {c.trust.map((item) => (
+          <span key={item}>{item}</span>
+        ))}
       </div>
     </div>
   );

@@ -85,7 +85,7 @@ export function LogoSVG({ scrollY, isTransparent, className }: LogoSVGProps) {
         textAnchor="middle"
         fontSize="30"
         fontWeight="700"
-        fontFamily="Rubik, sans-serif"
+        fontFamily="Assistant, sans-serif"
         direction="rtl"
         fill={getColor(lines.length + 1)}
         style={t}

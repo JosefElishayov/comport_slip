@@ -6,6 +6,7 @@ import { getVariantOptions, getProductSwatches, formatPrice } from 'brainerce';
 import type { InventoryInfo } from 'brainerce';
 import { useStoreInfo } from '@/providers/store-provider';
 import { useTranslations } from '@/lib/translations';
+import { useAttributeLabel } from '@/lib/attribute-i18n';
 import { cn } from '@/lib/utils';
 
 interface VariantSelectorProps {
@@ -35,6 +36,7 @@ export function VariantSelector({
 }: VariantSelectorProps) {
   const { storeInfo } = useStoreInfo();
   const t = useTranslations('productDetail');
+  const attrLabel = useAttributeLabel();
   const currency = storeInfo?.currency || 'USD';
   const variants = useMemo(() => product.variants || [], [product.variants]);
 
@@ -143,10 +145,10 @@ export function VariantSelector({
       {attributeGroups.map((group) => (
         <div key={group.name}>
           <label className="text-foreground mb-2 block text-sm font-medium">
-            {group.name}
+            {attrLabel(group.name)}
             {selectedOptions.get(group.name) && (
               <span className="text-muted-foreground ms-1 font-normal">
-                : {selectedOptions.get(group.name)}
+                : {attrLabel(selectedOptions.get(group.name)!)}
               </span>
             )}
           </label>
@@ -170,7 +172,7 @@ export function VariantSelector({
                       key={value}
                       type="button"
                       disabled={!isAvailable}
-                      title={value}
+                      title={attrLabel(value)}
                       onClick={() => {
                         const variant = matchedVariant || matchingVariants[0];
                         if (variant) onVariantChange(variant);
@@ -209,7 +211,7 @@ export function VariantSelector({
                       key={value}
                       type="button"
                       disabled={!isAvailable}
-                      title={value}
+                      title={attrLabel(value)}
                       onClick={() => {
                         const variant = matchedVariant || matchingVariants[0];
                         if (variant) onVariantChange(variant);
@@ -225,7 +227,7 @@ export function VariantSelector({
                     >
                       <img
                         src={swatchImageUrl}
-                        alt={value}
+                        alt={attrLabel(value)}
                         className="h-full w-full object-cover"
                       />
                     </button>
@@ -251,7 +253,7 @@ export function VariantSelector({
                           : 'border-border bg-muted text-muted-foreground cursor-not-allowed line-through opacity-50'
                     )}
                   >
-                    {value}
+                    {attrLabel(value)}
                   </button>
                 );
               }

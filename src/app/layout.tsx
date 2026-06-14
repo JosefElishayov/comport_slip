@@ -1,6 +1,9 @@
 
 import type { Metadata } from 'next';
-import { Rubik } from 'next/font/google';
+import { cookies } from 'next/headers';
+import { Assistant } from 'next/font/google';
+import { LocaleProvider } from '@/providers/locale-provider';
+import { LOCALE_COOKIE, getDirection, normalizeLocale } from '@/lib/locale';
 import { StoreProvider } from '@/providers/store-provider';
 import { Header } from '@/components/layout/header';
 import { Footer } from '@/components/layout/footer';
@@ -12,31 +15,48 @@ import { BrainerceBot } from '@/components/shared/brainerce-bot';
 import { getNonce } from '@/lib/nonce';
 import './globals.css';
 
-const font = Rubik({ subsets: ['hebrew', 'latin'] });
+const font = Assistant({ subsets: ['hebrew', 'latin'], display: 'swap' });
 
 const baseUrl = process.env.NEXT_PUBLIC_SITE_URL || 'https://example.com';
 
-export const metadata: Metadata = {
+const META_BY_LOCALE = {
+  he: {
+    titleDefault: 'קומפורט סליפ — מזרנים, מיטות ומוצרי שינה מבית רהיטי וייס',
+    titleTemplate: '%s | קומפורט סליפ',
+    description:
+      'קומפורט סליפ — חנות המזרנים המובילה מבית רהיטי וייס עם למעלה מ-40 שנות ניסיון. מזרנים אורתופדיים, מיטות, בסיסים ומוצרי שינה מהמותגים המובילים: עמינח, פולירון, סימונס ועוד. משלוח חינם, החזרה תוך 30 יום ותשלום מאובטח.',
+    keywords: ['מזרנים', 'מזרן אורתופדי', 'מיטות', 'מוצרי שינה', 'עמינח', 'פולירון', 'סימונס', 'קומפורט סליפ', 'רהיטי וייס'],
+    ogLocale: 'he_IL',
+  },
+  en: {
+    titleDefault: 'Comfort Sleep — Mattresses, Beds & Sleep Products by Weiss Furniture',
+    titleTemplate: '%s | Comfort Sleep',
+    description:
+      'Comfort Sleep — the leading mattress store by Weiss Furniture, with over 40 years of experience. Orthopedic mattresses, beds, bases and sleep products from the top brands: Aminach, Polyron, Simmons and more. Free shipping, 30-day returns and secure checkout.',
+    keywords: ['mattresses', 'orthopedic mattress', 'beds', 'sleep products', 'Aminach', 'Polyron', 'Simmons', 'Comfort Sleep', 'Weiss Furniture'],
+    ogLocale: 'en_US',
+  },
+} as const;
+
+export async function generateMetadata(): Promise<Metadata> {
+  const cookieStore = await cookies();
+  const locale = normalizeLocale(cookieStore.get(LOCALE_COOKIE)?.value);
+  const m = META_BY_LOCALE[locale];
+  const storeName = locale === 'en' ? 'Comfort Sleep' : 'קומפורט סליפ';
+  return {
   metadataBase: new URL(baseUrl),
   title: {
-    default: "קומפורט סליפ — מזרנים, מיטות ומוצרי שינה מבית רהיטי וייס",
-    template: "%s | קומפורט סליפ",
+    default: m.titleDefault,
+    template: m.titleTemplate,
   },
-  description:
-    "קומפורט סליפ — חנות המזרנים המובילה מבית רהיטי וייס עם למעלה מ-40 שנות ניסיון. מזרנים אורתופדיים, מיטות, בסיסים ומוצרי שינה מהמותגים המובילים: עמינח, פולירון, סימונס ועוד. משלוח חינם, החזרה תוך 30 יום ותשלום מאובטח.",
-  keywords: [
-    'מזרנים',
-    'מזרן אורתופדי',
-    'מיטות',
-    'מוצרי שינה',
-    'עמינח',
-    'פולירון',
-    'סימונס',
-    'קומפורט סליפ',
-    'רהיטי וייס',
-  ],
+  description: m.description,
+  keywords: m.keywords as unknown as string[],
   alternates: {
     canonical: '/',
+    languages: {
+      'he-IL': '/',
+      'en-US': '/',
+    },
   },
   icons: {
     icon: [
@@ -51,15 +71,16 @@ export const metadata: Metadata = {
     ],
   },
   openGraph: {
-    siteName: "קומפורט סליפ",
-    locale: 'he_IL',
+    siteName: storeName,
+    locale: m.ogLocale,
     type: 'website',
   },
   robots: {
     index: true,
     follow: true,
   },
-};
+  };
+}
 
 const organizationJsonLd = {
   '@context': 'https://schema.org',
@@ -112,8 +133,11 @@ export default async function RootLayout({
   children: React.ReactNode;
 }) {
   const nonce = await getNonce();
+  const cookieStore = await cookies();
+  const locale = normalizeLocale(cookieStore.get(LOCALE_COOKIE)?.value);
+  const dir = getDirection(locale);
   return (
-    <html lang="he" dir="rtl">
+    <html lang={locale} dir={dir}>
       <head>
         <script
           type="application/ld+json"
@@ -129,6 +153,7 @@ export default async function RootLayout({
         />
       </head>
       <body className={font.className}>
+        <LocaleProvider locale={locale}>
         <StoreProvider>
           <SkipToContent />
           <div className="min-h-screen flex flex-col">
@@ -141,6 +166,7 @@ export default async function RootLayout({
           <ShabbatOverlay />
           <BrainerceBot />
         </StoreProvider>
+        </LocaleProvider>
       </body>
     </html>
   );

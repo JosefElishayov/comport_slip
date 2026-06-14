@@ -7,6 +7,7 @@ import { useStoreInfo, useAuth } from '@/providers/store-provider';
 export function Footer() {
   const t = useTranslations('common');
   const tn = useTranslations('nav');
+  const tf = useTranslations('footer');
   const { storeInfo } = useStoreInfo();
   const { isLoggedIn } = useAuth();
   const year = new Date().getFullYear();
@@ -21,13 +22,13 @@ export function Footer() {
               {storeInfo?.name || t('store')}
             </h3>
             <p className="mt-2 text-sm text-primary-foreground/70 max-w-xs">
-              השינה שמגיעה לך — מזרונים איכותיים שעוטפים אותך בנוחות מושלמת
+              {tf('tagline')}
             </p>
           </div>
 
           {/* Links */}
           <div>
-            <h4 className="text-sm font-semibold mb-3">ניווט מהיר</h4>
+            <h4 className="text-sm font-semibold mb-3">{tf('quickNav')}</h4>
             <nav className="flex flex-col gap-2">
               <Link
                 href="/products"
@@ -47,55 +48,56 @@ export function Footer() {
                 href="/cart"
                 className="text-primary-foreground/70 hover:text-primary-foreground text-sm transition-colors"
               >
-                עגלת קניות
+                {tf('cart')}
               </Link>
               <Link
                 href="/about"
                 className="text-primary-foreground/70 hover:text-primary-foreground text-sm transition-colors"
               >
-                קצת עלינו
+                {tf('about')}
               </Link>
               <Link
                 href="/contact"
                 className="text-primary-foreground/70 hover:text-primary-foreground text-sm transition-colors"
               >
-                צור קשר
+                {tf('contact')}
               </Link>
               <Link
                 href="/accessibility"
                 className="text-primary-foreground/70 hover:text-primary-foreground text-sm transition-colors"
               >
-                הצהרת נגישות
+                {tf('accessibility')}
               </Link>
               <Link
                 href="/privacy"
                 className="text-primary-foreground/70 hover:text-primary-foreground text-sm transition-colors"
               >
-                מדיניות פרטיות
+                {tf('privacy')}
               </Link>
             </nav>
           </div>
 
           {/* Contact */}
           <div>
-            <h4 className="text-sm font-semibold mb-3">צרו קשר</h4>
+            <h4 className="text-sm font-semibold mb-3">{tf('contactTitle')}</h4>
             <div className="flex flex-col gap-2 text-sm text-primary-foreground/70">
-              <span>שירות לקוחות זמין עבורכם</span>
-              <span>א׳, ב׳, ד׳, ה׳: 11:00–14:00, 17:00–21:00</span>
-              <span>ג׳: 11:00–14:00 (אחה״צ סגור)</span>
-              <span>ו׳–ש׳: סגור</span>
+              <span>{tf('customerServiceAvailable')}</span>
+              <span>{tf('hours1')}</span>
+              <span>{tf('hours2')}</span>
+              <span>{tf('hours3')}</span>
               <a
                 href="tel:+97235794542"
                 className="text-primary-foreground/90 hover:text-primary-foreground"
+                dir="ltr"
               >
                 03-5794542
               </a>
-              <span>רחוב רש&quot;י 30, בני ברק</span>
+              <span>{tf('address')}</span>
               <Link
                 href="/contact"
                 className="mt-2 inline-flex items-center gap-1 text-primary-foreground hover:underline"
               >
-                שליחת פנייה →
+                {tf('sendInquiry')}
               </Link>
             </div>
           </div>

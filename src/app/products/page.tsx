@@ -2,25 +2,48 @@ import { Suspense } from 'react';
 import type { Metadata } from 'next';
 import type { Product, ProductQueryParams } from 'brainerce';
 import { getServerClient } from '@/lib/brainerce';
+import { getServerLocale } from '@/lib/locale-server';
 import { LoadingSpinner } from '@/components/shared/loading-spinner';
 import { sortOptions } from './sort-options';
 import ProductsPageClient, { type CategoryNode } from './products-page-client';
 
 const PAGE_SIZE = 20;
 
-export const metadata: Metadata = {
-  title: 'כל המוצרים — מזרנים, מיטות ובסיסים',
-  description:
-    'מבחר רחב של מזרנים אורתופדיים, מיטות, בסיסים ומוצרי שינה מהמותגים המובילים — עמינח, פולירון, סימונס ועוד. סינון לפי קטגוריה, מותג ומחיר. משלוח חינם והחזרה תוך 30 יום.',
-  alternates: { canonical: '/products' },
-  openGraph: {
-    title: 'כל המוצרים | קומפורט סליפ',
-    description: 'מזרנים, מיטות ובסיסים מהמותגים המובילים — משלוח חינם והחזרה תוך 30 יום.',
-    url: '/products',
-    type: 'website',
-    locale: 'he_IL',
+const PRODUCTS_META = {
+  he: {
+    title: 'כל המוצרים — מזרנים, מיטות ובסיסים',
+    description:
+      'מבחר רחב של מזרנים אורתופדיים, מיטות, בסיסים ומוצרי שינה מהמותגים המובילים — עמינח, פולירון, סימונס ועוד. סינון לפי קטגוריה, מותג ומחיר. משלוח חינם והחזרה תוך 30 יום.',
+    ogTitle: 'כל המוצרים | קומפורט סליפ',
+    ogDescription: 'מזרנים, מיטות ובסיסים מהמותגים המובילים — משלוח חינם והחזרה תוך 30 יום.',
+    ogLocale: 'he_IL',
   },
-};
+  en: {
+    title: 'All products — Mattresses, Beds & Bases',
+    description:
+      'A wide selection of orthopedic mattresses, beds, bases and sleep products from the leading brands — Aminach, Polyron, Simmons and more. Filter by category, brand and price. Free shipping and 30-day returns.',
+    ogTitle: 'All products | Comfort Sleep',
+    ogDescription: 'Mattresses, beds and bases from the leading brands — free shipping and 30-day returns.',
+    ogLocale: 'en_US',
+  },
+} as const;
+
+export async function generateMetadata(): Promise<Metadata> {
+  const locale = await getServerLocale();
+  const m = PRODUCTS_META[locale];
+  return {
+    title: m.title,
+    description: m.description,
+    alternates: { canonical: '/products' },
+    openGraph: {
+      title: m.ogTitle,
+      description: m.ogDescription,
+      url: '/products',
+      type: 'website',
+      locale: m.ogLocale,
+    },
+  };
+}
 
 interface ProductsPageProps {
   searchParams: Promise<{
@@ -48,7 +71,8 @@ export default async function ProductsPage({ searchParams }: ProductsPageProps) 
   if (sp.brand) params.brands = sp.brand;
   if (sp.tag) params.tags = sp.tag;
 
-  const client = getServerClient();
+  const locale = await getServerLocale();
+  const client = getServerClient(locale);
   const [productsRes, catRes, brandRes, tagRes] = await Promise.allSettled([
     client.getProducts(params),
     client.getCategories(),

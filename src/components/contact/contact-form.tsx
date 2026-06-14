@@ -3,28 +3,32 @@
 import { useEffect, useState } from 'react';
 import type { ContactFormPublic, ContactFormPublicField } from 'brainerce';
 import { getClient } from '@/lib/brainerce';
+import { useLocale } from '@/providers/locale-provider';
+import { useTranslations } from '@/lib/translations';
 import { LoadingSpinner } from '@/components/shared/loading-spinner';
 import { cn } from '@/lib/utils';
 
 const FORM_KEY = 'main';
-const LOCALE = 'he';
 
+type Translate = ReturnType<typeof useTranslations>;
 type FieldValue = string | string[] | boolean;
 
-const LEGACY_FORM: ContactFormPublic = {
-  id: 'legacy',
-  key: FORM_KEY,
-  name: 'צור קשר',
-  submitButton: 'שליחה',
-  successMessage: 'תודה! קיבלנו את הפנייה ונחזור אליך בהקדם.',
-  fields: [
-    { key: 'name', type: 'TEXT', label: 'שם מלא', isRequired: true, placeholder: 'ישראל ישראלי' },
-    { key: 'email', type: 'EMAIL', label: 'אימייל', isRequired: true, placeholder: 'name@example.com' },
-    { key: 'phone', type: 'PHONE', label: 'טלפון', isRequired: false, placeholder: '050-0000000' },
-    { key: 'subject', type: 'TEXT', label: 'נושא הפנייה', isRequired: false },
-    { key: 'message', type: 'TEXTAREA', label: 'תוכן ההודעה', isRequired: true, placeholder: 'איך נוכל לעזור?' },
-  ],
-};
+function buildLegacyForm(t: Translate): ContactFormPublic {
+  return {
+    id: 'legacy',
+    key: FORM_KEY,
+    name: t('legacyName'),
+    submitButton: t('submit'),
+    successMessage: t('successMessage'),
+    fields: [
+      { key: 'name', type: 'TEXT', label: t('fullName'), isRequired: true, placeholder: t('fullNamePlaceholder') },
+      { key: 'email', type: 'EMAIL', label: t('email'), isRequired: true, placeholder: t('emailPlaceholder') },
+      { key: 'phone', type: 'PHONE', label: t('phone'), isRequired: false, placeholder: t('phonePlaceholder') },
+      { key: 'subject', type: 'TEXT', label: t('subject'), isRequired: false },
+      { key: 'message', type: 'TEXTAREA', label: t('message'), isRequired: true, placeholder: t('messagePlaceholder') },
+    ],
+  };
+}
 
 function inputClasses(hasError: boolean): string {
   return cn(
@@ -39,25 +43,25 @@ function getInitialValue(field: ContactFormPublicField): FieldValue {
   return field.defaultValue ?? '';
 }
 
-function validateField(field: ContactFormPublicField, value: FieldValue): string | null {
+function validateField(field: ContactFormPublicField, value: FieldValue, t: Translate): string | null {
   if (field.isRequired) {
-    if (field.type === 'CHECKBOX' && value !== true) return 'שדה חובה';
-    if (Array.isArray(value) && value.length === 0) return 'שדה חובה';
-    if (typeof value === 'string' && value.trim() === '') return 'שדה חובה';
+    if (field.type === 'CHECKBOX' && value !== true) return t('requiredField');
+    if (Array.isArray(value) && value.length === 0) return t('requiredField');
+    if (typeof value === 'string' && value.trim() === '') return t('requiredField');
   }
 
   if (typeof value === 'string' && value !== '') {
     if (field.type === 'EMAIL' && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value)) {
-      return 'אימייל לא תקין';
+      return t('invalidEmail');
     }
     const v = field.validation;
     if (v) {
-      if (v.minLength != null && value.length < v.minLength) return `מינימום ${v.minLength} תווים`;
-      if (v.maxLength != null && value.length > v.maxLength) return `מקסימום ${v.maxLength} תווים`;
+      if (v.minLength != null && value.length < v.minLength) return t('minChars', { n: String(v.minLength) });
+      if (v.maxLength != null && value.length > v.maxLength) return t('maxChars', { n: String(v.maxLength) });
       if (v.pattern) {
         try {
           if (!new RegExp(v.pattern).test(value)) {
-            return v.patternMessage || 'ערך לא תקין';
+            return v.patternMessage || t('invalidValue');
           }
         } catch {
           // ignore invalid pattern from server
@@ -65,9 +69,9 @@ function validateField(field: ContactFormPublicField, value: FieldValue): string
       }
       if (field.type === 'NUMBER') {
         const num = Number(value);
-        if (Number.isNaN(num)) return 'יש להזין מספר';
-        if (v.min != null && num < v.min) return `מינימום ${v.min}`;
-        if (v.max != null && num > v.max) return `מקסימום ${v.max}`;
+        if (Number.isNaN(num)) return t('mustBeNumber');
+        if (v.min != null && num < v.min) return t('minValue', { n: String(v.min) });
+        if (v.max != null && num > v.max) return t('maxValue', { n: String(v.max) });
       }
     }
   }
@@ -76,6 +80,8 @@ function validateField(field: ContactFormPublicField, value: FieldValue): string
 }
 
 export function ContactForm() {
+  const { locale } = useLocale();
+  const t = useTranslations('contact');
   const [form, setForm] = useState<ContactFormPublic | null>(null);
   const [loadingForm, setLoadingForm] = useState(true);
   const [values, setValues] = useState<Record<string, FieldValue>>({});
@@ -90,14 +96,15 @@ export function ContactForm() {
     (async () => {
       try {
         const client = getClient();
-        const fetched = await client.contactForms.get(FORM_KEY, LOCALE);
+        const fetched = await client.contactForms.get(FORM_KEY, locale);
         if (cancelled) return;
         setForm(fetched);
         setValues(Object.fromEntries(fetched.fields.map((f) => [f.key, getInitialValue(f)])));
       } catch {
         if (cancelled) return;
-        setForm(LEGACY_FORM);
-        setValues(Object.fromEntries(LEGACY_FORM.fields.map((f) => [f.key, getInitialValue(f)])));
+        const legacy = buildLegacyForm(t);
+        setForm(legacy);
+        setValues(Object.fromEntries(legacy.fields.map((f) => [f.key, getInitialValue(f)])));
       } finally {
         if (!cancelled) setLoadingForm(false);
       }
@@ -105,7 +112,8 @@ export function ContactForm() {
     return () => {
       cancelled = true;
     };
-  }, []);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [locale]);
 
   function setField(key: string, value: FieldValue) {
     setValues((prev) => ({ ...prev, [key]: value }));
@@ -123,7 +131,7 @@ export function ContactForm() {
 
     const newErrors: Record<string, string> = {};
     for (const field of form.fields) {
-      const err = validateField(field, values[field.key]);
+      const err = validateField(field, values[field.key], t);
       if (err) newErrors[field.key] = err;
     }
     if (Object.keys(newErrors).length > 0) {
@@ -138,7 +146,7 @@ export function ContactForm() {
       await client.createInquiry({
         formKey: form.key,
         fields: values as Record<string, unknown>,
-        locale: LOCALE,
+        locale,
         sourceMetadata: {
           page: typeof window !== 'undefined' ? window.location.pathname : '/contact',
           referrer: typeof document !== 'undefined' ? document.referrer || undefined : undefined,
@@ -146,7 +154,7 @@ export function ContactForm() {
       });
       setSuccess(true);
     } catch (err) {
-      const message = err instanceof Error ? err.message : 'שליחת הטופס נכשלה. אנא נסו שוב.';
+      const message = err instanceof Error ? err.message : t('submitFailed');
       setSubmitError(message);
     } finally {
       setSubmitting(false);
@@ -175,7 +183,7 @@ export function ContactForm() {
             <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
           </svg>
         </div>
-        <h2 className="mt-4 text-xl font-bold text-foreground">נשלח בהצלחה</h2>
+        <h2 className="mt-4 text-xl font-bold text-foreground">{t('sentSuccess')}</h2>
         <p className="mt-2 text-muted-foreground">{form.successMessage}</p>
       </div>
     );
@@ -196,7 +204,7 @@ export function ContactForm() {
       {/* Honeypot — hidden from users, bots fill every field */}
       <div aria-hidden="true" className="absolute left-[-9999px] h-0 w-0 overflow-hidden">
         <label>
-          אל תמלאו את השדה הזה
+          {t('honeypot')}
           <input
             type="text"
             tabIndex={-1}
@@ -271,7 +279,7 @@ export function ContactForm() {
                 aria-describedby={describedBy}
                 className={cn(inputClasses(!!error), 'h-10')}
               >
-                <option value="">{field.placeholder || 'בחרו אפשרות'}</option>
+                <option value="">{field.placeholder || t('chooseOption')}</option>
                 {field.enumValues?.map((opt) => (
                   <option key={opt.value} value={opt.value}>
                     {opt.label}
@@ -390,7 +398,7 @@ export function ContactForm() {
         {submitting ? (
           <>
             <LoadingSpinner size="sm" className="border-primary-foreground/30 border-t-primary-foreground" />
-            שולח...
+            {t('sending')}
           </>
         ) : (
           form.submitButton
