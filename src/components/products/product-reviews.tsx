@@ -119,71 +119,77 @@ export function ProductReviews({
 
   return (
     <section
-      className={cn('border-border border-t pt-8', className)}
+      className={cn('border-border border-t pt-10', className)}
       aria-labelledby="product-reviews-heading"
     >
-      <div className="mb-6 flex flex-wrap items-end justify-between gap-4">
-        <div>
-          <h2
-            id="product-reviews-heading"
-            className="text-foreground text-2xl font-bold"
-          >
-            {t('reviewsTitle')}
-          </h2>
-          {total > 0 && (
-            <div className="mt-2 flex items-center gap-3">
-              <RatingSummary avgRating={avg} reviewCount={total} size="lg" showCount={false} />
-              <span className="text-muted-foreground text-sm">
-                {t('basedOnReviews', { count: String(total) })}
-              </span>
+      <div className="grid gap-8 lg:grid-cols-[minmax(0,340px)_1fr] lg:gap-12">
+        {/* Summary + write form — right column in RTL, sticky on scroll */}
+        <div className="space-y-6 lg:sticky lg:top-24 lg:self-start">
+          <div>
+            <h2
+              id="product-reviews-heading"
+              className="text-foreground text-2xl font-bold"
+            >
+              {t('reviewsTitle')}
+            </h2>
+            {total > 0 && (
+              <div className="mt-3 flex items-center gap-3">
+                <RatingSummary avgRating={avg} reviewCount={total} size="lg" showCount={false} />
+                <span className="text-muted-foreground text-sm">
+                  {t('basedOnReviews', { count: String(total) })}
+                </span>
+              </div>
+            )}
+          </div>
+
+          <WriteReviewArea
+            productId={productId}
+            isLoggedIn={isLoggedIn}
+            authLoading={authLoading}
+            myReview={myReview}
+            myReviewLoading={myReviewLoading}
+            onMutated={handleAfterMutation}
+          />
+        </div>
+
+        {/* Reviews list — left column */}
+        <div className="min-w-0">
+          {loading && reviews.length === 0 ? (
+            <div className="flex items-center justify-center py-12">
+              <LoadingSpinner size="md" />
+              <span className="ms-3 text-sm text-muted-foreground">{t('loadingReviews')}</span>
+            </div>
+          ) : showZeroState ? (
+            <div className="bg-secondary/30 border-border flex h-full min-h-[180px] flex-col items-center justify-center rounded-xl border p-8 text-center">
+              <p className="text-foreground text-base font-medium">{t('noReviewsYet')}</p>
+              <p className="text-muted-foreground mt-1 text-sm">{t('beTheFirstToReview')}</p>
+            </div>
+          ) : (
+            <ul className="space-y-5">
+              {reviews.map((r) => (
+                <ReviewItem key={r.id} review={r} verifiedLabel={t('verifiedPurchase')} />
+              ))}
+            </ul>
+          )}
+
+          {hasMore && (
+            <div className="mt-6 flex justify-center">
+              <button
+                type="button"
+                onClick={() => {
+                  const next = page + 1;
+                  setPage(next);
+                  void loadPage(next, true);
+                }}
+                disabled={loading}
+                className="border-border bg-background text-foreground hover:bg-secondary rounded-xl border px-5 py-2.5 text-sm font-medium transition-colors disabled:opacity-50"
+              >
+                {loading ? <LoadingSpinner size="sm" /> : t('showMoreReviews')}
+              </button>
             </div>
           )}
         </div>
       </div>
-
-      <WriteReviewArea
-        productId={productId}
-        isLoggedIn={isLoggedIn}
-        authLoading={authLoading}
-        myReview={myReview}
-        myReviewLoading={myReviewLoading}
-        onMutated={handleAfterMutation}
-      />
-
-      {loading && reviews.length === 0 ? (
-        <div className="flex items-center justify-center py-12">
-          <LoadingSpinner size="md" />
-          <span className="ms-3 text-sm text-muted-foreground">{t('loadingReviews')}</span>
-        </div>
-      ) : showZeroState ? (
-        <div className="bg-secondary/30 border-border mt-6 rounded-xl border p-8 text-center">
-          <p className="text-foreground text-base font-medium">{t('noReviewsYet')}</p>
-          <p className="text-muted-foreground mt-1 text-sm">{t('beTheFirstToReview')}</p>
-        </div>
-      ) : (
-        <ul className="mt-6 space-y-5">
-          {reviews.map((r) => (
-            <ReviewItem key={r.id} review={r} verifiedLabel={t('verifiedPurchase')} />
-          ))}
-        </ul>
-      )}
-
-      {hasMore && (
-        <div className="mt-6 flex justify-center">
-          <button
-            type="button"
-            onClick={() => {
-              const next = page + 1;
-              setPage(next);
-              void loadPage(next, true);
-            }}
-            disabled={loading}
-            className="border-border bg-background text-foreground hover:bg-secondary rounded-xl border px-5 py-2.5 text-sm font-medium transition-colors disabled:opacity-50"
-          >
-            {loading ? <LoadingSpinner size="sm" /> : t('showMoreReviews')}
-          </button>
-        </div>
-      )}
     </section>
   );
 }

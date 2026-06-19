@@ -564,14 +564,6 @@ export function ProductClientSection({ product: initialProduct }: ProductClientS
         </div>
       </div>
 
-      {/* Reviews */}
-      <ProductReviews
-        productId={product.id}
-        initialAvgRating={product.avgRating}
-        initialReviewCount={product.reviewCount}
-        className="mt-12"
-      />
-
       {/* Frequently Bought Together (cross-sells) */}
       {recommendations?.crossSells && recommendations.crossSells.length > 0 && (
         <FrequentlyBoughtTogether
@@ -598,6 +590,14 @@ export function ProductClientSection({ product: initialProduct }: ProductClientS
           className="mt-12"
         />
       )}
+
+      {/* Reviews — kept at the very bottom, below all product sections */}
+      <ProductReviews
+        productId={product.id}
+        initialAvgRating={product.avgRating}
+        initialReviewCount={product.reviewCount}
+        className="mt-16"
+      />
     </article>
   );
 }

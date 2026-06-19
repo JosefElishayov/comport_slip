@@ -235,9 +235,9 @@ export function FrequentlyBoughtTogether({
 
   function variantOptionLabel(variant: ProductVariant): string {
     const opts = getVariantOptions(variant);
-    const attrs = opts.map((o) => attrLabel(o.value)).join(' · ') || variant.name || '';
-    const price = variant.salePrice || variant.price;
-    return price ? `${attrs} — ${formatPrice(price, { currency }) as string}` : attrs;
+    // Price is shown on the thumbnail (and updates on selection), so keep the
+    // option label to just the variant attributes to avoid truncation.
+    return opts.map((o) => attrLabel(o.value)).join(' · ') || variant.name || '';
   }
 
   // All hooks/derived values above the early returns to keep hook order stable.
@@ -311,7 +311,7 @@ export function FrequentlyBoughtTogether({
               {idx > 0 && (
                 <span className="text-muted-foreground self-center text-lg font-light">+</span>
               )}
-              <div className="flex w-24 flex-col items-center gap-2">
+              <div className="flex w-28 flex-col items-center gap-2">
                 <ProductThumb
                   name={item.name}
                   imageUrl={item.imageUrl}
@@ -321,18 +321,34 @@ export function FrequentlyBoughtTogether({
                   onToggle={() => toggleItem(item.key)}
                 />
                 {variants.length > 1 && (
-                  <select
-                    aria-label={t('selectVariant')}
-                    value={chosen?.id ?? ''}
-                    onChange={(e) => setChosen(item.key, e.target.value)}
-                    className="border-border bg-background text-foreground w-full rounded border px-1.5 py-1 text-xs"
-                  >
-                    {variants.map((v) => (
-                      <option key={v.id} value={v.id}>
-                        {variantOptionLabel(v)}
-                      </option>
-                    ))}
-                  </select>
+                  <div className="relative w-full">
+                    <select
+                      aria-label={t('selectVariant')}
+                      value={chosen?.id ?? ''}
+                      onChange={(e) => setChosen(item.key, e.target.value)}
+                      className="border-border bg-background text-foreground hover:border-primary focus:border-primary focus:ring-primary/20 w-full cursor-pointer appearance-none rounded-lg border py-1.5 pe-7 ps-2.5 text-xs font-medium shadow-sm transition-colors focus:outline-none focus:ring-2"
+                    >
+                      {variants.map((v) => (
+                        <option key={v.id} value={v.id}>
+                          {variantOptionLabel(v)}
+                        </option>
+                      ))}
+                    </select>
+                    <svg
+                      className="text-muted-foreground pointer-events-none absolute inset-y-0 end-2 my-auto h-3.5 w-3.5"
+                      viewBox="0 0 20 20"
+                      fill="none"
+                      stroke="currentColor"
+                      aria-hidden="true"
+                    >
+                      <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        strokeWidth={2}
+                        d="M6 8l4 4 4-4"
+                      />
+                    </svg>
+                  </div>
                 )}
               </div>
             </div>
