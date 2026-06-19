@@ -9,6 +9,11 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     { url: `${baseUrl}/products`, lastModified: new Date(), priority: 0.9 },
     { url: `${baseUrl}/about`, lastModified: new Date(), priority: 0.5 },
     { url: `${baseUrl}/contact`, lastModified: new Date(), priority: 0.5 },
+    { url: `${baseUrl}/privacy`, lastModified: new Date(), priority: 0.3 },
+    { url: `${baseUrl}/terms`, lastModified: new Date(), priority: 0.3 },
+    { url: `${baseUrl}/shipping`, lastModified: new Date(), priority: 0.3 },
+    { url: `${baseUrl}/returns`, lastModified: new Date(), priority: 0.3 },
+    { url: `${baseUrl}/accessibility`, lastModified: new Date(), priority: 0.3 },
   ];
 
   try {

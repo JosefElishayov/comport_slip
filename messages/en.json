@@ -120,6 +120,7 @@
     "addSelectedToCart": "Add selected to cart",
     "totalPrice": "Total: {price}",
     "addingAll": "Adding...",
+    "selectVariant": "Choose option",
     "by": "by",
     "shareProduct": "Share product",
     "shared": "Shared",
@@ -292,7 +293,10 @@
     "privacyPolicyLink": "Privacy Policy",
     "privacyRequired": "You must accept the Privacy Policy to continue",
     "acceptsMarketing": "Send me news, offers and updates by email",
-    "saveDetailsForNextTime": "Save my details for faster checkout next time"
+    "saveDetailsForNextTime": "Save my details for faster checkout next time",
+    "termsPolicyLink": "the Terms of Use",
+    "returnsPolicyLink": "the Returns Policy",
+    "policyConsentAnd": " and "
   },
   "auth": {
     "loginPageTitle": "Sign in",
@@ -463,6 +467,9 @@
     "contact": "Contact",
     "accessibility": "Accessibility statement",
     "privacy": "Privacy policy",
+    "terms": "Terms of use",
+    "shipping": "Shipping policy",
+    "returns": "Returns & cancellation",
     "contactTitle": "Get in touch",
     "customerServiceAvailable": "Customer service is here for you",
     "hours1": "Sun, Mon, Wed, Thu: 11:00–14:00, 17:00–21:00",

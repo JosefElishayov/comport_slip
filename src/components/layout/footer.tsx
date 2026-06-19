@@ -74,6 +74,24 @@ export function Footer() {
               >
                 {tf('privacy')}
               </Link>
+              <Link
+                href="/terms"
+                className="text-primary-foreground/70 hover:text-primary-foreground text-sm transition-colors"
+              >
+                {tf('terms')}
+              </Link>
+              <Link
+                href="/shipping"
+                className="text-primary-foreground/70 hover:text-primary-foreground text-sm transition-colors"
+              >
+                {tf('shipping')}
+              </Link>
+              <Link
+                href="/returns"
+                className="text-primary-foreground/70 hover:text-primary-foreground text-sm transition-colors"
+              >
+                {tf('returns')}
+              </Link>
             </nav>
           </div>
 

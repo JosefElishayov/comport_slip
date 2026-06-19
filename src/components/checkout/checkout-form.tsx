@@ -342,6 +342,24 @@ export function CheckoutForm({
               className="text-primary underline underline-offset-2"
             >
               {t('privacyPolicyLink')}
+            </a>
+            {', '}
+            <a
+              href="/terms"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="text-primary underline underline-offset-2"
+            >
+              {t('termsPolicyLink')}
+            </a>
+            {t('policyConsentAnd')}
+            <a
+              href="/returns"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="text-primary underline underline-offset-2"
+            >
+              {t('returnsPolicyLink')}
             </a>{' '}
             <span className="text-destructive" aria-hidden="true">*</span>
           </span>

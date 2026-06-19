@@ -120,6 +120,7 @@
     "addSelectedToCart": "הוסף הנבחרים לעגלה",
     "totalPrice": "סה\"כ: {price}",
     "addingAll": "מוסיף...",
+    "selectVariant": "בחר אפשרות",
     "by": "מאת",
     "shareProduct": "שתף מוצר",
     "shared": "שותף",
@@ -292,7 +293,10 @@
     "privacyPolicyLink": "מדיניות הפרטיות",
     "privacyRequired": "יש לאשר את מדיניות הפרטיות כדי להמשיך",
     "acceptsMarketing": "שלחו לי חדשות, מבצעים ועדכונים במייל",
-    "saveDetailsForNextTime": "שמרו את הפרטים שלי לתשלום מהיר בפעם הבאה"
+    "saveDetailsForNextTime": "שמרו את הפרטים שלי לתשלום מהיר בפעם הבאה",
+    "termsPolicyLink": "התקנון",
+    "returnsPolicyLink": "מדיניות ההחזרות",
+    "policyConsentAnd": " ו"
   },
   "auth": {
     "loginPageTitle": "התחברות",
@@ -463,6 +467,9 @@
     "contact": "צור קשר",
     "accessibility": "הצהרת נגישות",
     "privacy": "מדיניות פרטיות",
+    "terms": "תקנון ותנאי שימוש",
+    "shipping": "מדיניות משלוחים",
+    "returns": "מדיניות החזרות וביטולים",
     "contactTitle": "צרו קשר",
     "customerServiceAvailable": "שירות לקוחות זמין עבורכם",
     "hours1": "א׳, ב׳, ד׳, ה׳: 11:00–14:00, 17:00–21:00",
