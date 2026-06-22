@@ -64,9 +64,11 @@ export function middleware(request: NextRequest) {
   const requestHeaders = new Headers(request.headers);
   requestHeaders.set('x-nonce', nonce);
 
-  // Forward the visitor's country (Cloudflare edge header) so Server Components
-  // can resolve the right region/currency for per-region pricing.
-  const country = request.headers.get('cf-ipcountry');
+  // Forward the visitor's country (edge geo header) so Server Components can
+  // resolve the right region/currency for per-region pricing. Vercel sets
+  // `x-vercel-ip-country`; Cloudflare sets `cf-ipcountry` — support both.
+  const country =
+    request.headers.get('x-vercel-ip-country') || request.headers.get('cf-ipcountry');
   if (country) {
     requestHeaders.set('x-geo-country', country);
   }
