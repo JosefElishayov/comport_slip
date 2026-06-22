@@ -26,7 +26,7 @@ export function PriceDisplay({
   size = 'md',
 }: PriceDisplayProps) {
   const { storeInfo } = useStoreInfo();
-  const currencyCode = currency || storeInfo?.currency || 'USD';
+  const currencyCode = currency || storeInfo?.currency || 'ILS';
 
   const basePrice = typeof price === 'string' ? parseFloat(price) : price;
   const sale =

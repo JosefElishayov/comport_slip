@@ -23,7 +23,7 @@ interface CartBundleOfferCardProps {
 export function CartBundleOfferCard({ offer, cartId, onAdd, className }: CartBundleOfferCardProps) {
   const { storeInfo } = useStoreInfo();
   const t = useTranslations('cart');
-  const currency = storeInfo?.currency || 'USD';
+  const currency = storeInfo?.currency || 'ILS';
   const [adding, setAdding] = useState(false);
   const [variableProducts, setVariableProducts] = useState<Record<string, Product>>({});
   const [selectedVariants, setSelectedVariants] = useState<Record<string, ProductVariant>>({});

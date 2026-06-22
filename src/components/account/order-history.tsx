@@ -79,7 +79,7 @@ function OrderCard({ order }: { order: Order }) {
   const [expanded, setExpanded] = useState(false);
   const statusConfig =
     STATUS_CONFIG[order.status?.toLowerCase() as OrderStatus] || STATUS_CONFIG.pending;
-  const currency = order.currency || 'USD';
+  const currency = order.currency || 'ILS';
   const totalAmount = order.totalAmount || order.total || '0';
 
   return (

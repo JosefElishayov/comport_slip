@@ -20,7 +20,7 @@ export function CartItem({ item, onUpdate, className }: CartItemProps) {
   const t = useTranslations('common');
   const td = useTranslations('productDetail');
   const { storeInfo } = useStoreInfo();
-  const currency = storeInfo?.currency || 'USD';
+  const currency = storeInfo?.currency || 'ILS';
   const [updating, setUpdating] = useState(false);
   const [removing, setRemoving] = useState(false);
 

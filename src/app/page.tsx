@@ -2,6 +2,7 @@ import type { Metadata } from 'next';
 import type { Product, DiscountBanner } from 'brainerce';
 import { getServerClient } from '@/lib/brainerce';
 import { getServerLocale } from '@/lib/locale-server';
+import { getServerRegionId } from '@/lib/region-server';
 import HomePageClient from './home-page-client';
 
 const HOME_META = {
@@ -42,9 +43,10 @@ export async function generateMetadata(): Promise<Metadata> {
 
 export default async function HomePage() {
   const locale = await getServerLocale();
+  const regionId = await getServerRegionId();
   const client = getServerClient(locale);
   const [productsRes, bannersRes] = await Promise.allSettled([
-    client.getProducts({ limit: 4, sortBy: 'createdAt', sortOrder: 'desc' }),
+    client.getProducts({ limit: 4, sortBy: 'createdAt', sortOrder: 'desc', regionId }),
     client.getDiscountBanners(),
   ]);
 

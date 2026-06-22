@@ -19,7 +19,7 @@ interface OrderBumpCardProps {
 export function OrderBumpCard({ bump, isAdded, onToggle, loading, className }: OrderBumpCardProps) {
   const { storeInfo } = useStoreInfo();
   const t = useTranslations('checkout');
-  const currency = storeInfo?.currency || 'USD';
+  const currency = storeInfo?.currency || 'ILS';
   const [selectedVariantId, setSelectedVariantId] = useState<string | null>(null);
 
   const product = bump.bumpProduct;

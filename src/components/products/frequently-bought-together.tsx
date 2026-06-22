@@ -107,7 +107,7 @@ export function FrequentlyBoughtTogether({
   const t = useTranslations('productDetail');
   const attrLabel = useAttributeLabel();
 
-  const currency = storeInfo?.currency || 'USD';
+  const currency = storeInfo?.currency || 'ILS';
 
   // Only show up to 3 cross-sells
   const crossSells = useMemo(() => items.slice(0, 3), [items]);

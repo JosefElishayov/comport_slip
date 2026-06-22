@@ -19,7 +19,7 @@ export function CartDrawer() {
   const tCart = useTranslations('cart');
   const { cart, isCartDrawerOpen, closeCartDrawer, refreshCart, itemCount, totals } = useCart();
   const { storeInfo } = useStoreInfo();
-  const currency = storeInfo?.currency || 'USD';
+  const currency = storeInfo?.currency || 'ILS';
 
   // Fetch bundle offers when drawer opens with items
   const [bundles, setBundles] = useState<CartBundlesResponse | null>(null);

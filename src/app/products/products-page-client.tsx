@@ -6,6 +6,7 @@ import { useRouter } from '@/lib/navigation';
 import type { Product } from 'brainerce';
 import type { ProductQueryParams } from 'brainerce';
 import { getClient } from '@/lib/brainerce';
+import { useRegionId } from '@/providers/region-provider';
 import { ProductGrid } from '@/components/products/product-grid';
 import { LoadingSpinner } from '@/components/shared/loading-spinner';
 import { useTranslations } from '@/lib/translations';
@@ -278,6 +279,7 @@ export default function ProductsPageClient({
   const brandId = searchParams.get('brand') || '';
   const tagId = searchParams.get('tag') || '';
   const sortParam = searchParams.get('sort') || '0';
+  const regionId = useRegionId();
 
   const [products, setProducts] = useState<Product[]>(initialProducts);
   const [loading, setLoading] = useState(false);
@@ -313,6 +315,7 @@ export default function ProductsPageClient({
         if (categoryId) params.categories = categoryId;
         if (brandId) params.brands = brandId;
         if (tagId) params.tags = tagId;
+        if (regionId) params.regionId = regionId;
 
         const result = await client.getProducts(params);
 
@@ -331,7 +334,7 @@ export default function ProductsPageClient({
         setLoadingMore(false);
       }
     },
-    [searchQuery, categoryId, brandId, tagId, currentSort.sortBy, currentSort.sortOrder]
+    [searchQuery, categoryId, brandId, tagId, currentSort.sortBy, currentSort.sortOrder, regionId]
   );
 
   const skipInitialFetch = useRef(true);

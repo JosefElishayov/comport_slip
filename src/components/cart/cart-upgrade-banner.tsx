@@ -24,7 +24,7 @@ export function CartUpgradeBanner({
 }: CartUpgradeBannerProps) {
   const { storeInfo } = useStoreInfo();
   const t = useTranslations('cart');
-  const currency = storeInfo?.currency || 'USD';
+  const currency = storeInfo?.currency || 'ILS';
   const [upgrading, setUpgrading] = useState(false);
   const [dismissed, setDismissed] = useState(false);
 

@@ -4,7 +4,12 @@ import { useState, useRef, useMemo, useCallback } from 'react';
 import { Link, useRouter } from '@/lib/navigation';
 import Image from 'next/image';
 import type { Product } from 'brainerce';
-import { getProductPriceInfo, getVariantPrice, formatPrice } from 'brainerce';
+import { formatPrice } from 'brainerce';
+import {
+  getDisplayPriceInfo,
+  getVariantDisplayPriceInfo,
+  getProductDisplayCurrency,
+} from '@/lib/pricing';
 import { useTranslations } from '@/lib/translations';
 import { useAttributeLabel } from '@/lib/attribute-i18n';
 import { PriceDisplay } from '@/components/shared/price-display';
@@ -30,9 +35,14 @@ export function ProductCard({ product, className }: ProductCardProps) {
   const router = useRouter();
   const { refreshCart, openCartDrawer } = useCart();
   const { storeInfo } = useStoreInfo();
-  const currency = storeInfo?.currency || 'ILS';
+  const fallbackCurrency = storeInfo?.currency || 'ILS';
+  // Region currency overlay (EUR for FR visitors, etc.) when present on the product.
+  const currency = getProductDisplayCurrency(product, fallbackCurrency);
   const imageRef = useRef<HTMLDivElement>(null);
-  const { price, originalPrice, isOnSale } = getProductPriceInfo(product);
+  const { price, originalPrice, isOnSale, currency: priceCurrency } = getDisplayPriceInfo(
+    product,
+    fallbackCurrency
+  );
   const mainImage = product.images?.[0];
   const imageUrl = mainImage?.url || null;
   const slug = product.slug || product.id;
@@ -95,9 +105,9 @@ export function ProductCard({ product, className }: ProductCardProps) {
     : false;
   const simpleCanPurchase = product.inventory?.canPurchase !== false;
 
-  // Variant price display
+  // Variant price display (region currency when available)
   const variantPrice = selectedVariant
-    ? getVariantPrice(selectedVariant, product.basePrice)
+    ? getVariantDisplayPriceInfo(selectedVariant, product.basePrice, fallbackCurrency).price
     : null;
 
   async function handleAddToCart(e: React.MouseEvent) {
@@ -290,7 +300,9 @@ export function ProductCard({ product, className }: ProductCardProps) {
             ) : (
               (() => {
                 const variants = product.variants ?? [];
-                const prices = variants.map((v) => getVariantPrice(v, product.basePrice));
+                const prices = variants.map(
+                  (v) => getVariantDisplayPriceInfo(v, product.basePrice, fallbackCurrency).price
+                );
                 const min = Math.min(...prices);
                 const max = Math.max(...prices);
                 return (
@@ -303,7 +315,12 @@ export function ProductCard({ product, className }: ProductCardProps) {
               })()
             )
           ) : (
-            <PriceDisplay price={originalPrice} salePrice={isOnSale ? price : undefined} size="sm" />
+            <PriceDisplay
+              price={originalPrice}
+              salePrice={isOnSale ? price : undefined}
+              currency={priceCurrency}
+              size="sm"
+            />
           )}
         </div>
 

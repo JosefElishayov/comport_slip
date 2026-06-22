@@ -5,6 +5,7 @@ import { Link } from '@/lib/navigation';
 import type { Product, DiscountBanner } from 'brainerce';
 import { getClient } from '@/lib/brainerce';
 import { useStoreInfo } from '@/providers/store-provider';
+import { useRegionId } from '@/providers/region-provider';
 import { ProductGrid } from '@/components/products/product-grid';
 import { LoadingSpinner } from '@/components/shared/loading-spinner';
 import { Reveal } from '@/components/shared/reveal';
@@ -17,6 +18,7 @@ interface HomePageClientProps {
 
 export default function HomePageClient({ initialProducts, initialBanners }: HomePageClientProps) {
   useStoreInfo();
+  const regionId = useRegionId();
   const [products, setProducts] = useState<Product[]>(initialProducts);
   const [banners, setBanners] = useState<DiscountBanner[]>(initialBanners);
   const [bannerDismissed, setBannerDismissed] = useState(false);
@@ -85,7 +87,7 @@ export default function HomePageClient({ initialProducts, initialBanners }: Home
       try {
         const client = getClient();
         const [productsRes, bannersRes] = await Promise.allSettled([
-          client.getProducts({ limit: 8, sortBy: 'createdAt', sortOrder: 'desc' }),
+          client.getProducts({ limit: 8, sortBy: 'createdAt', sortOrder: 'desc', regionId: regionId ?? undefined }),
           client.getDiscountBanners(),
         ]);
 
@@ -103,7 +105,7 @@ export default function HomePageClient({ initialProducts, initialBanners }: Home
     }
 
     load();
-  }, []);
+  }, [regionId]);
 
   return (
     <div>

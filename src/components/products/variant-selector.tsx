@@ -5,6 +5,7 @@ import type { Product, ProductVariant } from 'brainerce';
 import { getVariantOptions, getProductSwatches, formatPrice } from 'brainerce';
 import type { InventoryInfo } from 'brainerce';
 import { useStoreInfo } from '@/providers/store-provider';
+import { getVariantDisplayPriceInfo } from '@/lib/pricing';
 import { useTranslations } from '@/lib/translations';
 import { useAttributeLabel } from '@/lib/attribute-i18n';
 import { cn } from '@/lib/utils';
@@ -37,7 +38,7 @@ export function VariantSelector({
   const { storeInfo } = useStoreInfo();
   const t = useTranslations('productDetail');
   const attrLabel = useAttributeLabel();
-  const currency = storeInfo?.currency || 'USD';
+  const fallbackCurrency = storeInfo?.currency || 'ILS';
   const variants = useMemo(() => product.variants || [], [product.variants]);
 
   // Get swatch metadata from product attribute options
@@ -265,15 +266,16 @@ export function VariantSelector({
       {/* Variant-specific info */}
       {selectedVariant && (
         <div className="text-muted-foreground flex items-center gap-3 pt-1 text-sm">
-          {selectedVariant.price && (
-            <span>
-              {
-                formatPrice(selectedVariant.salePrice || selectedVariant.price, {
-                  currency,
-                }) as string
-              }
-            </span>
-          )}
+          {selectedVariant.price &&
+            (() => {
+              // Region-aware: prefer the variant's converted display price/currency.
+              const vinfo = getVariantDisplayPriceInfo(
+                selectedVariant,
+                product.basePrice,
+                fallbackCurrency
+              );
+              return <span>{formatPrice(vinfo.price, { currency: vinfo.currency }) as string}</span>;
+            })()}
           <span>{getTranslatedStockStatus(selectedVariant.inventory, t)}</span>
         </div>
       )}

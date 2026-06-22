@@ -20,7 +20,7 @@ export function TaxDisplay({ addressSet, taxAmount, taxBreakdown, className }: T
   const t = useTranslations('checkout');
   const tc = useTranslations('common');
   const { storeInfo } = useStoreInfo();
-  const currency = storeInfo?.currency || 'USD';
+  const currency = storeInfo?.currency || 'ILS';
 
   // Before address is set
   if (!addressSet) {

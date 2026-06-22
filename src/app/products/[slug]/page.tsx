@@ -1,7 +1,8 @@
 import type { Metadata } from 'next';
 import { notFound } from 'next/navigation';
-import { getServerClient } from '@/lib/brainerce';
+import { getServerClient, getServerProductBySlug } from '@/lib/brainerce';
 import { getServerLocale } from '@/lib/locale-server';
+import { getServerRegionId } from '@/lib/region-server';
 import { ProductJsonLd } from '@/components/seo/product-json-ld';
 import { ProductClientSection } from './product-client-section';
 
@@ -74,7 +75,7 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
       new Set([...tagNames, ...categoryNames, ...brandNames, product.name].filter(Boolean))
     );
 
-    const currency = process.env.NEXT_PUBLIC_STORE_CURRENCY || 'USD';
+    const currency = process.env.NEXT_PUBLIC_STORE_CURRENCY || 'ILS';
     const inStock = product.inventory?.canPurchase !== false;
     const ogLocale = (locale || process.env.NEXT_PUBLIC_DEFAULT_LOCALE || 'he_IL').replace(
       '-',
@@ -143,11 +144,11 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
 export default async function ProductDetailPage({ params }: Props) {
   const { slug, locale: paramLocale } = await params;
   const locale = paramLocale ?? (await getServerLocale());
+  const regionId = await getServerRegionId();
 
   let product;
   try {
-    const client = getServerClient(locale);
-    product = await client.getProductBySlug(slug);
+    product = await getServerProductBySlug(slug, { locale, regionId });
   } catch {
     // Network/backend error — let Next show 404 rather than 500 to crawlers.
     notFound();
@@ -160,7 +161,7 @@ export default async function ProductDetailPage({ params }: Props) {
   // For absolute URL in JSON-LD we DO need to encode — this is a raw string,
   // not a Next.js Metadata field.
   const productUrl = `${baseUrl}/products/${encodeURIComponent(slug)}`;
-  const currency = process.env.NEXT_PUBLIC_STORE_CURRENCY || 'USD';
+  const currency = process.env.NEXT_PUBLIC_STORE_CURRENCY || 'ILS';
 
   return (
     <>

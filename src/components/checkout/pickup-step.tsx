@@ -29,7 +29,7 @@ export function PickupStep({
   const tf = useTranslations('checkoutForm');
   const tc = useTranslations('common');
   const { storeInfo } = useStoreInfo();
-  const currency = storeInfo?.currency || 'USD';
+  const currency = storeInfo?.currency || 'ILS';
 
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [email, setEmail] = useState(initialEmail);

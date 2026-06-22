@@ -32,7 +32,7 @@ export async function ProductJsonLd(props: ProductJsonLdProps) {
   }
 }
 
-async function renderProductJsonLd({ product, url, currency = 'USD' }: ProductJsonLdProps) {
+async function renderProductJsonLd({ product, url, currency = 'ILS' }: ProductJsonLdProps) {
   const priceInfo = getProductPriceInfo(product);
   const baseUrl = process.env.NEXT_PUBLIC_SITE_URL || '';
   const storeName = process.env.NEXT_PUBLIC_STORE_NAME || undefined;

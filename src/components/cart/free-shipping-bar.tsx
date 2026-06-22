@@ -25,7 +25,7 @@ export function FreeShippingBar({ className }: FreeShippingBarProps) {
   const remaining = Math.max(0, threshold - subtotal);
   const progress = Math.min(100, (subtotal / threshold) * 100);
   const qualified = remaining <= 0;
-  const currency = storeInfo?.currency || 'USD';
+  const currency = storeInfo?.currency || 'ILS';
 
   // Don't show if already qualified
   if (qualified) {

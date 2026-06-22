@@ -10,8 +10,9 @@ import type {
   ProductMetafield,
   DownloadFile,
 } from 'brainerce';
-import { getProductPriceInfo, getDescriptionContent } from 'brainerce';
-import { useCart } from '@/providers/store-provider';
+import { getDescriptionContent } from 'brainerce';
+import { useCart, useStoreInfo } from '@/providers/store-provider';
+import { getDisplayPriceInfo, getVariantDisplayPriceInfo } from '@/lib/pricing';
 import { flyToCart } from '@/lib/fly-to-cart';
 import { PriceDisplay } from '@/components/shared/price-display';
 import { LoadingSpinner } from '@/components/shared/loading-spinner';
@@ -116,6 +117,8 @@ interface ProductClientSectionProps {
 
 export function ProductClientSection({ product: initialProduct }: ProductClientSectionProps) {
   const { refreshCart, openCartDrawer } = useCart();
+  const { storeInfo } = useStoreInfo();
+  const fallbackCurrency = storeInfo?.currency || 'ILS';
   const mainImageRef = useRef<HTMLDivElement>(null);
   const t = useTranslations('productDetail');
 
@@ -161,9 +164,17 @@ export function ProductClientSection({ product: initialProduct }: ProductClientS
     return images[selectedImageIndex]?.url || null;
   }, [selectedImageIndex, selectedVariant, images]);
 
-  // Price info - use variant price if selected, else product price
+  // Price info - use variant price if selected, else product price.
+  // Region currency overlay (displayPrice/displayCurrency) is preferred when
+  // present; the `currency` field tells PriceDisplay how to format.
   const priceInfo = useMemo(() => {
     if (selectedVariant?.price) {
+      // When the variant carries a region display price, it is the authoritative
+      // converted value — use it directly (no separate discount-rule overlay).
+      if (selectedVariant.displayCurrency && selectedVariant.displayPrice != null) {
+        return getVariantDisplayPriceInfo(selectedVariant, product.basePrice, fallbackCurrency);
+      }
+
       const variantBase = parseFloat(selectedVariant.price);
       const variantSale = selectedVariant.salePrice ? parseFloat(selectedVariant.salePrice) : null;
       const variantEffective =
@@ -182,6 +193,7 @@ export function ProductClientSection({ product: initialProduct }: ProductClientS
           isOnSale: discounted < variantEffective,
           discountAmount: amount,
           discountPercent: variantEffective > 0 ? Math.round((amount / variantEffective) * 100) : 0,
+          currency: fallbackCurrency,
         };
       }
 
@@ -193,10 +205,11 @@ export function ProductClientSection({ product: initialProduct }: ProductClientS
           variantEffective < variantBase && variantBase > 0
             ? Math.round(((variantBase - variantEffective) / variantBase) * 100)
             : 0,
+        currency: fallbackCurrency,
       };
     }
-    return getProductPriceInfo(product);
-  }, [product, selectedVariant]);
+    return getDisplayPriceInfo(product, fallbackCurrency);
+  }, [product, selectedVariant, fallbackCurrency]);
 
   // Inventory: use variant inventory if selected, else product inventory
   const inventory = selectedVariant?.inventory ?? product?.inventory ?? null;
@@ -391,6 +404,7 @@ export function ProductClientSection({ product: initialProduct }: ProductClientS
           <PriceDisplay
             price={priceInfo.originalPrice}
             salePrice={priceInfo.isOnSale ? priceInfo.price : undefined}
+            currency={priceInfo.currency}
             size="lg"
           />
 

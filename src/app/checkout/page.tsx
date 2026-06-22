@@ -34,7 +34,7 @@ function CheckoutContent() {
   const { storeInfo } = useStoreInfo();
   const { cart, refreshCart } = useCart();
   const { isLoggedIn } = useAuth();
-  const currency = storeInfo?.currency || 'USD';
+  const currency = storeInfo?.currency || 'ILS';
   const t = useTranslations('checkout');
   const tc = useTranslations('common');
 

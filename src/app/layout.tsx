@@ -4,6 +4,8 @@ import { cookies } from 'next/headers';
 import { Assistant } from 'next/font/google';
 import { LocaleProvider } from '@/providers/locale-provider';
 import { LOCALE_COOKIE, getDirection, normalizeLocale } from '@/lib/locale';
+import { RegionProvider } from '@/providers/region-provider';
+import { getServerRegionId } from '@/lib/region-server';
 import { StoreProvider } from '@/providers/store-provider';
 import { Header } from '@/components/layout/header';
 import { Footer } from '@/components/layout/footer';
@@ -136,6 +138,7 @@ export default async function RootLayout({
   const cookieStore = await cookies();
   const locale = normalizeLocale(cookieStore.get(LOCALE_COOKIE)?.value);
   const dir = getDirection(locale);
+  const regionId = (await getServerRegionId()) ?? null;
   return (
     <html lang={locale} dir={dir}>
       <head>
@@ -154,6 +157,7 @@ export default async function RootLayout({
       </head>
       <body className={font.className}>
         <LocaleProvider locale={locale}>
+        <RegionProvider regionId={regionId}>
         <StoreProvider>
           <SkipToContent />
           <div className="min-h-screen flex flex-col">
@@ -166,6 +170,7 @@ export default async function RootLayout({
           <ShabbatOverlay />
           <BrainerceBot />
         </StoreProvider>
+        </RegionProvider>
         </LocaleProvider>
       </body>
     </html>

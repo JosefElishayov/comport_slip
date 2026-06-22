@@ -38,7 +38,7 @@ export function Header() {
 
   const isTransparent = isHeroPage && !scrolled;
 
-  const currency = storeInfo?.currency || 'USD';
+  const currency = storeInfo?.currency || 'ILS';
 
   // Track scroll position for shrinking header effect
   useEffect(() => {

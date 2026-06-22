@@ -14,7 +14,7 @@ export function CartSummary({ className }: CartSummaryProps) {
   const tc = useTranslations('common');
   const { storeInfo } = useStoreInfo();
   const { totals, cart } = useCart();
-  const currency = storeInfo?.currency || 'USD';
+  const currency = storeInfo?.currency || 'ILS';
 
   const rules = cart?.appliedDiscounts;
   const ruleAmt = cart?.ruleDiscountAmount ? parseFloat(cart.ruleDiscountAmount) : 0;

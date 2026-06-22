@@ -64,6 +64,13 @@ export function middleware(request: NextRequest) {
   const requestHeaders = new Headers(request.headers);
   requestHeaders.set('x-nonce', nonce);
 
+  // Forward the visitor's country (Cloudflare edge header) so Server Components
+  // can resolve the right region/currency for per-region pricing.
+  const country = request.headers.get('cf-ipcountry');
+  if (country) {
+    requestHeaders.set('x-geo-country', country);
+  }
+
   const isProtected = PROTECTED_PATHS.some((p) => pathname.startsWith(p));
 
   if (isProtected) {

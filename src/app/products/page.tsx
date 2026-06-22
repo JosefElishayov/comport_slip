@@ -3,6 +3,7 @@ import type { Metadata } from 'next';
 import type { Product, ProductQueryParams } from 'brainerce';
 import { getServerClient } from '@/lib/brainerce';
 import { getServerLocale } from '@/lib/locale-server';
+import { getServerRegionId } from '@/lib/region-server';
 import { LoadingSpinner } from '@/components/shared/loading-spinner';
 import { sortOptions } from './sort-options';
 import ProductsPageClient, { type CategoryNode } from './products-page-client';
@@ -72,6 +73,8 @@ export default async function ProductsPage({ searchParams }: ProductsPageProps) 
   if (sp.tag) params.tags = sp.tag;
 
   const locale = await getServerLocale();
+  const regionId = await getServerRegionId();
+  if (regionId) params.regionId = regionId;
   const client = getServerClient(locale);
   const [productsRes, catRes, brandRes, tagRes] = await Promise.allSettled([
     client.getProducts(params),
