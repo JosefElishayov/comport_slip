@@ -1,5 +1,6 @@
 
 import { NextRequest, NextResponse } from 'next/server';
+import { stripLocalePrefix, withLocalePrefix } from '@/lib/locale';
 
 const TOKEN_COOKIE = 'brainerce_customer_token';
 
@@ -60,9 +61,17 @@ export function middleware(request: NextRequest) {
     return NextResponse.next();
   }
 
+  // Locale is derived from the URL prefix (`/en/...`), not a cookie — so it is
+  // authoritative for crawlers (which carry no cookie). The default locale (he)
+  // lives at the root unprefixed. Prefixed requests are rewritten back onto the
+  // shared route tree, with the active locale forwarded via `x-locale`.
+  const { locale, pathname: barePath } = stripLocalePrefix(pathname);
+  const hasPrefix = barePath !== pathname;
+
   const nonce = generateNonce();
   const requestHeaders = new Headers(request.headers);
   requestHeaders.set('x-nonce', nonce);
+  requestHeaders.set('x-locale', locale);
 
   // Forward the visitor's country (edge geo header) so Server Components can
   // resolve the right region/currency for per-region pricing. Vercel sets
@@ -73,17 +82,27 @@ export function middleware(request: NextRequest) {
     requestHeaders.set('x-geo-country', country);
   }
 
-  const isProtected = PROTECTED_PATHS.some((p) => pathname.startsWith(p));
+  const isProtected = PROTECTED_PATHS.some((p) => barePath.startsWith(p));
 
   if (isProtected) {
     const token = request.cookies.get(TOKEN_COOKIE);
     if (!token?.value) {
-      const loginUrl = new URL('/login', request.url);
+      // Keep the visitor in their language when bouncing to login.
+      const loginUrl = new URL(withLocalePrefix('/login', locale), request.url);
       return applyCspHeaders(NextResponse.redirect(loginUrl), nonce);
     }
   }
 
-  const response = NextResponse.next({ request: { headers: requestHeaders } });
+  // For `/en/...` rewrite onto the unprefixed route tree so the same routes
+  // serve both languages; the browser URL keeps its prefix.
+  let response: NextResponse;
+  if (hasPrefix) {
+    const rewriteUrl = request.nextUrl.clone();
+    rewriteUrl.pathname = barePath;
+    response = NextResponse.rewrite(rewriteUrl, { request: { headers: requestHeaders } });
+  } else {
+    response = NextResponse.next({ request: { headers: requestHeaders } });
+  }
   return applyCspHeaders(response, nonce);
 }
 

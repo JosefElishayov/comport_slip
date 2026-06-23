@@ -1,6 +1,6 @@
 import type { Metadata } from 'next';
-import { cookies } from 'next/headers';
-import { LOCALE_COOKIE, normalizeLocale, type Locale } from '@/lib/locale';
+import { type Locale } from '@/lib/locale';
+import { getServerLocale } from '@/lib/locale-server';
 
 const META = {
   he: {
@@ -14,7 +14,7 @@ const META = {
 } as const;
 
 export async function generateMetadata(): Promise<Metadata> {
-  const locale = normalizeLocale((await cookies()).get(LOCALE_COOKIE)?.value);
+  const locale = await getServerLocale();
   return { ...META[locale], alternates: { canonical: '/returns' } };
 }
 
@@ -191,7 +191,7 @@ const CONTENT: Record<Locale, { title: string; lastUpdated: string; sections: Se
 };
 
 export default async function ReturnsPage() {
-  const locale: Locale = normalizeLocale((await cookies()).get(LOCALE_COOKIE)?.value);
+  const locale: Locale = await getServerLocale();
   const c = CONTENT[locale];
 
   return (

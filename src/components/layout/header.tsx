@@ -3,6 +3,7 @@
 import { useState, useEffect, useRef, useCallback } from 'react';
 import { Link, useRouter } from '@/lib/navigation';
 import { usePathname } from 'next/navigation';
+import { stripLocalePrefix } from '@/lib/locale';
 import Image from 'next/image';
 import type { SearchSuggestions, ProductSuggestion } from 'brainerce';
 import { formatPrice } from 'brainerce';
@@ -23,7 +24,9 @@ export function Header() {
   const router = useRouter();
 
   const pathname = usePathname();
-  const isHeroPage = pathname === '/';
+  // Strip any `/en` prefix so route checks work the same in both languages.
+  const barePathname = stripLocalePrefix(pathname).pathname;
+  const isHeroPage = barePathname === '/';
 
   const [searchQuery, setSearchQuery] = useState('');
   const [suggestions, setSuggestions] = useState<SearchSuggestions | null>(null);

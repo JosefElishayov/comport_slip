@@ -1,9 +1,10 @@
 
 import type { Metadata } from 'next';
-import { cookies } from 'next/headers';
 import { Assistant } from 'next/font/google';
 import { LocaleProvider } from '@/providers/locale-provider';
-import { LOCALE_COOKIE, getDirection, normalizeLocale } from '@/lib/locale';
+import { NavLocaleProvider } from '@/providers/nav-locale-provider';
+import { getDirection } from '@/lib/locale';
+import { getServerLocale } from '@/lib/locale-server';
 import { RegionProvider } from '@/providers/region-provider';
 import { getServerRegionId } from '@/lib/region-server';
 import { StoreProvider } from '@/providers/store-provider';
@@ -41,8 +42,7 @@ const META_BY_LOCALE = {
 } as const;
 
 export async function generateMetadata(): Promise<Metadata> {
-  const cookieStore = await cookies();
-  const locale = normalizeLocale(cookieStore.get(LOCALE_COOKIE)?.value);
+  const locale = await getServerLocale();
   const m = META_BY_LOCALE[locale];
   const storeName = locale === 'en' ? 'Comfort Sleep' : 'קומפורט סליפ';
   return {
@@ -135,8 +135,7 @@ export default async function RootLayout({
   children: React.ReactNode;
 }) {
   const nonce = await getNonce();
-  const cookieStore = await cookies();
-  const locale = normalizeLocale(cookieStore.get(LOCALE_COOKIE)?.value);
+  const locale = await getServerLocale();
   const dir = getDirection(locale);
   const regionId = (await getServerRegionId()) ?? null;
   return (
@@ -157,6 +156,7 @@ export default async function RootLayout({
       </head>
       <body className={font.className}>
         <LocaleProvider locale={locale}>
+        <NavLocaleProvider>
         <RegionProvider regionId={regionId}>
         <StoreProvider>
           <SkipToContent />
@@ -171,6 +171,7 @@ export default async function RootLayout({
           <BrainerceBot />
         </StoreProvider>
         </RegionProvider>
+        </NavLocaleProvider>
         </LocaleProvider>
       </body>
     </html>

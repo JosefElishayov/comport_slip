@@ -2,7 +2,7 @@
 
 import React, { createContext, useContext, useMemo } from 'react';
 import { getMessages, type Messages } from '@/i18n';
-import { getDirection, type Locale } from '@/lib/locale';
+import { defaultLocale, getDirection, type Locale } from '@/lib/locale';
 import { getClient } from '@/lib/brainerce';
 
 interface LocaleContextValue {
@@ -48,4 +48,11 @@ export function useLocale(): LocaleContextValue {
 /** Active message bundle for the current locale. */
 export function useLocaleMessages(): Messages {
   return useLocale().messages;
+}
+
+/** Active locale without throwing when no provider is mounted (e.g. inside
+ *  error/not-found boundaries). Falls back to the default locale. Used by the
+ *  navigation wrapper, which must never crash a link. */
+export function useOptionalLocale(): Locale {
+  return useContext(LocaleContext)?.locale ?? defaultLocale;
 }

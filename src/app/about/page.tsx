@@ -1,7 +1,7 @@
 import type { Metadata } from 'next';
 import Link from 'next/link';
-import { cookies } from 'next/headers';
-import { LOCALE_COOKIE, normalizeLocale, type Locale } from '@/lib/locale';
+import { withLocalePrefix, type Locale } from '@/lib/locale';
+import { getServerLocale } from '@/lib/locale-server';
 
 const META = {
   he: {
@@ -17,7 +17,7 @@ const META = {
 } as const;
 
 export async function generateMetadata(): Promise<Metadata> {
-  const locale = normalizeLocale((await cookies()).get(LOCALE_COOKIE)?.value);
+  const locale = await getServerLocale();
   return { ...META[locale], alternates: { canonical: '/about' } };
 }
 
@@ -150,7 +150,7 @@ const CONTENT = {
 } as const;
 
 export default async function AboutPage() {
-  const locale: Locale = normalizeLocale((await cookies()).get(LOCALE_COOKIE)?.value);
+  const locale: Locale = await getServerLocale();
   const c = CONTENT[locale];
 
   return (
@@ -274,7 +274,7 @@ export default async function AboutPage() {
           </p>
           <div className="mt-8 flex flex-col items-center justify-center gap-3 sm:flex-row sm:gap-4">
             <Link
-              href="/products"
+              href={withLocalePrefix('/products', locale)}
               className="inline-flex items-center gap-2 rounded-full bg-accent px-8 py-3.5 text-base font-semibold text-white shadow-lg transition-all hover:shadow-xl hover:brightness-110"
             >
               {c.ctaProducts}
@@ -283,7 +283,7 @@ export default async function AboutPage() {
               </svg>
             </Link>
             <Link
-              href="/"
+              href={withLocalePrefix('/', locale)}
               className="inline-flex items-center gap-2 rounded-full border-2 border-white/40 bg-white/10 px-8 py-3.5 text-base font-semibold text-white backdrop-blur transition-all hover:bg-white/20"
             >
               {c.ctaHome}

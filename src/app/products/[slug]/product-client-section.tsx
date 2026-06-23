@@ -2,7 +2,7 @@
 
 import { useEffect, useState, useMemo, useRef } from 'react';
 import Image from 'next/image';
-import Link from 'next/link';
+import { Link, useRouter } from '@/lib/navigation';
 import type {
   Product,
   ProductVariant,
@@ -24,6 +24,8 @@ import { ProductShareButton } from '@/components/shared/product-share-button';
 import { RatingSummary } from '@/components/products/star-rating';
 import { ProductReviews } from '@/components/products/product-reviews';
 import { useTranslations } from '@/lib/translations';
+import { useOptionalLocale } from '@/providers/locale-provider';
+import { withLocalePrefix } from '@/lib/locale';
 import { cn } from '@/lib/utils';
 import { sanitizeProductHtml } from '@/lib/sanitize-html';
 
@@ -118,9 +120,11 @@ interface ProductClientSectionProps {
 export function ProductClientSection({ product: initialProduct }: ProductClientSectionProps) {
   const { refreshCart, openCartDrawer } = useCart();
   const { storeInfo } = useStoreInfo();
+  const router = useRouter();
   const fallbackCurrency = storeInfo?.currency || 'ILS';
   const mainImageRef = useRef<HTMLDivElement>(null);
   const t = useTranslations('productDetail');
+  const locale = useOptionalLocale();
 
   const product = initialProduct;
   const recommendations = product?.recommendations ?? null;
@@ -132,6 +136,7 @@ export function ProductClientSection({ product: initialProduct }: ProductClientS
   const [quantity, setQuantity] = useState(1);
   const [addingToCart, setAddingToCart] = useState(false);
   const [addedMessage, setAddedMessage] = useState(false);
+  const [buyingNow, setBuyingNow] = useState(false);
 
   // Images list - switch main image when variant changes
   const images: ProductImage[] = useMemo(() => {
@@ -246,6 +251,30 @@ export function ProductClientSection({ product: initialProduct }: ProductClientS
       console.error('Failed to add to cart:', err);
     } finally {
       setAddingToCart(false);
+    }
+  }
+
+  // Buy Now: add this single item to the cart server-side, then go straight to
+  // checkout. Brainerce always builds a Checkout from a cart (createCheckout
+  // requires a cartId), so there's no cart-less path — but the cart logic stays
+  // invisible to the buyer: one click, straight to payment.
+  async function handleBuyNow() {
+    if (!product || buyingNow || addingToCart) return;
+
+    try {
+      setBuyingNow(true);
+      const { getClient } = await import('@/lib/brainerce');
+      const client = getClient();
+      await client.smartAddToCart({
+        productId: product.id,
+        variantId: selectedVariant?.id,
+        quantity,
+      });
+      await refreshCart();
+      router.push('/checkout');
+    } catch (err) {
+      console.error('Failed to start checkout:', err);
+      setBuyingNow(false);
     }
   }
 
@@ -426,7 +455,7 @@ export function ProductClientSection({ product: initialProduct }: ProductClientS
           )}
 
           <ProductShareButton
-            path={`/products/${product.slug || product.id}`}
+            path={withLocalePrefix(`/products/${product.slug || product.id}`, locale)}
             title={product.name}
             shareText={product.description || product.name}
             imageUrl={mainImageUrl}
@@ -534,6 +563,30 @@ export function ProductClientSection({ product: initialProduct }: ProductClientS
               )}
             </button>
           </div>
+
+          {/* Buy Now — secondary, straight to checkout */}
+          <button
+            type="button"
+            onClick={handleBuyNow}
+            disabled={!canPurchase || addingToCart || buyingNow}
+            className={cn(
+              'w-full rounded-xl border px-6 py-3.5 text-sm font-semibold transition-all',
+              canPurchase
+                ? 'border-border bg-transparent text-foreground hover:bg-secondary'
+                : 'border-border bg-muted text-muted-foreground cursor-not-allowed'
+            )}
+          >
+            {buyingNow ? (
+              <span className="inline-flex items-center gap-2">
+                <LoadingSpinner size="sm" className="border-foreground/30 border-t-foreground" />
+                {t('processing')}
+              </span>
+            ) : !canPurchase ? (
+              t('outOfStock')
+            ) : (
+              t('buyNow')
+            )}
+          </button>
 
           {/* Download after purchase note */}
           {product.isDownloadable && (

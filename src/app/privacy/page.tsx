@@ -1,6 +1,6 @@
 import type { Metadata } from 'next';
-import { cookies } from 'next/headers';
-import { LOCALE_COOKIE, normalizeLocale, type Locale } from '@/lib/locale';
+import { type Locale } from '@/lib/locale';
+import { getServerLocale } from '@/lib/locale-server';
 
 const META = {
   he: {
@@ -14,7 +14,7 @@ const META = {
 } as const;
 
 export async function generateMetadata(): Promise<Metadata> {
-  const locale = normalizeLocale((await cookies()).get(LOCALE_COOKIE)?.value);
+  const locale = await getServerLocale();
   return { ...META[locale], alternates: { canonical: '/privacy' } };
 }
 
@@ -341,7 +341,7 @@ const CONTENT: Record<Locale, { title: string; lastUpdated: string; sections: Se
 };
 
 export default async function PrivacyPage() {
-  const locale: Locale = normalizeLocale((await cookies()).get(LOCALE_COOKIE)?.value);
+  const locale: Locale = await getServerLocale();
   const c = CONTENT[locale];
   // Section 12 (Your rights) carries the authority-link footnote.
   const rightsIndex = c.sections.findIndex((s) => s.highlight && s.title.includes('12'));

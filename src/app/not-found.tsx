@@ -1,6 +1,6 @@
 import Link from 'next/link';
-import { cookies } from 'next/headers';
-import { LOCALE_COOKIE, normalizeLocale, type Locale } from '@/lib/locale';
+import { withLocalePrefix, type Locale } from '@/lib/locale';
+import { getServerLocale } from '@/lib/locale-server';
 
 const CONTENT = {
   he: {
@@ -24,7 +24,7 @@ const CONTENT = {
 } as const;
 
 export default async function NotFound() {
-  const locale: Locale = normalizeLocale((await cookies()).get(LOCALE_COOKIE)?.value);
+  const locale: Locale = await getServerLocale();
   const c = CONTENT[locale];
   const isRtl = locale === 'he';
 
@@ -74,7 +74,7 @@ export default async function NotFound() {
 
       {/* CTA */}
       <Link
-        href="/products"
+        href={withLocalePrefix('/products', locale)}
         className="inline-flex items-center gap-2 rounded-lg px-8 py-4 text-[15px] font-semibold transition-all duration-150 hover:-translate-y-0.5 active:translate-y-0"
         style={{
           background: 'var(--accent, #1a1916)',

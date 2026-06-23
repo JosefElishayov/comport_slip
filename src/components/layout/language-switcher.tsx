@@ -1,8 +1,15 @@
 'use client';
 
 import { useCallback } from 'react';
-import { LOCALE_COOKIE, locales, type Locale } from '@/lib/locale';
+import {
+  LOCALE_COOKIE,
+  locales,
+  stripLocalePrefix,
+  withLocalePrefix,
+  type Locale,
+} from '@/lib/locale';
 import { useLocale } from '@/providers/locale-provider';
+import { useLocaleAlternates } from '@/providers/nav-locale-provider';
 
 const LABELS: Record<Locale, string> = {
   he: 'עברית',
@@ -22,17 +29,26 @@ export function LanguageSwitcher({
   variant?: 'inline' | 'block';
 }) {
   const { locale: active } = useLocale();
+  const alternates = useLocaleAlternates();
 
   const setLocale = useCallback(
     (next: Locale) => {
       if (next === active) return;
-      // 1 year, site-wide. Read by the layout (server) on the next request.
+      // Remember the preference (used as a fallback when no URL prefix is present).
       document.cookie = `${LOCALE_COOKIE}=${next}; path=/; max-age=31536000; samesite=lax`;
-      // Full reload so Server Components (static pages, <html dir>) and the
-      // store data re-render in the chosen language.
-      window.location.reload();
+
+      // Prefer a page-registered alternate (e.g. product pages, whose slug
+      // differs per locale — a naive prefix toggle would 404). Otherwise toggle
+      // the locale prefix on the current path, preserving query + hash.
+      let target = alternates[next];
+      if (!target) {
+        const { pathname: bare } = stripLocalePrefix(window.location.pathname);
+        target = withLocalePrefix(bare, next) + window.location.search + window.location.hash;
+      }
+      // Full navigation so Server Components re-render in the chosen language.
+      window.location.assign(target);
     },
-    [active]
+    [active, alternates]
   );
 
   const base = 'rounded-full px-2.5 py-1 text-xs font-semibold transition-colors';

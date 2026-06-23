@@ -1,7 +1,7 @@
 'use client';
 
 import { useCallback, useEffect, useState } from 'react';
-import Link from 'next/link';
+import { Link } from '@/lib/navigation';
 import { useTranslations } from '@/lib/translations';
 
 // Local mirror of SDK types — the brainerce package declares these interfaces

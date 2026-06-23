@@ -3,7 +3,9 @@ import { notFound } from 'next/navigation';
 import { getServerClient, getServerProductBySlug } from '@/lib/brainerce';
 import { getServerLocale } from '@/lib/locale-server';
 import { getServerRegionId } from '@/lib/region-server';
+import { withLocalePrefix, locales, type Locale } from '@/lib/locale';
 import { ProductJsonLd } from '@/components/seo/product-json-ld';
+import { RegisterLocaleAlternates } from '@/providers/nav-locale-provider';
 import { ProductClientSection } from './product-client-section';
 
 type Props = {
@@ -33,11 +35,13 @@ function clamp(text: string, max: number): string {
 }
 
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
-  const { slug, locale: paramLocale } = await params;
-  const locale = paramLocale ?? (await getServerLocale());
+  const { slug } = await params;
+  const locale = await getServerLocale();
   // Pass the raw slug — Next.js encodes the path when resolving against
   // metadataBase. Pre-encoding produces %25-escaped (double-encoded) URLs.
-  const canonicalPath = `/products/${slug}`;
+  // Canonical is self-referential per locale: he stays at the root (unchanged),
+  // en lives under /en — so the Hebrew canonical is byte-identical to before.
+  const canonicalPath = withLocalePrefix(`/products/${slug}`, locale);
 
   try {
     const client = getServerClient(locale);
@@ -96,12 +100,31 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
     if (brandNames.length > 0) otherMeta['product:brand'] = brandNames[0];
     if (categoryNames.length > 0) otherMeta['product:category'] = categoryNames[0];
 
+    // Reciprocal hreflang: map each locale to its own slug (slug is locale-aware
+    // via Accept-Language). x-default points at Hebrew (the default locale).
+    // Built from the slug we already have + one fetch of the alternate locale.
+    const slugByLocale: Partial<Record<Locale, string>> = { [locale]: product.slug || slug };
+    const otherLocale = locales.find((l) => l !== locale);
+    if (otherLocale) {
+      try {
+        const alt = await getServerClient(otherLocale).getProduct(product.id);
+        if (alt?.slug) slugByLocale[otherLocale] = alt.slug;
+      } catch {
+        // Alternate fetch failed — emit canonical only, no hreflang this render.
+      }
+    }
+    const languages: Record<string, string> = {};
+    if (slugByLocale.he) languages['he-IL'] = withLocalePrefix(`/products/${slugByLocale.he}`, 'he');
+    if (slugByLocale.en) languages['en-US'] = withLocalePrefix(`/products/${slugByLocale.en}`, 'en');
+    if (slugByLocale.he) languages['x-default'] = withLocalePrefix(`/products/${slugByLocale.he}`, 'he');
+
     return {
       title: seoTitle,
       description: cleanedDescription,
       keywords: keywords.length > 0 ? keywords : undefined,
       alternates: {
         canonical: canonicalPath,
+        ...(Object.keys(languages).length > 0 ? { languages } : {}),
       },
       openGraph: {
         title: seoTitle,
@@ -142,8 +165,8 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
 }
 
 export default async function ProductDetailPage({ params }: Props) {
-  const { slug, locale: paramLocale } = await params;
-  const locale = paramLocale ?? (await getServerLocale());
+  const { slug } = await params;
+  const locale = await getServerLocale();
   const regionId = await getServerRegionId();
 
   let product;
@@ -163,8 +186,28 @@ export default async function ProductDetailPage({ params }: Props) {
   const productUrl = `${baseUrl}/products/${encodeURIComponent(slug)}`;
   const currency = process.env.NEXT_PUBLIC_STORE_CURRENCY || 'ILS';
 
+  // Per-locale alternate URLs so the language switcher swaps to the matching
+  // slug in the other language (each locale has a different slug — a plain
+  // prefix toggle would 404). The slug field is locale-aware via Accept-Language.
+  const alternates: Partial<Record<Locale, string>> = {
+    [locale]: withLocalePrefix(`/products/${product.slug || product.id}`, locale),
+  };
+  const otherLocale = locales.find((l) => l !== locale);
+  if (otherLocale) {
+    try {
+      const alt = await getServerClient(otherLocale).getProduct(product.id);
+      alternates[otherLocale] = withLocalePrefix(
+        `/products/${alt?.slug || product.id}`,
+        otherLocale
+      );
+    } catch {
+      // Alternate fetch failed — switcher falls back to a prefix toggle.
+    }
+  }
+
   return (
     <>
+      <RegisterLocaleAlternates alternates={alternates} />
       <ProductJsonLd product={product} url={productUrl} currency={currency} />
       <ProductClientSection product={product} />
     </>
