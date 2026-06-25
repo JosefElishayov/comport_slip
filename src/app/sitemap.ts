@@ -18,6 +18,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   const staticPaths: Array<{ path: string; priority: number }> = [
     { path: '', priority: 1 },
     { path: '/products', priority: 0.9 },
+    { path: '/blog', priority: 0.6 },
     { path: '/about', priority: 0.5 },
     { path: '/contact', priority: 0.5 },
     { path: '/privacy', priority: 0.3 },
@@ -70,7 +71,43 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
         };
       });
 
-    return [...staticPages, ...productPages];
+    // Blog posts — localized slugs, same he/en reciprocal-alternates treatment.
+    let blogPages: MetadataRoute.Sitemap = [];
+    try {
+      const hePosts = (await getServerClient('he').blog.getPosts({ limit: 1000 })).data;
+      const enSlugById = new Map<string, string>();
+      try {
+        const enPosts = (await getServerClient('en').blog.getPosts({ limit: 1000 })).data;
+        for (const p of enPosts) if (p.slug) enSlugById.set(p.id, p.slug);
+      } catch {
+        // English fetch failed — emit Hebrew-only blog entries.
+      }
+      blogPages = hePosts
+        .filter((post) => !!post.slug)
+        .map((post) => {
+          const enSlug = enSlugById.get(post.id);
+          return {
+            url: `${baseUrl}/blog/${post.slug}`,
+            lastModified: post.updatedAt ? new Date(post.updatedAt) : new Date(),
+            priority: 0.6,
+            ...(enSlug
+              ? {
+                  alternates: {
+                    languages: languagesFor(
+                      `/blog/${post.slug}`,
+                      `/en/blog/${enSlug}`,
+                      baseUrl
+                    ),
+                  },
+                }
+              : {}),
+          };
+        });
+    } catch {
+      // Blog fetch failed entirely — skip blog entries, keep the rest.
+    }
+
+    return [...staticPages, ...productPages, ...blogPages];
   } catch {
     return staticPages;
   }

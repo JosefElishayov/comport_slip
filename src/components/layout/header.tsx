@@ -167,6 +167,12 @@ export function Header() {
                 {t('products')}
               </Link>
               <Link
+                href="/blog"
+                className={`text-sm font-medium transition-colors ${isTransparent ? 'text-white/90 hover:text-white' : 'text-muted-foreground hover:text-primary'}`}
+              >
+                {t('blog')}
+              </Link>
+              <Link
                 href="/about"
                 className={`text-sm font-medium transition-colors ${isTransparent ? 'text-white/90 hover:text-white' : 'text-muted-foreground hover:text-primary'}`}
               >
@@ -398,6 +404,13 @@ export function Header() {
               className={`block rounded-lg px-3 py-2.5 text-sm font-medium transition-colors ${isTransparent ? 'text-white hover:bg-white/10' : 'text-foreground hover:bg-secondary/50'}`}
             >
               {t('products')}
+            </Link>
+            <Link
+              href="/blog"
+              onClick={() => setMobileMenuOpen(false)}
+              className={`block rounded-lg px-3 py-2.5 text-sm font-medium transition-colors ${isTransparent ? 'text-white hover:bg-white/10' : 'text-foreground hover:bg-secondary/50'}`}
+            >
+              {t('blog')}
             </Link>
             <Link
               href="/about"

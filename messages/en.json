@@ -49,7 +49,8 @@
     "search": "Search",
     "menu": "Menu",
     "about": "About",
-    "contact": "Contact"
+    "contact": "Contact",
+    "blog": "Blog"
   },
   "home": {
     "pageTitle": "Home",
@@ -478,7 +479,8 @@
     "hours2": "Tue: 11:00–14:00 (afternoon closed)",
     "hours3": "Fri–Sat: closed",
     "address": "30 Rashi St., Bnei Brak",
-    "sendInquiry": "Send an inquiry →"
+    "sendInquiry": "Send an inquiry →",
+    "blog": "Blog"
   },
   "contact": {
     "legacyName": "Contact us",

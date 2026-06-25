@@ -57,6 +57,12 @@ export function Footer() {
                 {tf('about')}
               </Link>
               <Link
+                href="/blog"
+                className="text-primary-foreground/70 hover:text-primary-foreground text-sm transition-colors"
+              >
+                {tf('blog')}
+              </Link>
+              <Link
                 href="/contact"
                 className="text-primary-foreground/70 hover:text-primary-foreground text-sm transition-colors"
               >
