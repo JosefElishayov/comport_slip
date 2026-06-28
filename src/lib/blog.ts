@@ -53,9 +53,23 @@ export async function getBlogPost(
   locale: Locale
 ): Promise<BlogPost | null> {
   try {
-    return await getServerClient(locale).blog.getPost(slug);
+    // Next.js hands the dynamic `[slug]` segment to us still percent-encoded for
+    // non-ASCII slugs (Hebrew). The SDK's getPost encodes the slug again on its
+    // way out — so passing the raw param double-encodes it and the backend 404s.
+    // Decode it first so the SDK encodes exactly once. (Mirrors the decode step
+    // in lib/brainerce's encodePathSegment for product-by-slug.)
+    return await getServerClient(locale).blog.getPost(normalizeSlug(slug));
   } catch {
     return null;
+  }
+}
+
+/** Decode a percent-encoded path segment if needed; idempotent and never throws. */
+function normalizeSlug(value: string): string {
+  try {
+    return decodeURIComponent(value);
+  } catch {
+    return value;
   }
 }
 
