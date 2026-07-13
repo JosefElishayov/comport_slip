@@ -1,6 +1,11 @@
 import type { MetadataRoute } from 'next';
 import { getServerClient } from '@/lib/brainerce';
 
+// Without this the sitemap is generated once at build time and frozen —
+// a product trashed/added in Brainerce wouldn't be reflected until the next
+// deploy. Hourly revalidation keeps it in sync with the catalog.
+export const revalidate = 3600;
+
 // Hebrew lives at the root (existing indexed URLs — unchanged); English under
 // /en. Each entry carries reciprocal hreflang alternates so Google treats the
 // two language versions as translations, not duplicates. x-default → Hebrew.

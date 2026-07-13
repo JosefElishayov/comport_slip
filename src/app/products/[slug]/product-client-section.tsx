@@ -311,7 +311,7 @@ export function ProductClientSection({ product: initialProduct }: ProductClientS
       </nav>
       <div className="grid grid-cols-1 gap-10 lg:grid-cols-2 lg:gap-16">
         {/* Image Gallery */}
-        <div className="space-y-4">
+        <div className="space-y-4 lg:sticky lg:top-24 lg:self-start">
           {/* Main Image */}
           <div ref={mainImageRef} className="bg-secondary/30 relative aspect-square overflow-hidden rounded-2xl shadow-sm">
             {mainImageUrl ? (
@@ -511,24 +511,24 @@ export function ProductClientSection({ product: initialProduct }: ProductClientS
             />
           )}
 
-          {/* Quantity + Add to Cart */}
-          <div className="flex items-center gap-4">
-            <div className="border-border flex items-center rounded-xl border bg-secondary/30">
+          {/* Quantity + Add to Cart + Buy Now — unified in a single row on every breakpoint */}
+          <div className="flex items-center gap-2 sm:gap-3">
+            <div className="border-border flex shrink-0 items-center rounded-xl border bg-secondary/30">
               <button
                 type="button"
                 onClick={() => setQuantity((q) => Math.max(1, q - 1))}
-                className="text-foreground hover:bg-secondary px-4 py-3 transition-colors rounded-s-xl"
+                className="text-foreground hover:bg-secondary px-2.5 py-3 transition-colors rounded-s-xl sm:px-4"
                 aria-label={t('decreaseQuantity')}
               >
                 -
               </button>
-              <span className="text-foreground min-w-[3rem] px-4 py-3 text-center text-sm font-semibold">
+              <span className="text-foreground min-w-[2rem] px-1 py-3 text-center text-sm font-semibold sm:min-w-[3rem] sm:px-4">
                 {quantity}
               </span>
               <button
                 type="button"
                 onClick={() => setQuantity((q) => q + 1)}
-                className="text-foreground hover:bg-secondary px-4 py-3 transition-colors rounded-e-xl"
+                className="text-foreground hover:bg-secondary px-2.5 py-3 transition-colors rounded-e-xl sm:px-4"
                 aria-label={t('increaseQuantity')}
               >
                 +
@@ -540,7 +540,7 @@ export function ProductClientSection({ product: initialProduct }: ProductClientS
               onClick={handleAddToCart}
               disabled={!canPurchase || addingToCart}
               className={cn(
-                'flex-1 rounded-xl px-6 py-3.5 text-sm font-semibold transition-all shadow-sm',
+                'min-w-0 flex-1 rounded-xl px-3 py-3.5 text-sm font-semibold whitespace-nowrap transition-all shadow-sm sm:px-6',
                 canPurchase
                   ? 'bg-accent text-accent-foreground hover:brightness-110 hover:shadow-md'
                   : 'bg-muted text-muted-foreground cursor-not-allowed'
@@ -562,31 +562,31 @@ export function ProductClientSection({ product: initialProduct }: ProductClientS
                 t('addToCart')
               )}
             </button>
-          </div>
 
-          {/* Buy Now — secondary, straight to checkout */}
-          <button
-            type="button"
-            onClick={handleBuyNow}
-            disabled={!canPurchase || addingToCart || buyingNow}
-            className={cn(
-              'w-full rounded-xl border px-6 py-3.5 text-sm font-semibold transition-all',
-              canPurchase
-                ? 'border-border bg-transparent text-foreground hover:bg-secondary'
-                : 'border-border bg-muted text-muted-foreground cursor-not-allowed'
-            )}
-          >
-            {buyingNow ? (
-              <span className="inline-flex items-center gap-2">
-                <LoadingSpinner size="sm" className="border-foreground/30 border-t-foreground" />
-                {t('processing')}
-              </span>
-            ) : !canPurchase ? (
-              t('outOfStock')
-            ) : (
-              t('buyNow')
-            )}
-          </button>
+            {/* Buy Now — secondary, straight to checkout */}
+            <button
+              type="button"
+              onClick={handleBuyNow}
+              disabled={!canPurchase || addingToCart || buyingNow}
+              className={cn(
+                'shrink-0 rounded-xl border px-3 py-3.5 text-sm font-semibold whitespace-nowrap transition-all sm:px-6',
+                canPurchase
+                  ? 'border-border bg-transparent text-foreground hover:bg-secondary'
+                  : 'border-border bg-muted text-muted-foreground cursor-not-allowed'
+              )}
+            >
+              {buyingNow ? (
+                <span className="inline-flex items-center gap-2">
+                  <LoadingSpinner size="sm" className="border-foreground/30 border-t-foreground" />
+                  {t('processing')}
+                </span>
+              ) : !canPurchase ? (
+                t('outOfStock')
+              ) : (
+                t('buyNow')
+              )}
+            </button>
+          </div>
 
           {/* Download after purchase note */}
           {product.isDownloadable && (

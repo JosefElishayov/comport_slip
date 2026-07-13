@@ -163,7 +163,7 @@ export default async function RootLayout({
           <SkipToContent />
           <div className="min-h-screen flex flex-col">
             <Header />
-            <main id="main-content" tabIndex={-1} className="flex-1 overflow-x-hidden">{children}</main>
+            <main id="main-content" tabIndex={-1} className="flex-1">{children}</main>
             <Footer />
           </div>
           <AccessibilityMenu />

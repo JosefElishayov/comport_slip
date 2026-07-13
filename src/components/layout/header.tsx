@@ -76,10 +76,11 @@ export function Header() {
     }, 300);
   }, []);
 
-  // Close suggestions / search panel on click outside
+  // Close suggestions / search panel on click outside (desktop panel or mobile menu search)
   useEffect(() => {
     function handleClickOutside(e: MouseEvent) {
-      if (searchRef.current && !searchRef.current.contains(e.target as Node)) {
+      const target = e.target as HTMLElement;
+      if (!target.closest('[data-search-area]')) {
         setShowSuggestions(false);
         setSearchOpen(false);
       }
@@ -119,6 +120,15 @@ export function Header() {
     setShowSuggestions(false);
     setSearchOpen(false);
     setSearchQuery('');
+    setMobileMenuOpen(false);
+  }
+
+  function handleCategoryClick(categoryId: string) {
+    router.push(`/products?category=${categoryId}`);
+    setShowSuggestions(false);
+    setSearchOpen(false);
+    setSearchQuery('');
+    setMobileMenuOpen(false);
   }
 
   return (
@@ -284,6 +294,7 @@ export function Header() {
         {/* Expanding Search Panel */}
         <div
           ref={searchRef}
+          data-search-area
           className={`overflow-hidden transition-[max-height,opacity] duration-300 ease-[cubic-bezier(0.22,1,0.36,1)] ${
             searchOpen ? 'max-h-[480px] opacity-100' : 'pointer-events-none max-h-0 opacity-0'
           }`}
@@ -368,12 +379,7 @@ export function Header() {
                       <button
                         key={cat.id}
                         type="button"
-                        onClick={() => {
-                          router.push(`/products?category=${cat.id}`);
-                          setShowSuggestions(false);
-                          setSearchOpen(false);
-                          setSearchQuery('');
-                        }}
+                        onClick={() => handleCategoryClick(cat.id)}
                         className="hover:bg-secondary/50 flex w-full items-center justify-between px-4 py-2.5 text-start transition-colors"
                       >
                         <span className="text-foreground text-sm">{cat.name}</span>
@@ -456,15 +462,95 @@ export function Header() {
             )}
 
             {/* Mobile search */}
-            <form onSubmit={handleSearchSubmit} className="px-2 pt-2">
-              <input
-                type="text"
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-                placeholder={t('searchPlaceholder')}
-                className={`h-10 w-full rounded-full border px-4 text-sm focus:outline-none focus:ring-2 transition-all ${isTransparent ? 'border-white/40 bg-white/10 text-white placeholder:text-white/60 focus:ring-white/20 focus:border-white/70' : 'border-border bg-secondary/50 text-foreground placeholder:text-muted-foreground focus:ring-primary/20 focus:border-primary'}`}
-              />
-            </form>
+            <div className="relative px-2 pt-2" data-search-area>
+              <form onSubmit={handleSearchSubmit}>
+                <input
+                  type="text"
+                  value={searchQuery}
+                  onChange={(e) => {
+                    setSearchQuery(e.target.value);
+                    fetchSuggestions(e.target.value);
+                  }}
+                  onFocus={() => {
+                    if (suggestions && searchQuery.length >= 2) setShowSuggestions(true);
+                  }}
+                  placeholder={t('searchPlaceholder')}
+                  className={`h-10 w-full rounded-full border px-4 text-sm focus:outline-none focus:ring-2 transition-all ${isTransparent ? 'border-white/40 bg-white/10 text-white placeholder:text-white/60 focus:ring-white/20 focus:border-white/70' : 'border-border bg-secondary/50 text-foreground placeholder:text-muted-foreground focus:ring-primary/20 focus:border-primary'}`}
+                />
+              </form>
+
+              {showSuggestions && suggestions && (
+                <div className="bg-background border-border absolute left-2 right-2 top-full z-50 mt-2 max-h-72 overflow-y-auto rounded-xl border shadow-lg">
+                  {suggestions.products.length > 0 && (
+                    <div>
+                      <div className="text-muted-foreground bg-secondary/50 px-4 py-2 text-xs font-medium">
+                        {t('products')}
+                      </div>
+                      {suggestions.products.map((product) => (
+                        <button
+                          key={product.id}
+                          type="button"
+                          onClick={() => handleSuggestionClick(product)}
+                          className="hover:bg-secondary/50 flex w-full items-center gap-3 px-4 py-2.5 text-start transition-colors"
+                        >
+                          {product.image ? (
+                            <Image
+                              src={product.image}
+                              alt={product.name}
+                              width={36}
+                              height={36}
+                              className="flex-shrink-0 rounded-lg object-cover"
+                            />
+                          ) : (
+                            <div className="bg-secondary h-9 w-9 flex-shrink-0 rounded-lg" />
+                          )}
+                          <div className="min-w-0 flex-1">
+                            <p className="text-foreground truncate text-sm">{product.name}</p>
+                            {(() => {
+                              const raw = product.salePrice || product.price;
+                              const num = parseFloat(raw);
+                              if (!num || num <= 0) return null;
+                              return (
+                                <p className="text-muted-foreground text-xs">
+                                  {formatPrice(raw, { currency }) as string}
+                                </p>
+                              );
+                            })()}
+                          </div>
+                        </button>
+                      ))}
+                    </div>
+                  )}
+
+                  {suggestions.categories.length > 0 && (
+                    <div>
+                      <div className="text-muted-foreground bg-secondary/50 px-4 py-2 text-xs font-medium">
+                        {t('categories')}
+                      </div>
+                      {suggestions.categories.map((cat) => (
+                        <button
+                          key={cat.id}
+                          type="button"
+                          onClick={() => handleCategoryClick(cat.id)}
+                          className="hover:bg-secondary/50 flex w-full items-center justify-between px-4 py-2.5 text-start transition-colors"
+                        >
+                          <span className="text-foreground text-sm">{cat.name}</span>
+                          <span className="text-muted-foreground text-xs">
+                            {cat.productCount} {tc('products')}
+                          </span>
+                        </button>
+                      ))}
+                    </div>
+                  )}
+
+                  {suggestions.products.length === 0 && suggestions.categories.length === 0 && (
+                    <div className="text-muted-foreground px-4 py-4 text-center text-sm">
+                      {tc('noResults')}
+                    </div>
+                  )}
+                </div>
+              )}
+            </div>
 
             {/* Language switcher (mobile) */}
             <div className={`mt-2 border-t pt-2 ${isTransparent ? 'border-white/20' : 'border-border'}`}>
