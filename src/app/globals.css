@@ -33,6 +33,7 @@
 /* Smooth scrolling */
 html {
   scroll-behavior: smooth;
+  overflow-x: hidden;
 }
 
 /* Hero spacer — reserves scroll space equal to the viewport */
@@ -65,6 +66,11 @@ html {
 @media (max-width: 640px) {
   .hero-spacer {
     height: 80vh;
+    height: 80dvh;
+  }
+  .hero-video-section {
+    height: calc(80vh - var(--banner-h, 0px));
+    height: calc(80dvh - var(--banner-h, 0px));
   }
 }
 

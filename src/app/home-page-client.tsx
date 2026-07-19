@@ -54,10 +54,12 @@ export default function HomePageClient({ initialProducts, initialBanners }: Home
       const overlay = heroOverlayRef.current;
       if (!hero) return;
 
-      const scrollY = window.scrollY;
+      // clamp negative values from iOS rubber-band overscroll so the hero
+      // never gets stuck mid-shrink (exposing page background at its edges)
+      const scrollY = Math.max(window.scrollY, 0);
       const vh = window.innerHeight;
       // shrink animation completes over first 55vh of scroll
-      const progress = Math.min(scrollY / (vh * 0.55), 1);
+      const progress = scrollY <= 0 ? 0 : Math.min(scrollY / (vh * 0.55), 1);
 
       const scale = 1 - progress * 0.2;
       const radius = progress * 28;
@@ -74,8 +76,16 @@ export default function HomePageClient({ initialProducts, initialBanners }: Home
     };
 
     window.addEventListener('scroll', handleScroll, { passive: true });
+    window.addEventListener('resize', handleScroll);
+    // mobile browsers restore scroll position from bfcache without firing
+    // 'scroll', which can leave the hero rendered mid-shrink from a stale run
+    window.addEventListener('pageshow', handleScroll);
     handleScroll();
-    return () => window.removeEventListener('scroll', handleScroll);
+    return () => {
+      window.removeEventListener('scroll', handleScroll);
+      window.removeEventListener('resize', handleScroll);
+      window.removeEventListener('pageshow', handleScroll);
+    };
   }, []);
 
   useEffect(() => {
