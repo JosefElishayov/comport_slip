@@ -33,7 +33,6 @@
 /* Smooth scrolling */
 html {
   scroll-behavior: smooth;
-  overflow-x: hidden;
 }
 
 /* Hero spacer — reserves scroll space equal to the viewport */

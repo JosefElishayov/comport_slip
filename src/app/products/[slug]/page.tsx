@@ -181,9 +181,20 @@ export default async function ProductDetailPage({ params }: Props) {
   }
 
   const baseUrl = process.env.NEXT_PUBLIC_SITE_URL || '';
-  // For absolute URL in JSON-LD we DO need to encode — this is a raw string,
-  // not a Next.js Metadata field.
-  const productUrl = `${baseUrl}/products/${encodeURIComponent(slug)}`;
+  // For the absolute URL in JSON-LD we DO need to encode — this is a raw string,
+  // not a Next.js Metadata field. Next hands `slug` to us already
+  // percent-encoded for non-ASCII (Hebrew), so decode first: encoding it as-is
+  // yields %25D7%259E… and points the structured data at a URL that isn't the
+  // canonical one. (Same decode-then-encode step as lib/brainerce's
+  // encodePathSegment.)
+  const decodedSlug = (() => {
+    try {
+      return decodeURIComponent(slug);
+    } catch {
+      return slug;
+    }
+  })();
+  const productUrl = `${baseUrl}/products/${encodeURIComponent(decodedSlug)}`;
   const currency = process.env.NEXT_PUBLIC_STORE_CURRENCY || 'ILS';
 
   // Per-locale alternate URLs so the language switcher swaps to the matching

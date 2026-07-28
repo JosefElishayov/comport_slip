@@ -1,5 +1,6 @@
 import type { MetadataRoute } from 'next';
 import { getServerClient } from '@/lib/brainerce';
+import { categoryPath, flattenLinkableCategories, getCategoryTree } from '@/lib/categories';
 
 // Without this the sitemap is generated once at build time and frozen —
 // a product trashed/added in Brainerce wouldn't be reflected until the next
@@ -39,6 +40,21 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     priority,
     alternates: { languages: languagesFor(path, `/en${path}`, baseUrl) },
   }));
+
+  // Category landing pages — the highest-priority organic surface after the
+  // homepage. Slugs are shared across locales (only the name is translated),
+  // so the he/en pair differs by URL prefix alone.
+  const categoryPages: MetadataRoute.Sitemap = flattenLinkableCategories(
+    await getCategoryTree()
+  ).map((category) => {
+    const path = categoryPath(category.slug);
+    return {
+      url: `${baseUrl}${path}`,
+      lastModified: new Date(),
+      priority: 0.85,
+      alternates: { languages: languagesFor(path, `/en${path}`, baseUrl) },
+    };
+  });
 
   try {
     // Hebrew slugs (default locale). The `slug` field is locale-aware, so a
@@ -112,8 +128,10 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
       // Blog fetch failed entirely — skip blog entries, keep the rest.
     }
 
-    return [...staticPages, ...productPages, ...blogPages];
+    return [...staticPages, ...categoryPages, ...productPages, ...blogPages];
   } catch {
-    return staticPages;
+    // Product fetch failed — categories resolve independently (and already
+    // degrade to [] on their own), so keep them rather than dropping to static.
+    return [...staticPages, ...categoryPages];
   }
 }

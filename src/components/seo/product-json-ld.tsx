@@ -45,10 +45,16 @@ async function renderProductJsonLd({ product, url, currency = 'ILS' }: ProductJs
     ? 'https://schema.org/InStock'
     : 'https://schema.org/OutOfStock';
 
-  // Default price validity: ~1 year out, common SEO recommendation.
-  const priceValidUntil = new Date(Date.now() + 365 * 24 * 60 * 60 * 1000)
-    .toISOString()
-    .split('T')[0];
+  // `priceValidUntil` must describe a real sale window — Brainerce exposes it as
+  // `salePriceEndsAt`. Emitting an invented date (e.g. "a year from now") tells
+  // Google the current price is guaranteed until then, which is a
+  // misrepresentation the moment the price moves. Omit it when there is no
+  // scheduled end; the field is optional.
+  const saleEndsDate = product.salePriceEndsAt ? new Date(product.salePriceEndsAt) : null;
+  const priceValidUntil =
+    saleEndsDate && !isNaN(saleEndsDate.getTime()) && saleEndsDate.getTime() > Date.now()
+      ? saleEndsDate.toISOString().split('T')[0]
+      : null;
 
   const brandNames =
     (product as { brands?: Array<{ name: string }> }).brands?.map((b) => b.name) ?? [];
@@ -105,7 +111,9 @@ async function renderProductJsonLd({ product, url, currency = 'ILS' }: ProductJs
       highPrice: Math.max(...variantPrices),
       offerCount: variantPrices.length,
       availability,
+      itemCondition: 'https://schema.org/NewCondition',
       url,
+      ...(priceValidUntil ? { priceValidUntil } : {}),
       ...(seller ? { seller } : {}),
     };
   } else {
@@ -115,8 +123,8 @@ async function renderProductJsonLd({ product, url, currency = 'ILS' }: ProductJs
       priceCurrency: currency,
       availability,
       itemCondition: 'https://schema.org/NewCondition',
-      priceValidUntil,
       url,
+      ...(priceValidUntil ? { priceValidUntil } : {}),
       ...(seller ? { seller } : {}),
     };
   }

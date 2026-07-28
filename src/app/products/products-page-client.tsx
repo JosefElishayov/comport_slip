@@ -1,8 +1,8 @@
 'use client';
 
-import { useEffect, useState, useCallback, useRef } from 'react';
+import { useEffect, useState, useCallback, useMemo, useRef } from 'react';
 import { useSearchParams } from 'next/navigation';
-import { useRouter } from '@/lib/navigation';
+import { Link, useRouter } from '@/lib/navigation';
 import type { Product } from 'brainerce';
 import type { ProductQueryParams } from 'brainerce';
 import { getClient } from '@/lib/brainerce';
@@ -18,9 +18,24 @@ const PAGE_SIZE = 20;
 export interface CategoryNode {
   id: string;
   name: string;
+  /** Present when the category has a landing page at `/category/${slug}`. */
+  slug?: string | null;
   image?: string | null;
   parentId?: string | null;
   children: CategoryNode[];
+}
+
+/** Flatten the tree to the categories that have a landing page to link to. */
+function linkableCategories(nodes: CategoryNode[]): Array<{ id: string; name: string; slug: string }> {
+  const out: Array<{ id: string; name: string; slug: string }> = [];
+  const walk = (list: CategoryNode[]) => {
+    for (const node of list) {
+      if (node.slug) out.push({ id: node.id, name: node.name, slug: node.slug });
+      if (node.children?.length) walk(node.children);
+    }
+  };
+  walk(nodes);
+  return out;
 }
 
 function isActiveInTree(node: CategoryNode, selectedId: string): boolean {
@@ -291,6 +306,8 @@ export default function ProductsPageClient({
   const [brands] = useState<Array<{ id: string; name: string }>>(initialBrands);
   const [tags] = useState<Array<{ id: string; name: string }>>(initialTags);
 
+  const categoryLinks = useMemo(() => linkableCategories(categories), [categories]);
+
   const sortIndex = parseInt(sortParam, 10) || 0;
   const currentSort = sortOptions[sortIndex] || sortOptions[0];
 
@@ -502,6 +519,28 @@ export default function ProductsPageClient({
             </div>
           )}
         </>
+      )}
+
+      {/* Real links to the category landing pages. The dropdown above only
+          rewrites query params, which leaves those pages orphaned — crawlers
+          need an <a href> to reach them. */}
+      {categoryLinks.length > 0 && (
+        <nav aria-labelledby="browse-by-category" className="mt-12 border-t border-gray-100 pt-8">
+          <h2 id="browse-by-category" className="text-sm font-semibold text-gray-900">
+            {t('browseByCategory')}
+          </h2>
+          <div className="mt-4 flex flex-wrap gap-2">
+            {categoryLinks.map((cat) => (
+              <Link
+                key={cat.id}
+                href={`/category/${cat.slug}`}
+                className="rounded-full border border-gray-200 px-4 py-2 text-sm text-gray-700 transition-colors hover:border-gray-300 hover:bg-gray-50"
+              >
+                {cat.name}
+              </Link>
+            ))}
+          </div>
+        </nav>
       )}
     </div>
     </div>

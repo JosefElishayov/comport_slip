@@ -90,7 +90,8 @@
     "selectOptions": "בחר אפשרויות",
     "buyNow": "קנה עכשיו",
     "allBrands": "כל המותגים",
-    "allTags": "כל התגיות"
+    "allTags": "כל התגיות",
+    "browseByCategory": "עיון לפי קטגוריה"
   },
   "productDetail": {
     "notFound": "המוצר לא נמצא.",

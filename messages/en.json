@@ -90,7 +90,8 @@
     "selectOptions": "Select options",
     "buyNow": "Buy now",
     "allBrands": "All brands",
-    "allTags": "All tags"
+    "allTags": "All tags",
+    "browseByCategory": "Browse by category"
   },
   "productDetail": {
     "notFound": "Product not found.",
