@@ -7,6 +7,7 @@ import type { WaitForOrderResult, OrderDownloadLink } from 'brainerce';
 import { getClient } from '@/lib/brainerce';
 import { useCart } from '@/providers/store-provider';
 import { LoadingSpinner } from '@/components/shared/loading-spinner';
+import { OrderConfirmationSummary } from '@/components/checkout/order-confirmation-summary';
 import { useTranslations } from '@/lib/translations';
 
 function OrderConfirmationContent() {
@@ -79,7 +80,9 @@ function OrderConfirmationContent() {
         if (cancelled) break;
         try {
           const client = getClient();
-          const res = await client.waitForOrder(checkoutId!, { maxWaitMs: 10000 });
+          const res = await client.waitForOrder(checkoutId!, {
+            maxWaitMs: 10000,
+          });
           if (res.success && !cancelled) {
             setResult(res);
             setPolling(false);
@@ -90,7 +93,9 @@ function OrderConfirmationContent() {
     }
 
     poll();
-    return () => { cancelled = true; };
+    return () => {
+      cancelled = true;
+    };
   }, [polling, checkoutId]);
 
   if (loading) {
@@ -165,6 +170,8 @@ function OrderConfirmationContent() {
         {result.status.orderId && (
           <ConfirmationDownloads orderId={result.status.orderId} checkoutId={checkoutId!} />
         )}
+
+        <OrderConfirmationSummary checkoutId={checkoutId!} />
 
         <div className="mt-8 flex flex-col items-center justify-center gap-3 sm:flex-row">
           <Link

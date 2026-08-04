@@ -448,7 +448,19 @@
     "orderProcessing": "ההזמנה שלך בעיבוד. תקבלו בקרוב אימייל אישור עם פרטי ההזמנה.",
     "missingCheckoutInfo": "חסר מידע תשלום.",
     "yourDownloads": "ההורדות שלך",
-    "download": "הורדה"
+    "download": "הורדה",
+    "orderDetails": "פרטי ההזמנה",
+    "productFallback": "מוצר",
+    "perUnit": "ליחידה",
+    "shipTo": "יעד המשלוח",
+    "paymentMethod": "אמצעי תשלום",
+    "paymentCard": "כרטיס אשראי",
+    "paymentPaypal": "PayPal",
+    "paymentCod": "מזומן במסירה",
+    "paymentBit": "ביט",
+    "paymentApplePay": "Apple Pay",
+    "paymentGooglePay": "Google Pay",
+    "privacyNote": "מטעמי פרטיות, פרטי הלקוח והכתובת המלאה אינם מוצגים בעמוד זה. הפרטים המלאים נשלחו אליכם באימייל וזמינים באזור האישי."
   },
   "reservation": {
     "expired": "השריון פג. ייתכן שהמוצרים כבר לא זמינים.",

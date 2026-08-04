@@ -448,7 +448,19 @@
     "orderProcessing": "Your order is being processed. You'll receive a confirmation email with your order details shortly.",
     "missingCheckoutInfo": "Missing checkout information.",
     "yourDownloads": "Your downloads",
-    "download": "Download"
+    "download": "Download",
+    "orderDetails": "Order details",
+    "productFallback": "Product",
+    "perUnit": "each",
+    "shipTo": "Shipping to",
+    "paymentMethod": "Payment method",
+    "paymentCard": "Credit card",
+    "paymentPaypal": "PayPal",
+    "paymentCod": "Cash on delivery",
+    "paymentBit": "Bit",
+    "paymentApplePay": "Apple Pay",
+    "paymentGooglePay": "Google Pay",
+    "privacyNote": "For privacy, customer details and the full address are not shown on this page. The complete details were emailed to you and are available in your account."
   },
   "reservation": {
     "expired": "Your reservation has expired. The items may no longer be available.",
