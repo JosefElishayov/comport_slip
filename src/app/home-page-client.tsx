@@ -165,10 +165,10 @@ export default function HomePageClient({ initialProducts, initialBanners }: Home
             <div className="animate-fade-in-up-delay-2 mt-10 flex flex-col items-center gap-4 sm:flex-row sm:justify-center">
               <Link
                 href="/products"
-                className="btn-shimmer inline-flex items-center gap-2 rounded-full bg-accent px-8 py-4 text-lg font-semibold text-white shadow-lg transition-all hover:-translate-y-0.5 hover:shadow-2xl hover:brightness-110"
+                className="btn-shimmer inline-flex max-w-full items-center gap-2 rounded-full bg-accent px-8 py-4 text-lg font-semibold text-white shadow-lg transition-all hover:-translate-y-0.5 hover:shadow-2xl hover:brightness-110"
               >
-                {t('heroCta')}
-                <svg className="h-5 w-5 rtl:rotate-180" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                <span className="min-w-0">{t('heroCta')}</span>
+                <svg className="h-5 w-5 flex-shrink-0 rtl:rotate-180" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
                   <path strokeLinecap="round" strokeLinejoin="round" d="M14 5l7 7m0 0l-7 7m7-7H3" />
                 </svg>
               </Link>
@@ -254,7 +254,7 @@ export default function HomePageClient({ initialProducts, initialBanners }: Home
       {/* Comfort Promise Section */}
       <section className="section-cool">
         <div className="mx-auto max-w-7xl px-4 py-20 sm:px-6 lg:px-8">
-          <div className="grid items-center gap-12 lg:grid-cols-2">
+          <div className="grid grid-cols-1 items-center gap-12 lg:grid-cols-2">
             <Reveal variant="right">
               <h2 className="text-foreground text-3xl font-bold sm:text-4xl">{t('promiseTitle')}</h2>
               <p className="text-muted-foreground mt-4 text-lg leading-relaxed">{t('promiseText')}</p>

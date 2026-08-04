@@ -46,6 +46,12 @@ html {
   position: relative;
   z-index: 2;
   background: hsl(var(--background));
+  /* Reveal-animated children (.reveal-left/-right) sit transform-shifted by
+     40px until scrolled into view, which can overflow the page horizontally
+     before that happens. Clip it here (homepage-only, far from the product
+     page's sticky gallery) instead of on html, which would risk breaking
+     position:sticky elsewhere. */
+  overflow-x: clip;
 }
 
 /* Hero video section — fixed so content slides over it */
@@ -232,6 +238,12 @@ html {
   70%  { transform: scale(1.18); opacity: 0; }
   100% { transform: scale(1.18); opacity: 0; }
 }
+.pulse-ring {
+  /* the ::before ring scales past this box on every cycle; without clipping,
+     that unclipped paint area inflates the page's content width enough to
+     trip mobile browsers' "widen viewport to fit content" heuristic */
+  overflow: hidden;
+}
 .pulse-ring::before {
   content: "";
   position: absolute;
@@ -251,7 +263,7 @@ html {
   content: "";
   position: absolute;
   top: 0;
-  left: -75%;
+  left: 0;
   width: 50%;
   height: 100%;
   background: linear-gradient(
@@ -260,12 +272,15 @@ html {
     rgba(255, 255, 255, 0.35) 50%,
     rgba(255, 255, 255, 0) 80%
   );
-  transform: skewX(-20deg);
-  transition: left 0.7s ease;
+  /* translateX is relative to this element's own (50%-of-button) width, so
+     -150%/260% reproduce the old left:-75%/130% sweep — via transform so it
+     never contributes to the button's (and page's) layout scroll width */
+  transform: translateX(-150%) skewX(-20deg);
+  transition: transform 0.7s ease;
   pointer-events: none;
 }
 .btn-shimmer:hover::after {
-  left: 130%;
+  transform: translateX(260%) skewX(-20deg);
 }
 
 /* Lift on hover utility */
