@@ -493,7 +493,10 @@
     "hours3": "Fri–Sat: closed",
     "address": "30 Rashi St., Bnei Brak",
     "sendInquiry": "Send an inquiry →",
-    "blog": "Blog"
+    "blog": "Blog",
+    "builtBy": "Built with love by",
+    "studioVibe": "Studio Vibe",
+    "poweredBy": "Powered by"
   },
   "contact": {
     "legacyName": "Contact us",

@@ -127,9 +127,31 @@ export function Footer() {
           </div>
         </div>
 
-        <div className="mt-10 border-t border-primary-foreground/10 pt-6 flex flex-col items-center justify-between gap-4 sm:flex-row">
-          <p className="text-primary-foreground/50 text-sm">
+        <div className="mt-10 grid gap-3 border-t border-primary-foreground/10 pt-6 text-center sm:grid-cols-3 sm:items-center">
+          <p className="text-primary-foreground/50 flex flex-wrap items-center justify-center gap-x-1.5 gap-y-1 text-sm sm:justify-self-start">
+            <span>{tf('builtBy')}</span>
+            <a
+              href="https://www.studio-vibe.com/"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="text-primary-foreground/80 hover:text-primary-foreground font-medium underline-offset-4 transition-colors hover:underline"
+            >
+              {tf('studioVibe')}
+            </a>
+          </p>
+          <p className="text-primary-foreground/50 text-sm sm:justify-self-center">
             {year} {storeInfo?.name || t('store')}. {t('allRightsReserved')}
+          </p>
+          <p className="text-primary-foreground/50 flex flex-wrap items-center justify-center gap-x-1.5 gap-y-1 text-sm sm:justify-self-end">
+            <span>{tf('poweredBy')}</span>
+            <a
+              href="https://brainerce.com/"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="text-primary-foreground/80 hover:text-primary-foreground font-medium underline-offset-4 transition-colors hover:underline"
+            >
+              Brainerce
+            </a>
           </p>
         </div>
       </div>
