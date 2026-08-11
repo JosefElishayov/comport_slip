@@ -29,8 +29,10 @@ function buildCsp(nonce: string): string {
     "img-src 'self' data: blob: https:",
     "font-src 'self' data:",
     // Active payment provider: Meshulam/Grow only. Add other providers here if enabled in Brainerce.
-    "frame-src 'self' https://brainerce.com https://*.brainerce.com https://meshulam.co.il https://*.meshulam.co.il https://grow.link https://*.grow.link https://grow.security https://*.grow.security https://pay.google.com",
-    "connect-src 'self' https://brainerce.com https://*.brainerce.com https://*.meshulam.co.il https://grow.link https://*.grow.link https://*.grow.security https://pay.google.com https://cloudflareinsights.com https://*.cloudflareinsights.com",
+    // Google Ads gtag.js drops a conversion-linker iframe on td.doubleclick.net
+    // and serves remarketing frames from googletagmanager.com.
+    "frame-src 'self' https://brainerce.com https://*.brainerce.com https://meshulam.co.il https://*.meshulam.co.il https://grow.link https://*.grow.link https://grow.security https://*.grow.security https://pay.google.com https://www.googletagmanager.com https://td.doubleclick.net https://*.doubleclick.net",
+    "connect-src 'self' https://brainerce.com https://*.brainerce.com https://*.meshulam.co.il https://grow.link https://*.grow.link https://*.grow.security https://pay.google.com https://cloudflareinsights.com https://*.cloudflareinsights.com https://www.googletagmanager.com https://*.google-analytics.com https://*.analytics.google.com https://*.g.doubleclick.net https://td.doubleclick.net https://pagead2.googlesyndication.com https://www.google.com https://www.google.co.il",
     "worker-src 'self' blob:",
     // 'self' (not 'none') so iframe-based payment providers (e.g. Cardcom)
     // can redirect the iframe back to /payment-complete on the storefront

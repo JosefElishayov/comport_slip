@@ -16,6 +16,8 @@ import { CookieConsentBanner } from '@/components/cookie-consent/cookie-consent-
 import { ShabbatOverlay } from '@/components/shared/shabbat-overlay';
 import { BrainerceBot } from '@/components/shared/brainerce-bot';
 import { AnalyticsTracker } from '@/components/analytics/analytics-tracker';
+import { GoogleTag } from '@/components/analytics/google-tag';
+import { GoogleTagConsent } from '@/components/analytics/google-tag-consent';
 import { getNonce } from '@/lib/nonce';
 import './globals.css';
 
@@ -142,6 +144,7 @@ export default async function RootLayout({
   return (
     <html lang={locale} dir={dir}>
       <head>
+        <GoogleTag />
         <script
           type="application/ld+json"
           nonce={nonce}
@@ -171,6 +174,7 @@ export default async function RootLayout({
           <ShabbatOverlay />
           <BrainerceBot />
           <AnalyticsTracker />
+          <GoogleTagConsent />
         </StoreProvider>
         </RegionProvider>
         </NavLocaleProvider>

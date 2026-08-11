@@ -5,7 +5,9 @@ import { Link } from '@/lib/navigation';
 import { useTranslations } from '@/lib/translations';
 
 const STORAGE_KEY = 'cookie-consent';
-const CONSENT_EVENT = 'cookie-consent-change';
+
+/** Fired on the window when the visitor accepts or declines; `detail` is the choice. */
+export const CONSENT_EVENT = 'cookie-consent-change';
 
 type ConsentValue = 'accepted' | 'declined';
 
