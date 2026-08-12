@@ -14,6 +14,8 @@ interface CustomFieldsStepProps {
   loading?: boolean;
   className?: string;
   hideSubmit?: boolean;
+  /** Rendered between the subtitle and the fields — used for gating questions. */
+  beforeFields?: React.ReactNode;
 }
 
 const MAX_IMAGE_SIZE = 5 * 1024 * 1024; // 5 MB
@@ -28,6 +30,7 @@ export function CustomFieldsStep({
   loading = false,
   className,
   hideSubmit = false,
+  beforeFields,
 }: CustomFieldsStepProps) {
   const t = useTranslations('checkout');
   const [uploadingKeys, setUploadingKeys] = useState<Set<string>>(new Set());
@@ -41,6 +44,8 @@ export function CustomFieldsStep({
   return (
     <div className={cn('space-y-4', className)}>
       <p className="text-muted-foreground text-sm">{t('customFieldsSubtitle')}</p>
+
+      {beforeFields}
 
       {fields.map((field) => {
         const value = values[field.key];

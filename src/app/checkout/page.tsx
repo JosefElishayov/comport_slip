@@ -21,6 +21,7 @@ import { ShippingStep } from '@/components/checkout/shipping-step';
 import { PaymentStep } from '@/components/checkout/payment-step';
 import { PickupStep } from '@/components/checkout/pickup-step';
 import { CustomFieldsStep } from '@/components/checkout/custom-fields-step';
+import { ElevatorGate, type ElevatorAnswer } from '@/components/checkout/elevator-gate';
 import { OrderBumpCard } from '@/components/checkout/order-bump-card';
 import { CouponInput } from '@/components/cart/coupon-input';
 import { ReservationCountdown } from '@/components/cart/reservation-countdown';
@@ -28,6 +29,7 @@ import { LoadingSpinner } from '@/components/shared/loading-spinner';
 import { useTranslations } from '@/lib/translations';
 import { cn } from '@/lib/utils';
 import { isValidCheckoutId } from '@/lib/safe-redirect';
+import { isFloorField, elevatorFitsValue, isElevatorFitsValue } from '@/lib/checkout-field-gates';
 
 function CheckoutContent() {
   const searchParams = useSearchParams();
@@ -62,6 +64,7 @@ function CheckoutContent() {
   const [customFields, setCustomFields] = useState<CheckoutCustomFieldDefinition[]>([]);
   const [customFieldValues, setCustomFieldValues] = useState<Record<string, unknown>>({});
   const [customFieldsLoading, setCustomFieldsLoading] = useState(false);
+  const [elevatorAnswer, setElevatorAnswer] = useState<ElevatorAnswer | null>(null);
   const [shippingOpen, setShippingOpen] = useState(false);
   const [addressOpen, setAddressOpen] = useState(true);
   const [step, setStep] = useState<'details' | 'payment'>('details');
@@ -93,6 +96,20 @@ function CheckoutContent() {
   useEffect(() => {
     if (!addressDone || !shippingDone) setStep('details');
   }, [addressDone, shippingDone, deliveryType, selectedRateId]);
+
+  // Restore the elevator answer once when resuming a checkout that already has a floor value
+  const elevatorInitRef = useRef(false);
+  useEffect(() => {
+    if (elevatorInitRef.current) return;
+    const floor = customFields.find(isFloorField);
+    if (!floor) return;
+    const value = customFieldValues[floor.key];
+    if (value === undefined || value === null || value === '') return;
+    elevatorInitRef.current = true;
+    setElevatorAnswer(
+      isElevatorFitsValue(floor, value, t('elevatorFitsValue')) ? 'fits' : 'no-fit'
+    );
+  }, [customFields, customFieldValues, t]);
 
   // Pre-fill address and customer data from profile when logged in
   useEffect(() => {
@@ -277,9 +294,18 @@ function CheckoutContent() {
     return true;
   });
 
+  // The floor field is gated behind the elevator question — asking a customer which
+  // floor to carry to is pointless when the item fits in the elevator. Answering
+  // "fits" records the answer on the floor field itself (see checkout-field-gates).
+  const floorField = visibleCustomFields.find(isFloorField) ?? null;
+  const gatedCustomFields =
+    floorField && elevatorAnswer !== 'no-fit'
+      ? visibleCustomFields.filter((f) => f !== floorField)
+      : visibleCustomFields;
+
   // Required visible custom fields that have not been filled.
   // BOOLEAN required = must be checked (true). Others = must have a non-empty value.
-  const missingRequiredKeys = visibleCustomFields
+  const missingRequiredKeys = gatedCustomFields
     .filter((f) => f.required)
     .filter((f) => {
       const v = customFieldValues[f.key];
@@ -287,7 +313,26 @@ function CheckoutContent() {
       return v === undefined || v === null || v === '';
     })
     .map((f) => f.key);
-  const hasMissingRequiredCustomFields = missingRequiredKeys.length > 0;
+  const isElevatorAnswerMissing = floorField !== null && elevatorAnswer === null;
+  const hasMissingRequiredCustomFields = missingRequiredKeys.length > 0 || isElevatorAnswerMissing;
+  const missingRequiredMessage = isElevatorAnswerMissing
+    ? t('elevatorRequired')
+    : t('customFieldsMissingRequired');
+
+  function handleElevatorAnswer(answer: ElevatorAnswer) {
+    setElevatorAnswer(answer);
+    if (!floorField) return;
+    setCustomFieldValues((prev) => {
+      const next = { ...prev };
+      if (answer === 'fits') {
+        next[floorField.key] = elevatorFitsValue(floorField, t('elevatorFitsValue'));
+      } else if (isElevatorFitsValue(floorField, prev[floorField.key], t('elevatorFitsValue'))) {
+        // Switching to "doesn't fit" — drop the sentinel so the customer types a real floor
+        delete next[floorField.key];
+      }
+      return next;
+    });
+  }
 
   // Submit custom fields helper
   async function submitCustomFields(checkoutId: string) {
@@ -315,7 +360,7 @@ function CheckoutContent() {
   ) {
     if (!checkout) return;
     if (hasMissingRequiredCustomFields) {
-      setError(t('customFieldsMissingRequired'));
+      setError(missingRequiredMessage);
       return;
     }
 
@@ -428,7 +473,7 @@ function CheckoutContent() {
   ) {
     if (!checkout) return;
     if (hasMissingRequiredCustomFields) {
-      setError(t('customFieldsMissingRequired'));
+      setError(missingRequiredMessage);
       return;
     }
 
@@ -512,7 +557,7 @@ function CheckoutContent() {
     visibleCustomFields.length > 0 ? (
       <div className="border-border border-t pt-4">
         <CustomFieldsStep
-          fields={visibleCustomFields}
+          fields={gatedCustomFields}
           values={customFieldValues}
           onChange={(key, value) =>
             setCustomFieldValues((prev) => ({ ...prev, [key]: value }))
@@ -521,6 +566,11 @@ function CheckoutContent() {
           onUploadFile={(file) => getClient().uploadCustomizationFile(file)}
           loading={customFieldsLoading}
           hideSubmit
+          beforeFields={
+            floorField ? (
+              <ElevatorGate value={elevatorAnswer} onChange={handleElevatorAnswer} />
+            ) : null
+          }
         />
       </div>
     ) : null;
@@ -821,14 +871,14 @@ function CheckoutContent() {
                       role="alert"
                       className="bg-destructive/10 border-destructive/20 text-destructive rounded-lg border px-4 py-3 text-sm"
                     >
-                      {t('customFieldsMissingRequired')}
+                      {missingRequiredMessage}
                     </div>
                   )}
                   <button
                     type="button"
                     onClick={() => {
                       if (hasMissingRequiredCustomFields) {
-                        setError(t('customFieldsMissingRequired'));
+                        setError(missingRequiredMessage);
                         return;
                       }
                       setStep('payment');
