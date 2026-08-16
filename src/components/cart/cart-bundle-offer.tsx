@@ -11,6 +11,7 @@ import { formatPrice } from 'brainerce';
 import { useStoreInfo } from '@/providers/store-provider';
 import { useTranslations } from '@/lib/translations';
 import { cn } from '@/lib/utils';
+import { trackAddToCart } from '@/lib/gtag-ecommerce';
 import { VariantSelector } from '@/components/products/variant-selector';
 
 interface CartBundleOfferCardProps {
@@ -138,6 +139,19 @@ export function CartBundleOfferCard({ offer, cartId, onAdd, className }: CartBun
         cartId,
         offer.id,
         Object.keys(variantSelections).length > 0 ? variantSelections : undefined,
+      );
+      // Prices are left off deliberately: the bundle discount applies to the
+      // group, so any per-line price would be invented and would report a
+      // `value` that never matches what gets charged. The money is measured at
+      // purchase, server-side.
+      trackAddToCart(
+        currency,
+        offer.offeredProducts.map((p) => ({
+          id: p.id,
+          name: p.name,
+          quantity: 1,
+          variantName: selectedVariants[p.id]?.name,
+        }))
       );
       onAdd();
     } catch (err) {

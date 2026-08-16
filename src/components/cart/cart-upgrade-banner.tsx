@@ -8,6 +8,7 @@ import { getClient } from '@/lib/brainerce';
 import { useStoreInfo } from '@/providers/store-provider';
 import { useTranslations } from '@/lib/translations';
 import { cn } from '@/lib/utils';
+import { trackAddToCart } from '@/lib/gtag-ecommerce';
 
 interface CartUpgradeBannerProps {
   suggestion: CartUpgradeSuggestion;
@@ -67,6 +68,13 @@ export function CartUpgradeBanner({
       const client = getClient();
       await client.smartRemoveFromCart(cartItem.productId, cartItem.variantId || undefined);
       await client.smartAddToCart({ productId: target.id, quantity: cartItem.quantity });
+      // Only the upgraded-to product is reported. The line it replaced was a
+      // remove_from_cart, which this storefront doesn't track.
+      trackAddToCart(currency, {
+        id: target.id,
+        name: target.name,
+        quantity: cartItem.quantity,
+      });
       onUpgrade();
     } catch (err) {
       console.error('Failed to upgrade cart item:', err);

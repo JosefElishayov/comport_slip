@@ -9,6 +9,7 @@ import { useStoreInfo } from '@/providers/store-provider';
 import { useTranslations } from '@/lib/translations';
 import { useAttributeLabel } from '@/lib/attribute-i18n';
 import { cn } from '@/lib/utils';
+import { trackAddToCart, type Ga4ItemInput } from '@/lib/gtag-ecommerce';
 
 interface FrequentlyBoughtTogetherProps {
   items: ProductRecommendation[];
@@ -277,6 +278,9 @@ export function FrequentlyBoughtTogether({
       const { getClient } = await import('@/lib/brainerce');
       const client = getClient();
       const itemsToAdd = bundleItems.filter((item) => selected.has(item.key));
+      // Only the lines that actually landed get reported, and as a single
+      // add_to_cart — "add all" is one shopper action, not N of them.
+      const added: Ga4ItemInput[] = [];
       for (const item of itemsToAdd) {
         const chosen = getChosenVariant(item);
         try {
@@ -285,11 +289,19 @@ export function FrequentlyBoughtTogether({
             variantId: chosen?.id,
             quantity: 1,
           });
+          added.push({
+            id: item.productId,
+            name: item.name,
+            price: getDisplayPrice(item),
+            quantity: 1,
+            variantName: chosen?.name,
+          });
         } catch (err) {
           // One item failing shouldn't abort the rest of the bundle.
           console.error(`Failed to add "${item.name}" to cart:`, err);
         }
       }
+      trackAddToCart(currency, added);
       await refreshCart();
     } finally {
       setAdding(false);

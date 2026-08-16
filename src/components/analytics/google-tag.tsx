@@ -2,7 +2,7 @@ import { getNonce } from '@/lib/nonce';
 import { GTAG_BOOTSTRAP_SNIPPET } from '@/lib/gtag';
 
 /**
- * Google tag (gtag.js) for Google Ads — rendered in <head>.
+ * Google tag (gtag.js) for GA4 + Google Ads — rendered in <head>.
  *
  * One nonced inline script seeds the dataLayer with Consent Mode v2 defaults
  * and then appends the gtag.js loader; `strict-dynamic` in the middleware CSP

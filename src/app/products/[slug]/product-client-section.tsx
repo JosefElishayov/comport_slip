@@ -13,6 +13,7 @@ import type {
 import { getDescriptionContent } from 'brainerce';
 import { useCart, useStoreInfo } from '@/providers/store-provider';
 import { getDisplayPriceInfo, getVariantDisplayPriceInfo } from '@/lib/pricing';
+import { trackViewItem, trackAddToCart } from '@/lib/gtag-ecommerce';
 import { flyToCart } from '@/lib/fly-to-cart';
 import { PriceDisplay } from '@/components/shared/price-display';
 import { LoadingSpinner } from '@/components/shared/loading-spinner';
@@ -220,6 +221,21 @@ export function ProductClientSection({ product: initialProduct }: ProductClientS
   const inventory = selectedVariant?.inventory ?? product?.inventory ?? null;
   const canPurchase = inventory?.canPurchase !== false;
 
+  // GA4 view_item — once per product. The ref guard (rather than a trimmed
+  // dependency list) keeps `priceInfo` fresh without re-firing every time the
+  // shopper switches variant, which GA4 would read as several product views.
+  const viewedProductRef = useRef<string | null>(null);
+  useEffect(() => {
+    if (!product || viewedProductRef.current === product.id) return;
+    viewedProductRef.current = product.id;
+    trackViewItem(priceInfo.currency, {
+      id: product.id,
+      name: product.name,
+      price: priceInfo.price,
+      category: product.categories?.[0]?.name,
+    });
+  }, [product, priceInfo]);
+
   // Description
   const description = useMemo(() => {
     return product ? getDescriptionContent(product) : null;
@@ -242,6 +258,14 @@ export function ProductClientSection({ product: initialProduct }: ProductClientS
         productId: product.id,
         variantId: selectedVariant?.id,
         quantity,
+      });
+      trackAddToCart(priceInfo.currency, {
+        id: product.id,
+        name: product.name,
+        price: priceInfo.price,
+        quantity,
+        variantName: selectedVariant?.name,
+        category: product.categories?.[0]?.name,
       });
       await refreshCart();
       setAddedMessage(true);
@@ -269,6 +293,16 @@ export function ProductClientSection({ product: initialProduct }: ProductClientS
         productId: product.id,
         variantId: selectedVariant?.id,
         quantity,
+      });
+      // Buy Now still passes through the cart, so it is a genuine add_to_cart.
+      // begin_checkout follows from the checkout page itself.
+      trackAddToCart(priceInfo.currency, {
+        id: product.id,
+        name: product.name,
+        price: priceInfo.price,
+        quantity,
+        variantName: selectedVariant?.name,
+        category: product.categories?.[0]?.name,
       });
       await refreshCart();
       router.push('/checkout');

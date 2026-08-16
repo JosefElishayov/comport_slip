@@ -3,6 +3,7 @@
 import { useEffect } from 'react';
 import { getClient } from '@/lib/brainerce';
 import { useCart } from '@/providers/store-provider';
+import { trackAddToCart } from '@/lib/gtag-ecommerce';
 
 const CONNECTION_ID =
   process.env.NEXT_PUBLIC_BRAINERCE_CONNECTION_ID || 'vc_BslbK0EDGoUXP2c5VH0Dk';
@@ -36,6 +37,9 @@ export function BrainerceBot() {
                 variantId: variantId ?? undefined,
                 quantity,
               });
+              // The bot's callback carries ids only — no name or price. A thin
+              // add_to_cart still beats losing the bot's conversions entirely.
+              trackAddToCart(undefined, { id: productId, quantity });
               await refreshCart();
               openCartDrawer();
               return true;

@@ -18,6 +18,7 @@ import { DiscountBadge } from '@/components/products/discount-badge';
 import { useCart, useStoreInfo } from '@/providers/store-provider';
 import { cn } from '@/lib/utils';
 import { flyToCart } from '@/lib/fly-to-cart';
+import { trackAddToCart } from '@/lib/gtag-ecommerce';
 import { LoadingSpinner } from '@/components/shared/loading-spinner';
 import { ProductShareButton } from '@/components/shared/product-share-button';
 import { RatingSummary } from '@/components/products/star-rating';
@@ -122,6 +123,14 @@ export function ProductCard({ product, className }: ProductCardProps) {
         const { getClient } = await import('@/lib/brainerce');
         const client = getClient();
         await client.smartAddToCart({ productId: product.id, variantId: selectedVariant.id, quantity: 1 });
+        trackAddToCart(priceCurrency, {
+          id: product.id,
+          name: product.name,
+          price: variantPrice ?? price,
+          quantity: 1,
+          variantName: selectedVariant.name,
+          category: product.categories?.[0]?.name,
+        });
         await refreshCart();
         setAdded(true);
         openCartDrawer();
@@ -141,6 +150,13 @@ export function ProductCard({ product, className }: ProductCardProps) {
       const { getClient } = await import('@/lib/brainerce');
       const client = getClient();
       await client.smartAddToCart({ productId: product.id, quantity: 1 });
+      trackAddToCart(priceCurrency, {
+        id: product.id,
+        name: product.name,
+        price,
+        quantity: 1,
+        category: product.categories?.[0]?.name,
+      });
       await refreshCart();
       setAdded(true);
       openCartDrawer();
@@ -162,6 +178,13 @@ export function ProductCard({ product, className }: ProductCardProps) {
         const { getClient } = await import('@/lib/brainerce');
         const client = getClient();
         await client.smartAddToCart({ productId: product.id, quantity: 1 });
+        trackAddToCart(priceCurrency, {
+          id: product.id,
+          name: product.name,
+          price,
+          quantity: 1,
+          category: product.categories?.[0]?.name,
+        });
         await refreshCart();
         router.push('/checkout');
       } catch (err) {

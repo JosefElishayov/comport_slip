@@ -15,6 +15,8 @@ import type {
 } from 'brainerce';
 import { formatPrice } from 'brainerce';
 import { getClient } from '@/lib/brainerce';
+import { getGa4StitchIds } from '@/lib/gtag';
+import { trackBeginCheckout } from '@/lib/gtag-ecommerce';
 import { useStoreInfo, useCart, useAuth } from '@/providers/store-provider';
 import { CheckoutForm } from '@/components/checkout/checkout-form';
 import { ShippingStep } from '@/components/checkout/shipping-step';
@@ -252,6 +254,17 @@ function CheckoutContent() {
       .catch(() => {});
   }, [checkout?.id, storeInfo?.upsell?.checkoutOrderBumpEnabled]);
 
+  // GA4 begin_checkout — once per cart. Fired from the page rather than from
+  // the "checkout" buttons so every entry path is counted the same: cart
+  // drawer, cart page, and Buy Now (which navigates straight here).
+  const beganCheckoutRef = useRef<string | null>(null);
+  useEffect(() => {
+    if (!cart?.id || cart.items.length === 0) return;
+    if (beganCheckoutRef.current === cart.id) return;
+    beganCheckoutRef.current = cart.id;
+    trackBeginCheckout(cart);
+  }, [cart]);
+
   // Handle bump toggle
   async function handleBumpToggle(bumpId: string, add: boolean, variantId?: string) {
     if (!cart?.id || bumpLoading) return;
@@ -368,6 +381,10 @@ function CheckoutContent() {
       setLoading(true);
       setError(null);
       const client = getClient();
+      // GA4 stitch ids, so the purchase conversion Brainerce sends from its
+      // server lands on this shopper's GA4 session. Empty unless analytics
+      // consent was granted; a synchronous read, so checkout never waits on it.
+      const stitchIds = getGa4StitchIds();
 
       if (isAllDigital) {
         // Digital products: set customer info only, skip shipping
@@ -377,12 +394,16 @@ function CheckoutContent() {
           lastName: address.lastName,
           phone: address.phone,
           acceptsMarketing: consent.acceptsMarketing,
+          ...stitchIds,
         });
         setCheckout(updated);
         // Also submit custom fields
         await submitCustomFields(updated.id);
       } else {
-        const response = await client.setShippingAddress(checkout.id, address);
+        const response = await client.setShippingAddress(checkout.id, {
+          ...address,
+          ...stitchIds,
+        });
         setCheckout(response.checkout);
         setShippingRates(response.rates);
         // Also submit custom fields
