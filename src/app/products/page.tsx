@@ -64,9 +64,9 @@ export default async function ProductsPage({ searchParams }: ProductsPageProps) 
   const params: ProductQueryParams = {
     page: 1,
     limit: PAGE_SIZE,
-    sortBy: sort.sortBy,
-    sortOrder: sort.sortOrder,
   };
+  if (sort.sortBy) params.sortBy = sort.sortBy;
+  if (sort.sortOrder) params.sortOrder = sort.sortOrder;
   if (sp.search) params.search = sp.search;
   if (sp.category) params.categories = sp.category;
   if (sp.brand) params.brands = sp.brand;

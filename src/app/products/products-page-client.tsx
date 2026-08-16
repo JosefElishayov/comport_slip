@@ -324,10 +324,10 @@ export default function ProductsPageClient({
         const params: ProductQueryParams = {
           page: pageNum,
           limit: PAGE_SIZE,
-          sortBy: currentSort.sortBy,
-          sortOrder: currentSort.sortOrder,
         };
 
+        if (currentSort.sortBy) params.sortBy = currentSort.sortBy;
+        if (currentSort.sortOrder) params.sortOrder = currentSort.sortOrder;
         if (searchQuery) params.search = searchQuery;
         if (categoryId) params.categories = categoryId;
         if (brandId) params.brands = brandId;
