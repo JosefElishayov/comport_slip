@@ -7,6 +7,7 @@ import { formatPrice } from 'brainerce';
 import { getClient } from '@/lib/brainerce';
 import { useTranslations } from '@/lib/translations';
 import { cn } from '@/lib/utils';
+import { useOrderItemImages } from '@/hooks/use-order-item-images';
 
 const STATUS_CONFIG: Record<OrderStatus, { labelKey: string; className: string }> = {
   pending: {
@@ -77,6 +78,7 @@ function OrderCard({ order }: { order: Order }) {
   const t = useTranslations('account');
   const tc = useTranslations('common');
   const [expanded, setExpanded] = useState(false);
+  const fallbackImages = useOrderItemImages(order.items);
   const statusConfig =
     STATUS_CONFIG[order.status?.toLowerCase() as OrderStatus] || STATUS_CONFIG.pending;
   const currency = order.currency || 'ILS';
@@ -149,45 +151,53 @@ function OrderCard({ order }: { order: Order }) {
       {/* Expanded order items */}
       {expanded && (
         <div className="border-border bg-muted/30 space-y-3 border-t px-4 py-3">
-          {order.items.map((item, index) => (
-            <div key={`${item.productId}-${index}`} className="flex items-center gap-3">
-              <div className="bg-muted relative h-10 w-10 flex-shrink-0 overflow-hidden rounded">
-                {item.image ? (
-                  <Image
-                    src={item.image}
-                    alt={item.name || t('productFallback')}
-                    fill
-                    sizes="40px"
-                    className="object-cover"
-                  />
-                ) : (
-                  <div className="text-muted-foreground absolute inset-0 flex items-center justify-center">
-                    <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                      <path
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                        strokeWidth={1.5}
-                        d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"
-                      />
-                    </svg>
-                  </div>
-                )}
-              </div>
+          {order.items.map((item, index) => {
+            const imageSrc = item.image || fallbackImages[item.productId];
+            return (
+              <div key={`${item.productId}-${index}`} className="flex items-center gap-3">
+                <div className="bg-muted relative h-10 w-10 flex-shrink-0 overflow-hidden rounded">
+                  {imageSrc ? (
+                    <Image
+                      src={imageSrc}
+                      alt={item.name || t('productFallback')}
+                      fill
+                      sizes="40px"
+                      className="object-cover"
+                    />
+                  ) : (
+                    <div className="text-muted-foreground absolute inset-0 flex items-center justify-center">
+                      <svg
+                        className="h-4 w-4"
+                        fill="none"
+                        viewBox="0 0 24 24"
+                        stroke="currentColor"
+                      >
+                        <path
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                          strokeWidth={1.5}
+                          d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"
+                        />
+                      </svg>
+                    </div>
+                  )}
+                </div>
 
-              <div className="min-w-0 flex-1">
-                <p className="text-foreground truncate text-sm">
-                  {item.name || t('productFallback')}
-                </p>
-                <p className="text-muted-foreground text-xs">
-                  {tc('qty')} {item.quantity}
-                </p>
-              </div>
+                <div className="min-w-0 flex-1">
+                  <p className="text-foreground truncate text-sm">
+                    {item.name || t('productFallback')}
+                  </p>
+                  <p className="text-muted-foreground text-xs">
+                    {tc('qty')} {item.quantity}
+                  </p>
+                </div>
 
-              <span className="text-foreground flex-shrink-0 text-sm">
-                {formatPrice(parseFloat(item.price), { currency }) as string}
-              </span>
-            </div>
-          ))}
+                <span className="text-foreground flex-shrink-0 text-sm">
+                  {formatPrice(parseFloat(item.price), { currency }) as string}
+                </span>
+              </div>
+            );
+          })}
 
           {/* Downloads section */}
           {order.hasDownloads && <OrderDownloads orderId={order.id} />}

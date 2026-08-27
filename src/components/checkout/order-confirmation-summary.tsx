@@ -6,6 +6,7 @@ import type { Order } from 'brainerce';
 import { formatPrice } from 'brainerce';
 import { getClient } from '@/lib/brainerce';
 import { useTranslations } from '@/lib/translations';
+import { useOrderItemImages } from '@/hooks/use-order-item-images';
 
 /**
  * Known payment methods we have a localized label for. Anything else is
@@ -75,6 +76,8 @@ export function OrderConfirmationSummary({ checkoutId }: { checkoutId: string })
       cancelled = true;
     };
   }, [checkoutId]);
+
+  const fallbackImages = useOrderItemImages(order?.items);
 
   if (loading) {
     return (
@@ -148,13 +151,14 @@ export function OrderConfirmationSummary({ checkoutId }: { checkoutId: string })
             ? parseFloat(item.totalPrice)
             : unitPrice * item.quantity;
           const customizations = item.customizations ? Object.values(item.customizations) : [];
+          const imageSrc = item.image || fallbackImages[item.productId];
 
           return (
             <li key={`${item.productId}-${index}`} className="flex gap-4 px-5 py-4">
               <div className="bg-muted relative h-16 w-16 flex-shrink-0 overflow-hidden rounded">
-                {item.image ? (
+                {imageSrc ? (
                   <Image
-                    src={item.image}
+                    src={imageSrc}
                     alt={item.name || t('productFallback')}
                     fill
                     sizes="64px"
