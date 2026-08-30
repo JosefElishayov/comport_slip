@@ -88,11 +88,11 @@ export default async function BlogPage({ searchParams }: BlogPageProps) {
     <div className="bg-background">
       {/* Hero */}
       <section className="relative overflow-hidden bg-gradient-to-b from-primary/10 via-secondary to-background">
-        <div className="absolute inset-0 -z-10 opacity-40">
+        <div className="pointer-events-none absolute inset-0 opacity-40">
           <div className="absolute -top-24 -right-24 h-72 w-72 rounded-full bg-accent/20 blur-3xl" />
           <div className="absolute -bottom-32 -left-20 h-80 w-80 rounded-full bg-primary/20 blur-3xl" />
         </div>
-        <div className="mx-auto max-w-4xl px-4 py-20 text-center sm:px-6 sm:py-24 lg:py-28 lg:px-8">
+        <div className="relative mx-auto max-w-4xl px-4 py-20 text-center sm:px-6 sm:py-24 lg:py-28 lg:px-8">
           <span className="inline-flex items-center gap-2 rounded-full border border-primary/20 bg-white/70 px-4 py-1.5 text-sm font-medium text-primary backdrop-blur">
             <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.8}>
               <path strokeLinecap="round" strokeLinejoin="round" d="M12 6.042A8.967 8.967 0 006 3.75c-1.052 0-2.062.18-3 .512v14.25A8.987 8.987 0 016 18c2.305 0 4.408.867 6 2.292m0-14.25a8.966 8.966 0 016-2.292c1.052 0 2.062.18 3 .512v14.25A8.987 8.987 0 0018 18a8.967 8.967 0 00-6 2.292m0-14.25v14.25" />
@@ -114,7 +114,7 @@ export default async function BlogPage({ searchParams }: BlogPageProps) {
         <div className="mx-auto max-w-6xl px-4 pb-20 sm:px-6 lg:px-8">
           {/* Category filters */}
           {categories.length > 0 && (
-            <nav className="-mt-6 mb-12 flex flex-wrap items-center justify-center gap-2.5">
+            <nav className="relative z-10 -mt-6 mb-12 flex flex-wrap items-center justify-center gap-2.5">
               <CategoryChip
                 href={withLocalePrefix('/blog', locale)}
                 label={c.allCategories}
