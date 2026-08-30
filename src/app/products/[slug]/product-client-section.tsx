@@ -19,6 +19,7 @@ import { PriceDisplay } from '@/components/shared/price-display';
 import { LoadingSpinner } from '@/components/shared/loading-spinner';
 import { VariantSelector } from '@/components/products/variant-selector';
 import { StockBadge } from '@/components/products/stock-badge';
+import { BackInStockForm } from '@/components/products/back-in-stock-form';
 import { RecommendationSection } from '@/components/products/recommendation-section';
 import { FrequentlyBoughtTogether } from '@/components/products/frequently-bought-together';
 import { ProductShareButton } from '@/components/shared/product-share-button';
@@ -621,6 +622,14 @@ export function ProductClientSection({ product: initialProduct }: ProductClientS
               )}
             </button>
           </div>
+
+          {/* Back-in-stock alert — self-gates on tracked / non-backorderable / sold out */}
+          <BackInStockForm
+            productId={product.id}
+            variantId={selectedVariant?.id}
+            inventory={inventory}
+            requiresVariant={product.type === 'VARIABLE' && (product.variants?.length ?? 0) > 0}
+          />
 
           {/* Download after purchase note */}
           {product.isDownloadable && (

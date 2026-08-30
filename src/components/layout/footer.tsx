@@ -3,6 +3,7 @@
 import { Link } from '@/lib/navigation';
 import { useTranslations } from '@/lib/translations';
 import { useStoreInfo, useAuth } from '@/providers/store-provider';
+import { NewsletterSignup } from '@/components/marketing/newsletter-signup';
 
 export function Footer() {
   const t = useTranslations('common');
@@ -15,6 +16,12 @@ export function Footer() {
   return (
     <footer className="border-border bg-primary text-primary-foreground border-t">
       <div className="mx-auto max-w-7xl px-4 py-12 sm:px-6 lg:px-8">
+        {/* Newsletter capture — confirmed opt-in, no popup (see design rules) */}
+        <NewsletterSignup
+          source="footer"
+          className="border-primary-foreground/10 mb-10 border-b pb-10"
+        />
+
         <div className="grid gap-8 sm:grid-cols-2 lg:grid-cols-3">
           {/* Brand */}
           <div>

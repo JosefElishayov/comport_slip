@@ -88,6 +88,7 @@
     "sortNameZA": "שם ת-א",
     "sortPriceLow": "מחיר: מהנמוך לגבוה",
     "sortPriceHigh": "מחיר: מהגבוה לנמוך",
+    "outOfStock": "אזל מהמלאי",
     "selectOptions": "בחר אפשרויות",
     "buyNow": "קנה עכשיו",
     "allBrands": "כל המותגים",
@@ -159,6 +160,18 @@
     "reviewsDisabled": "כתיבת ביקורות אינה זמינה כרגע",
     "showMoreReviews": "הצגת ביקורות נוספות",
     "loadingReviews": "טוען ביקורות...",
+    "notifyMeHeading": "אזל מהמלאי — נעדכן כשחוזר",
+    "notifyMeSubtitle": "נשלח לך מייל אחד בלבד כשהפריט חוזר למלאי. בלי דיוור ובלי ספאם.",
+    "notifyMeEmailLabel": "כתובת אימייל לעדכון",
+    "notifyMeEmailPlaceholder": "האימייל שלך",
+    "notifyMeSubmit": "עדכנו אותי כשחוזר",
+    "notifyMeSending": "שולח...",
+    "notifyMeSuccess": "תודה! נעדכן אותך במייל ברגע שהפריט יחזור למלאי.",
+    "notifyMeInvalidEmail": "כתובת אימייל לא תקינה",
+    "notifyMeError": "לא הצלחנו לשמור את הבקשה. נסו שוב בעוד רגע.",
+    "notifyMeRateLimited": "יותר מדי בקשות. נסו שוב בעוד דקה.",
+    "notifyMeSelectVariant": "בחרו אפשרות כדי לקבל עדכון כשהיא חוזרת למלאי.",
+    "notifyMeHoneypot": "אל תמלאו שדה זה",
     "starsLabel": "{rating} מתוך 5 כוכבים"
   },
   "cart": {
@@ -577,5 +590,19 @@
     "קשה": "קשה",
     "בינוני": "בינוני",
     "רך": "רך"
+  },
+  "newsletter": {
+    "heading": "רוצים לשמוע ראשונים?",
+    "subtitle": "מבצעים, מוצרים חדשים וטיפים לשינה טובה — ישירות למייל.",
+    "emailLabel": "כתובת אימייל להרשמה לדיוור",
+    "emailPlaceholder": "האימייל שלך",
+    "submit": "הרשמה",
+    "sending": "שולח...",
+    "success": "כמעט סיימנו — שלחנו לך מייל לאישור ההרשמה. בדקו גם בתיקיית הספאם.",
+    "invalidEmail": "כתובת אימייל לא תקינה",
+    "error": "לא הצלחנו לשמור את הבקשה. נסו שוב בעוד רגע.",
+    "rateLimited": "יותר מדי בקשות. נסו שוב בעוד דקה.",
+    "privacyNote": "אפשר להסיר את ההרשמה בכל עת.",
+    "honeypot": "אל תמלאו שדה זה"
   }
 }

@@ -88,6 +88,7 @@
     "sortNameZA": "Name Z-A",
     "sortPriceLow": "Price: low to high",
     "sortPriceHigh": "Price: high to low",
+    "outOfStock": "Out of stock",
     "selectOptions": "Select options",
     "buyNow": "Buy now",
     "allBrands": "All brands",
@@ -159,6 +160,18 @@
     "reviewsDisabled": "Writing reviews is currently unavailable",
     "showMoreReviews": "Show more reviews",
     "loadingReviews": "Loading reviews...",
+    "notifyMeHeading": "Out of stock — we’ll let you know",
+    "notifyMeSubtitle": "One email, sent the moment this item is back. No newsletter, no spam.",
+    "notifyMeEmailLabel": "Email for the alert",
+    "notifyMeEmailPlaceholder": "your@email.com",
+    "notifyMeSubmit": "Email me when it’s back",
+    "notifyMeSending": "Sending...",
+    "notifyMeSuccess": "Thanks! We’ll email you as soon as this item is back in stock.",
+    "notifyMeInvalidEmail": "Please enter a valid email address",
+    "notifyMeError": "We couldn’t save your request. Please try again in a moment.",
+    "notifyMeRateLimited": "Too many requests. Please try again in a minute.",
+    "notifyMeSelectVariant": "Select an option to be notified when it’s back in stock.",
+    "notifyMeHoneypot": "Do not fill this field",
     "starsLabel": "{rating} out of 5 stars"
   },
   "cart": {
@@ -577,5 +590,19 @@
     "קשה": "Firm",
     "בינוני": "Medium",
     "רך": "Soft"
+  },
+  "newsletter": {
+    "heading": "Want to hear it first?",
+    "subtitle": "Offers, new arrivals and better-sleep tips — straight to your inbox.",
+    "emailLabel": "Email address for the newsletter",
+    "emailPlaceholder": "your@email.com",
+    "submit": "Sign up",
+    "sending": "Sending...",
+    "success": "Almost there — check your email to confirm, including your spam folder.",
+    "invalidEmail": "Please enter a valid email address",
+    "error": "We couldn’t save your request. Please try again in a moment.",
+    "rateLimited": "Too many requests. Please try again in a minute.",
+    "privacyNote": "You can unsubscribe at any time.",
+    "honeypot": "Do not fill this field"
   }
 }
