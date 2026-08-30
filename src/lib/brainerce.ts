@@ -22,7 +22,7 @@ let clientInstance: BrainerceClient | null = null;
 export function getClient(): BrainerceClient {
   if (!clientInstance) {
     clientInstance = new BrainerceClient({
-      connectionId: CONNECTION_ID,
+      salesChannelId: CONNECTION_ID,
       baseUrl: '/api/store', // same-origin proxy handles auth via httpOnly cookie
       proxyMode: true, // skip client-side token checks; proxy adds Authorization header
     });
@@ -58,7 +58,7 @@ export function initClient(): BrainerceClient {
 export function getServerClient(locale?: string): BrainerceClient {
   const apiUrl = process.env.BRAINERCE_API_URL || 'https://api.brainerce.com';
   const client = new BrainerceClient({
-    connectionId: CONNECTION_ID,
+    salesChannelId: CONNECTION_ID,
     baseUrl: apiUrl,
     origin: process.env.NEXT_PUBLIC_SITE_URL || 'http://localhost:3000',
   });
