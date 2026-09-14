@@ -7,6 +7,7 @@ import { formatPrice } from 'brainerce';
 import { getClient } from '@/lib/brainerce';
 import { useTranslations } from '@/lib/translations';
 import { useOrderItemImages } from '@/hooks/use-order-item-images';
+import { getOrderTenders, maskTender, sumTenders } from '@/lib/gift-cards';
 
 /**
  * Known payment methods we have a localized label for. Anything else is
@@ -43,6 +44,7 @@ function Money({ value, currency }: { value: number; currency: string }) {
 export function OrderConfirmationSummary({ checkoutId }: { checkoutId: string }) {
   const t = useTranslations('orderConfirmation');
   const tc = useTranslations('common');
+  const tg = useTranslations('giftCard');
   const [order, setOrder] = useState<Order | null>(null);
   const [loading, setLoading] = useState(true);
 
@@ -112,6 +114,8 @@ export function OrderConfirmationSummary({ checkoutId }: { checkoutId: string })
       ? order.taxBreakdown.totalTax
       : null;
   const rules = order.appliedDiscounts;
+  const tenders = getOrderTenders(order);
+  const chargedToProvider = Math.max(0, total - sumTenders(tenders));
   const hasBreakdown = subtotal !== null && subtotal > 0;
 
   const createdAt =
@@ -282,6 +286,35 @@ export function OrderConfirmationSummary({ checkoutId }: { checkoutId: string })
           <p className="text-muted-foreground text-end text-xs">
             {tc('includesTax')} <Money value={includedVat} currency={currency} />
           </p>
+        )}
+
+        {tenders.length > 0 && (
+          <div className="border-border mt-2 space-y-1.5 border-t pt-2">
+            {tenders.map((tender) => {
+              const masked = maskTender(tender);
+              return (
+                <div key={tender.id} className="flex items-center justify-between">
+                  <span className="text-muted-foreground">
+                    {tg('title')}
+                    {masked && (
+                      <span dir="ltr" className="ms-1 tabular-nums">
+                        {masked}
+                      </span>
+                    )}
+                  </span>
+                  <span className="text-foreground">
+                    −<Money value={parseFloat(tender.amountBase)} currency={currency} />
+                  </span>
+                </div>
+              );
+            })}
+            <div className="flex items-center justify-between">
+              <span className="text-foreground font-semibold">{tg('amountCharged')}</span>
+              <span className="text-foreground font-semibold">
+                <Money value={chargedToProvider} currency={currency} />
+              </span>
+            </div>
+          </div>
         )}
       </div>
 

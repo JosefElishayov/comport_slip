@@ -28,6 +28,11 @@ const LEGACY_GROW_SDK: PaymentClientSdk = {
     '[id*="Gr0W8-"],[id*="Gr0W8-"] *,[class*="Gr0W8-"],[class*="Gr0W8-"] *{direction:ltr !important;text-align:left}',
 };
 
+/** Fallback height until the embed page reports its real content height. */
+const DEFAULT_IFRAME_HEIGHT = 600;
+const MIN_IFRAME_HEIGHT = 320;
+const MAX_IFRAME_HEIGHT = 2400;
+
 interface PaymentStepProps {
   checkoutId: string;
   className?: string;
@@ -82,6 +87,7 @@ export function PaymentStep({ checkoutId, className }: PaymentStepProps) {
   const initialized = useRef(false);
   const successHandledRef = useRef(false);
   const iframeRef = useRef<HTMLIFrameElement>(null);
+  const [iframeHeight, setIframeHeight] = useState(DEFAULT_IFRAME_HEIGHT);
 
   // Stable refs for SDK event callbacks (avoids stale closures in onload)
   const cbRef = useRef({
@@ -417,8 +423,34 @@ export function PaymentStep({ checkoutId, className }: PaymentStepProps) {
           setError(t('paymentRedirectBlocked'));
           return;
         }
+        // The embed page runs on the platform origin; our own /payment-complete
+        // callback later loads inside the same iframe on our origin. Trusting
+        // only window.location.origin dropped every message the embed page sent.
+        let paymentOrigin = '';
+        try {
+          paymentOrigin = new URL(intent.clientSecret).origin;
+        } catch {
+          // clientSecret already passed isAllowedPaymentUrl above
+        }
+        const isTrustedOrigin = (origin: string) =>
+          origin === window.location.origin || (!!paymentOrigin && origin === paymentOrigin);
+
         const handleMessage = (event: MessageEvent) => {
-          if (event.origin !== window.location.origin) return;
+          if (!isTrustedOrigin(event.origin)) return;
+
+          // Embed page reports its real content height. Without this the iframe
+          // stays at its fallback height and the payment form gets its own
+          // nested scrollbar.
+          if (event.data?.type === 'brainerce:resize') {
+            const height = Number(event.data.height ?? event.data.data?.height);
+            if (Number.isFinite(height) && height > 0) {
+              setIframeHeight(
+                Math.min(Math.max(Math.round(height), MIN_IFRAME_HEIGHT), MAX_IFRAME_HEIGHT)
+              );
+            }
+            return;
+          }
+
           if (event.data?.type !== 'brainerce:payment-complete') return;
 
           const params = event.data.data as Record<string, string> | undefined;
@@ -669,8 +701,8 @@ export function PaymentStep({ checkoutId, className }: PaymentStepProps) {
           ref={iframeRef}
           src={paymentIntent.clientSecret}
           onLoad={handleIframeLoad}
-          className="w-full border-0"
-          style={{ height: '600px' }}
+          className="w-full border-0 transition-[height] duration-200 ease-out"
+          style={{ height: `${iframeHeight}px` }}
           title={t('payment')}
           allow="payment"
         />

@@ -26,6 +26,8 @@ import { CustomFieldsStep } from '@/components/checkout/custom-fields-step';
 import { ElevatorGate, type ElevatorAnswer } from '@/components/checkout/elevator-gate';
 import { OrderBumpCard } from '@/components/checkout/order-bump-card';
 import { CouponInput } from '@/components/cart/coupon-input';
+import { GiftCardInput } from '@/components/checkout/gift-card-input';
+import { GiftCardCompletion } from '@/components/checkout/gift-card-completion';
 import { ReservationCountdown } from '@/components/cart/reservation-countdown';
 import { LoadingSpinner } from '@/components/shared/loading-spinner';
 import { useTranslations } from '@/lib/translations';
@@ -41,6 +43,7 @@ function CheckoutContent() {
   const currency = storeInfo?.currency || 'ILS';
   const t = useTranslations('checkout');
   const tc = useTranslations('common');
+  const tg = useTranslations('giftCard');
 
   const [checkout, setCheckout] = useState<Checkout | null>(null);
   const [shippingRates, setShippingRates] = useState<ShippingRate[]>([]);
@@ -928,7 +931,17 @@ function CheckoutContent() {
               </button>
               <div className="border-border rounded-lg border p-6">
                 <h2 className="text-foreground mb-4 text-lg font-semibold">{t('payment')}</h2>
-                <PaymentStep key={`${checkout.id}-${checkout.couponCode ?? ''}`} checkoutId={checkout.id} />
+                {(checkout.tenders?.length ?? 0) > 0 &&
+                parseFloat(checkout.providerAmountDue ?? checkout.total) === 0 ? (
+                  <GiftCardCompletion checkoutId={checkout.id} />
+                ) : (
+                  <PaymentStep
+                    key={`${checkout.id}-${checkout.couponCode ?? ''}-${(checkout.tenders ?? [])
+                      .map((tender) => tender.tenderId)
+                      .join(',')}`}
+                    checkoutId={checkout.id}
+                  />
+                )}
               </div>
             </>
           )}
@@ -1028,6 +1041,21 @@ function CheckoutContent() {
             {cart && (
               <div className="border-border border-t pt-4">
                 <CouponInput cart={cart} checkoutId={checkout?.id} onUpdate={handleCouponUpdate} />
+              </div>
+            )}
+
+            {/* Gift card — a means of payment, not a discount. It is held against
+                the checkout before the payment intent exists, so the field is
+                only offered on the details step. */}
+            {checkout && step === 'details' && (
+              <div className="border-border border-t pt-4">
+                <GiftCardInput
+                  checkoutId={checkout.id}
+                  tenders={checkout.tenders}
+                  currency={currency}
+                  status={checkout.status}
+                  onUpdate={setCheckout}
+                />
               </div>
             )}
 
@@ -1133,6 +1161,35 @@ function CheckoutContent() {
                   <p className="text-muted-foreground mt-1 text-end text-xs">
                     {tc('includesTax')}
                   </p>
+
+                  {checkout.tenders && checkout.tenders.length > 0 && (
+                    <div className="mt-2 space-y-2">
+                      {checkout.tenders.map((tender) => (
+                        <div
+                          key={tender.tenderId}
+                          className="flex items-center justify-between"
+                        >
+                          <span className="text-muted-foreground">{tg('title')}</span>
+                          <span dir="ltr" className="text-foreground tabular-nums">
+                            −{formatPrice(parseFloat(tender.amountApplied), { currency }) as string}
+                          </span>
+                        </div>
+                      ))}
+                      <div className="border-border flex items-center justify-between border-t pt-2">
+                        <span className="text-foreground font-semibold">{tg('amountDue')}</span>
+                        <span
+                          dir="ltr"
+                          className="text-foreground text-base font-semibold tabular-nums"
+                        >
+                          {
+                            formatPrice(parseFloat(checkout.providerAmountDue ?? checkout.total), {
+                              currency,
+                            }) as string
+                          }
+                        </span>
+                      </div>
+                    </div>
+                  )}
                 </div>
               </div>
             )}

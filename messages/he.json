@@ -415,6 +415,12 @@
     "statusDelivered": "נמסר",
     "statusCancelled": "בוטל",
     "statusRefunded": "הוחזר",
+    "statusDraft": "טיוטה",
+    "statusOnHold": "בהמתנה",
+    "statusPaid": "שולם",
+    "statusCompleted": "הושלם",
+    "statusFulfilled": "סופק",
+    "statusPartiallyRefunded": "הוחזר חלקית",
     "editProfile": "עריכת פרופיל",
     "firstName": "שם פרטי",
     "lastName": "שם משפחה",
@@ -494,6 +500,25 @@
   "coupon": {
     "placeholder": "קוד קופון",
     "invalidCode": "קוד קופון לא תקין"
+  },
+  "giftCard": {
+    "title": "כרטיס מתנה",
+    "placeholder": "קוד כרטיס מתנה",
+    "applied": "כרטיס מתנה",
+    "unusable": "לא ניתן להשתמש בקוד הזה. בדקו אותו ונסו שוב.",
+    "removeFailed": "לא הצלחנו להסיר את הכרטיס. נסו שוב.",
+    "amountDue": "יתרה לתשלום",
+    "amountCharged": "חויב באמצעי התשלום",
+    "balanceTitle": "בדיקת יתרה בכרטיס מתנה",
+    "balanceHint": "הזינו את קוד הכרטיס כדי לראות כמה נשאר בו. הקוד אינו נשמר אצלנו.",
+    "check": "בדיקה",
+    "balanceLabel": "יתרה זמינה",
+    "checkFailed": "הבדיקה נכשלה כרגע. נסו שוב בעוד רגע.",
+    "issuedNote": "כרטיסי מתנה מונפקים על ידי החנות ואינם ניתנים לרכישה באתר. את הקוד מזינים בשלב הפרטים בקופה.",
+    "fullyCovered": "כרטיס המתנה מכסה את מלוא ההזמנה — אין מה לחייב באמצעי תשלום.",
+    "completeOrder": "השלם הזמנה",
+    "completeFailed": "לא הצלחנו להשלים את ההזמנה. נסו שוב.",
+    "locked": "התשלום כבר בתהליך — לא ניתן להוסיף או להסיר כרטיס מתנה בשלב הזה."
   },
   "footer": {
     "tagline": "השינה שמגיעה לך — מזרונים איכותיים שעוטפים אותך בנוחות מושלמת",

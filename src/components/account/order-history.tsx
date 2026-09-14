@@ -8,33 +8,74 @@ import { getClient } from '@/lib/brainerce';
 import { useTranslations } from '@/lib/translations';
 import { cn } from '@/lib/utils';
 import { useOrderItemImages } from '@/hooks/use-order-item-images';
+import { getOrderTenders, maskTender, sumTenders } from '@/lib/gift-cards';
 
-const STATUS_CONFIG: Record<OrderStatus, { labelKey: string; className: string }> = {
-  pending: {
+// SDK v2 reports order status in UPPERCASE (OrderStatus).
+type StatusLabelKey =
+  | 'statusDraft'
+  | 'statusPending'
+  | 'statusProcessing'
+  | 'statusOnHold'
+  | 'statusPaid'
+  | 'statusShipped'
+  | 'statusDelivered'
+  | 'statusCompleted'
+  | 'statusFulfilled'
+  | 'statusCancelled'
+  | 'statusRefunded'
+  | 'statusPartiallyRefunded';
+
+const STATUS_CONFIG: Record<OrderStatus, { labelKey: StatusLabelKey; className: string }> = {
+  DRAFT: {
+    labelKey: 'statusDraft',
+    className: 'bg-gray-100 text-gray-800 dark:bg-gray-900/40 dark:text-gray-300',
+  },
+  PENDING: {
     labelKey: 'statusPending',
     className: 'bg-yellow-100 text-yellow-800 dark:bg-yellow-950/30 dark:text-yellow-400',
   },
-  processing: {
+  PROCESSING: {
     labelKey: 'statusProcessing',
     className: 'bg-blue-100 text-blue-800 dark:bg-blue-950/30 dark:text-blue-400',
   },
-  shipped: {
+  ON_HOLD: {
+    labelKey: 'statusOnHold',
+    className: 'bg-yellow-100 text-yellow-800 dark:bg-yellow-950/30 dark:text-yellow-400',
+  },
+  PAID: {
+    labelKey: 'statusPaid',
+    className: 'bg-green-100 text-green-800 dark:bg-green-950/30 dark:text-green-400',
+  },
+  SHIPPED: {
     labelKey: 'statusShipped',
     className: 'bg-purple-100 text-purple-800 dark:bg-purple-950/30 dark:text-purple-400',
   },
-  delivered: {
+  DELIVERED: {
     labelKey: 'statusDelivered',
     className: 'bg-green-100 text-green-800 dark:bg-green-950/30 dark:text-green-400',
   },
-  cancelled: {
+  COMPLETED: {
+    labelKey: 'statusCompleted',
+    className: 'bg-green-100 text-green-800 dark:bg-green-950/30 dark:text-green-400',
+  },
+  FULFILLED: {
+    labelKey: 'statusFulfilled',
+    className: 'bg-green-100 text-green-800 dark:bg-green-950/30 dark:text-green-400',
+  },
+  CANCELLED: {
     labelKey: 'statusCancelled',
     className: 'bg-red-100 text-red-800 dark:bg-red-950/30 dark:text-red-400',
   },
-  refunded: {
+  REFUNDED: {
     labelKey: 'statusRefunded',
     className: 'bg-orange-100 text-orange-800 dark:bg-orange-950/30 dark:text-orange-400',
   },
+  PARTIALLY_REFUNDED: {
+    labelKey: 'statusPartiallyRefunded',
+    className: 'bg-orange-100 text-orange-800 dark:bg-orange-950/30 dark:text-orange-400',
+  },
 };
+
 
 interface OrderHistoryProps {
   orders: Order[];
@@ -80,7 +121,7 @@ function OrderCard({ order }: { order: Order }) {
   const [expanded, setExpanded] = useState(false);
   const fallbackImages = useOrderItemImages(order.items);
   const statusConfig =
-    STATUS_CONFIG[order.status?.toLowerCase() as OrderStatus] || STATUS_CONFIG.pending;
+    STATUS_CONFIG[order.status?.toUpperCase() as OrderStatus] || STATUS_CONFIG.PENDING;
   const currency = order.currency || 'ILS';
   const totalAmount = order.totalAmount || order.total || '0';
 
@@ -103,15 +144,7 @@ function OrderCard({ order }: { order: Order }) {
                 statusConfig.className
               )}
             >
-              {t(
-                statusConfig.labelKey as
-                  | 'statusPending'
-                  | 'statusProcessing'
-                  | 'statusShipped'
-                  | 'statusDelivered'
-                  | 'statusCancelled'
-                  | 'statusRefunded'
-              )}
+              {t(statusConfig.labelKey)}
             </span>
           </div>
           <div className="text-muted-foreground mt-1 flex items-center gap-4 text-xs">
@@ -276,6 +309,58 @@ function OrderDownloads({ orderId }: { orderId: string }) {
   );
 }
 
+/**
+ * Gift cards that settled part of an order, and what was actually charged.
+ *
+ * `total` is what the order was worth — these are what paid for it, so they
+ * belong beside every total we render, not folded into a discount line.
+ */
+function GiftCardTenderLines({
+  order,
+  currency,
+  className,
+}: {
+  order: Order;
+  currency: string;
+  className?: string;
+}) {
+  const tg = useTranslations('giftCard');
+  const tenders = getOrderTenders(order);
+  if (tenders.length === 0) return null;
+
+  const total = parseFloat(order.totalAmount || order.total || '0');
+  const charged = Math.max(0, total - sumTenders(tenders));
+
+  return (
+    <div className={cn('space-y-1', className)}>
+      {tenders.map((tender) => {
+        const masked = maskTender(tender);
+        return (
+          <div key={tender.id} className="flex items-center justify-between">
+            <span className="text-muted-foreground">
+              {tg('title')}
+              {masked && (
+                <span dir="ltr" className="ms-1 tabular-nums">
+                  {masked}
+                </span>
+              )}
+            </span>
+            <span dir="ltr" className="text-foreground tabular-nums">
+              −{formatPrice(parseFloat(tender.amountBase), { currency }) as string}
+            </span>
+          </div>
+        );
+      })}
+      <div className="flex items-center justify-between">
+        <span className="text-foreground font-medium">{tg('amountCharged')}</span>
+        <span dir="ltr" className="text-foreground font-semibold tabular-nums">
+          {formatPrice(charged, { currency }) as string}
+        </span>
+      </div>
+    </div>
+  );
+}
+
 function OrderFinancialSummary({ order, currency }: { order: Order; currency: string }) {
   const tc = useTranslations('common');
   const totalAmount = order.totalAmount || order.total || '0';
@@ -290,11 +375,14 @@ function OrderFinancialSummary({ order, currency }: { order: Order; currency: st
 
   if (!hasBreakdown) {
     return (
-      <div className="border-border flex items-center justify-between border-t pt-2">
-        <span className="text-muted-foreground text-sm font-medium">{tc('total')}</span>
-        <span className="text-foreground text-sm font-semibold">
-          {formatPrice(parseFloat(totalAmount), { currency }) as string}
-        </span>
+      <div className="border-border space-y-1 border-t pt-2 text-sm">
+        <div className="flex items-center justify-between">
+          <span className="text-muted-foreground font-medium">{tc('total')}</span>
+          <span className="text-foreground font-semibold">
+            {formatPrice(parseFloat(totalAmount), { currency }) as string}
+          </span>
+        </div>
+        <GiftCardTenderLines order={order} currency={currency} />
       </div>
     );
   }
@@ -355,6 +443,8 @@ function OrderFinancialSummary({ order, currency }: { order: Order; currency: st
           {formatPrice(parseFloat(totalAmount), { currency }) as string}
         </span>
       </div>
+
+      <GiftCardTenderLines order={order} currency={currency} className="pt-1" />
     </div>
   );
 }

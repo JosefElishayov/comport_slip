@@ -415,6 +415,12 @@
     "statusDelivered": "Delivered",
     "statusCancelled": "Cancelled",
     "statusRefunded": "Refunded",
+    "statusDraft": "Draft",
+    "statusOnHold": "On hold",
+    "statusPaid": "Paid",
+    "statusCompleted": "Completed",
+    "statusFulfilled": "Fulfilled",
+    "statusPartiallyRefunded": "Partially refunded",
     "editProfile": "Edit profile",
     "firstName": "First name",
     "lastName": "Last name",
@@ -494,6 +500,25 @@
   "coupon": {
     "placeholder": "Coupon code",
     "invalidCode": "Invalid coupon code"
+  },
+  "giftCard": {
+    "title": "Gift card",
+    "placeholder": "Gift card code",
+    "applied": "Gift card",
+    "unusable": "We can't use this code. Check it and try again.",
+    "removeFailed": "We couldn't remove the card. Please try again.",
+    "amountDue": "Amount due",
+    "amountCharged": "Charged to payment method",
+    "balanceTitle": "Check a gift card balance",
+    "balanceHint": "Enter the card code to see what is left on it. We do not store the code.",
+    "check": "Check",
+    "balanceLabel": "Available balance",
+    "checkFailed": "The check failed just now. Try again in a moment.",
+    "issuedNote": "Gift cards are issued by the store and cannot be bought on the site. Enter the code at the details step of checkout.",
+    "fullyCovered": "The gift card covers the whole order — there is nothing to charge.",
+    "completeOrder": "Complete order",
+    "completeFailed": "We couldn't complete the order. Please try again.",
+    "locked": "Payment is already in progress — gift cards cannot be added or removed now."
   },
   "footer": {
     "tagline": "The sleep you deserve — quality mattresses that wrap you in perfect comfort.",

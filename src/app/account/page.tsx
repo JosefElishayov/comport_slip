@@ -9,6 +9,7 @@ import { LoadingSpinner } from '@/components/shared/loading-spinner';
 import { ProfileSection } from '@/components/account/profile-section';
 import { AddressBook } from '@/components/account/address-book';
 import { OrderHistory } from '@/components/account/order-history';
+import { GiftCardBalanceCheck } from '@/components/account/gift-card-balance';
 import { useTranslations } from '@/lib/translations';
 
 export default function AccountPage() {
@@ -154,6 +155,10 @@ export default function AccountPage() {
             className="mb-8"
           />
         )}
+
+        {/* Gift card balance — the only customer-facing gift card surface there
+            is: cards are bearer value and are not tied to an account. */}
+        <GiftCardBalanceCheck className="mb-8" />
 
         {/* Order History */}
         <div className="dashboard-card p-6">
