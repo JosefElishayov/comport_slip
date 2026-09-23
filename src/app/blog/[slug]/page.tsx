@@ -73,7 +73,7 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
       url: canonical,
       type: 'article',
       locale: locale === 'he' ? 'he_IL' : 'en_US',
-      publishedTime: post.publishedAt,
+      publishedTime: post.publishedAt ?? undefined,
       modifiedTime: post.updatedAt,
       authors: post.author ? [post.author] : undefined,
       tags: post.tags,

@@ -8,7 +8,6 @@ import type {
   ProductVariant,
   ProductImage,
   ProductMetafield,
-  DownloadFile,
 } from 'brainerce';
 import { getDescriptionContent } from 'brainerce';
 import { useCart, useStoreInfo } from '@/providers/store-provider';
@@ -495,47 +494,6 @@ export function ProductClientSection({ product: initialProduct }: ProductClientS
             shareText={product.description || product.name}
             imageUrl={mainImageUrl}
           />
-
-          {/* Downloadable files info */}
-          {product.isDownloadable && product.downloads && product.downloads.length > 0 && (
-            <div className="bg-muted/50 rounded-lg border p-4">
-              <p className="text-foreground mb-2 text-sm font-medium">
-                {t('filesIncluded')} ({product.downloads.length})
-              </p>
-              <ul className="space-y-1.5">
-                {product.downloads.map((file: DownloadFile) => (
-                  <li
-                    key={file.id}
-                    className="text-muted-foreground flex items-center gap-2 text-sm"
-                  >
-                    <svg
-                      className="h-4 w-4 flex-shrink-0"
-                      fill="none"
-                      viewBox="0 0 24 24"
-                      stroke="currentColor"
-                    >
-                      <path
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                        strokeWidth={1.5}
-                        d="M7 21h10a2 2 0 002-2V9.414a1 1 0 00-.293-.707l-5.414-5.414A1 1 0 0012.586 3H7a2 2 0 00-2 2v14a2 2 0 002 2z"
-                      />
-                    </svg>
-                    <span className="truncate">{file.name}</span>
-                    {file.size && (
-                      <span className="flex-shrink-0 text-xs">
-                        (
-                        {file.size < 1024 * 1024
-                          ? `${(file.size / 1024).toFixed(0)} KB`
-                          : `${(file.size / (1024 * 1024)).toFixed(1)} MB`}
-                        )
-                      </span>
-                    )}
-                  </li>
-                ))}
-              </ul>
-            </div>
-          )}
 
           {/* Variant Selector */}
           {product.type === 'VARIABLE' && product.variants && product.variants.length > 0 && (

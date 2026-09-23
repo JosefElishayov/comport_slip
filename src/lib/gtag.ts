@@ -13,8 +13,17 @@
  * one would double-count every route change unless that setting is turned off.
  */
 
-/** GA4 property "קומפורט סליפ", web stream comfortsleep.co.il. */
-export const GA4_MEASUREMENT_ID = 'G-KQNSQNDCGE';
+/**
+ * GA4 property "קומפורט סליפ", web stream comfortsleep.co.il.
+ *
+ * Sourced from `NEXT_PUBLIC_GA4_MEASUREMENT_ID`, populated by
+ * `scripts/fetch-store-info.mjs` (`npm run setup`) from the sales channel's
+ * `tracking.ga4MeasurementId` — the same value the Brainerce dashboard's
+ * Analytics panel shows. Re-run setup after changing the GA4 property there;
+ * the literal fallback is only for a fresh checkout before setup has run.
+ */
+export const GA4_MEASUREMENT_ID =
+  process.env.NEXT_PUBLIC_GA4_MEASUREMENT_ID || 'G-KQNSQNDCGE';
 
 export const GOOGLE_ADS_ID = 'AW-18286035451';
 

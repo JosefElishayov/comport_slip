@@ -26,7 +26,8 @@ export function elevatorFitsValue(
   label: string
 ): unknown {
   if ((field.type as string) === 'NUMBER') {
-    return field.minValue != null && field.minValue > 0 ? field.minValue : 0;
+    const min = field.minValue != null ? parseFloat(field.minValue) : NaN;
+    return min > 0 ? min : 0;
   }
   return label;
 }

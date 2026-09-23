@@ -23,7 +23,10 @@ const envContent = readFileSync(envPath, 'utf-8');
 
 function getVar(content, key) {
   const match = content.match(new RegExp(`^${key}=(.*)$`, 'm'));
-  return match ? match[1].trim() : null;
+  if (!match) return null;
+  // .env values are sometimes quoted (e.g. BRAINERCE_API_URL="https://...");
+  // strip matching outer quotes so callers get the raw value either way.
+  return match[1].trim().replace(/^(['"])(.*)\1$/, '$2');
 }
 
 function setVar(content, key, value) {
@@ -39,6 +42,7 @@ const apiUrl = (getVar(envContent, 'BRAINERCE_API_URL') || 'https://api.brainerc
   /\/$/,
   ''
 );
+const siteUrl = getVar(envContent, 'NEXT_PUBLIC_SITE_URL') || 'https://comfortsleep.co.il';
 
 if (!connectionId) {
   console.error('❌  NEXT_PUBLIC_BRAINERCE_CONNECTION_ID is not set in .env.local');
@@ -49,7 +53,11 @@ console.log(`Fetching store info for connection: ${connectionId} ...`);
 
 let storeInfo;
 try {
-  const res = await fetch(`${apiUrl}/api/vc/${connectionId}/info`);
+  // The API rejects vibe-coded requests with no Origin header (403), same
+  // check a real browser satisfies automatically — this script has to set it.
+  const res = await fetch(`${apiUrl}/api/vc/${connectionId}/info`, {
+    headers: { Origin: siteUrl },
+  });
   if (!res.ok) {
     console.error(`❌  API returned ${res.status}: ${await res.text()}`);
     process.exit(1);
@@ -62,6 +70,7 @@ try {
 
 const name = storeInfo.name;
 const currency = storeInfo.currency;
+const ga4MeasurementId = storeInfo.tracking?.ga4MeasurementId;
 
 if (!name) {
   console.error('❌  Store info response has no `name` field:', storeInfo);
@@ -73,9 +82,14 @@ updated = setVar(updated, 'NEXT_PUBLIC_STORE_NAME', name);
 if (currency) {
   updated = setVar(updated, 'NEXT_PUBLIC_STORE_CURRENCY', currency);
 }
+if (ga4MeasurementId) {
+  updated = setVar(updated, 'NEXT_PUBLIC_GA4_MEASUREMENT_ID', ga4MeasurementId);
+}
 
 writeFileSync(envPath, updated, 'utf-8');
 
 console.log(`✓ NEXT_PUBLIC_STORE_NAME=${name}`);
 if (currency) console.log(`✓ NEXT_PUBLIC_STORE_CURRENCY=${currency}`);
+if (ga4MeasurementId) console.log(`✓ NEXT_PUBLIC_GA4_MEASUREMENT_ID=${ga4MeasurementId}`);
+else console.log('ℹ No GA4 measurement id configured on this sales channel — left untouched.');
 console.log('Done. Restart the dev server for changes to take effect.');
