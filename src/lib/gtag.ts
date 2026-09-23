@@ -66,6 +66,19 @@ export function consentSignals(granted: boolean): ConsentSignals {
  *
  * `wait_for_update` holds tags briefly so a visitor who accepts straight away
  * is still measured.
+ *
+ * The loader `src` is keyed on {@link GOOGLE_ADS_ID}, not the GA4 id — despite
+ * loading GA4 too. This isn't a mistake: `googletagmanager.com/gtag/js?id=…`
+ * 404s for a `G-…` id whose GA4 property was never actually linked into this
+ * account's live "Google tag" (confirmed live: `?id=G-KQNSQNDCGE` 404s,
+ * `?id=AW-18286035451` 200s, and GA4's own "Installation instructions" panel
+ * for this exact stream hands out the `AW-` script — GA4 itself knows the
+ * `G-` id alone won't load). One loader script is shared across every product
+ * regardless — `gtag('config', id)` for each id below is what actually wires
+ * a product to it, so loading via a valid Ads id still fully configures GA4.
+ * If GA4 is ever relinked as the account's primary tag, `?id=` could switch
+ * back — verify with a plain `curl` first, the 404 gives no other sign of
+ * life client-side.
  */
 export const GTAG_BOOTSTRAP_SNIPPET = `
 window.dataLayer = window.dataLayer || [];
@@ -80,7 +93,7 @@ gtag('config', ${JSON.stringify(GOOGLE_ADS_ID)});
 (function(){
   var s = document.createElement('script');
   s.async = true;
-  s.src = ${JSON.stringify(`https://www.googletagmanager.com/gtag/js?id=${GA4_MEASUREMENT_ID}`)};
+  s.src = ${JSON.stringify(`https://www.googletagmanager.com/gtag/js?id=${GOOGLE_ADS_ID}`)};
   document.head.appendChild(s);
 })();
 `.trim();
