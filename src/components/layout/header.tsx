@@ -2,8 +2,6 @@
 
 import { useState, useEffect, useRef, useCallback } from 'react';
 import { Link, useRouter } from '@/lib/navigation';
-import { usePathname } from 'next/navigation';
-import { stripLocalePrefix } from '@/lib/locale';
 import Image from 'next/image';
 import type { SearchSuggestions, ProductSuggestion } from 'brainerce';
 import { formatPrice } from 'brainerce';
@@ -23,11 +21,6 @@ export function Header() {
   const { locale } = useLocale();
   const router = useRouter();
 
-  const pathname = usePathname();
-  // Strip any `/en` prefix so route checks work the same in both languages.
-  const barePathname = stripLocalePrefix(pathname).pathname;
-  const isHeroPage = barePathname === '/';
-
   const [searchQuery, setSearchQuery] = useState('');
   const [suggestions, setSuggestions] = useState<SearchSuggestions | null>(null);
   const [showSuggestions, setShowSuggestions] = useState(false);
@@ -38,8 +31,6 @@ export function Header() {
   const searchRef = useRef<HTMLDivElement>(null);
   const searchInputRef = useRef<HTMLInputElement>(null);
   const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
-
-  const isTransparent = isHeroPage && !scrolled;
 
   const currency = storeInfo?.currency || 'ILS';
 
@@ -135,8 +126,8 @@ export function Header() {
     <>
     <header
       style={{ top: 'var(--banner-h, 0px)' }}
-      className={`${isHeroPage ? 'fixed' : 'sticky'} z-50 w-full ${
-        scrolled ? 'pt-3' : isTransparent ? '' : 'border-b border-border bg-background'
+      className={`sticky z-50 w-full ${
+        scrolled ? 'pt-3' : 'border-b border-border bg-background'
       }`}
     >
       <div
@@ -157,7 +148,7 @@ export function Header() {
             <button
               type="button"
               onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
-              className={`rounded-full p-2 md:hidden transition-colors ${isTransparent ? 'text-white hover:bg-white/10' : 'text-foreground hover:bg-secondary/50'}`}
+              className={`rounded-full p-2 md:hidden transition-colors text-foreground hover:bg-secondary/50`}
               aria-label={t('menu')}
             >
               <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -172,32 +163,32 @@ export function Header() {
             <nav className="hidden items-center gap-6 md:flex">
               <Link
                 href="/products"
-                className={`text-sm font-medium transition-colors ${isTransparent ? 'text-white/90 hover:text-white' : 'text-muted-foreground hover:text-primary'}`}
+                className={`text-sm font-medium transition-colors text-muted-foreground hover:text-primary`}
               >
                 {t('products')}
               </Link>
               <Link
                 href="/blog"
-                className={`text-sm font-medium transition-colors ${isTransparent ? 'text-white/90 hover:text-white' : 'text-muted-foreground hover:text-primary'}`}
+                className={`text-sm font-medium transition-colors text-muted-foreground hover:text-primary`}
               >
                 {t('blog')}
               </Link>
               <Link
                 href="/about"
-                className={`text-sm font-medium transition-colors ${isTransparent ? 'text-white/90 hover:text-white' : 'text-muted-foreground hover:text-primary'}`}
+                className={`text-sm font-medium transition-colors text-muted-foreground hover:text-primary`}
               >
                 {t('about')}
               </Link>
               <Link
                 href="/contact"
-                className={`text-sm font-medium transition-colors ${isTransparent ? 'text-white/90 hover:text-white' : 'text-muted-foreground hover:text-primary'}`}
+                className={`text-sm font-medium transition-colors text-muted-foreground hover:text-primary`}
               >
                 {t('contact')}
               </Link>
               {isLoggedIn && (
                 <Link
                   href="/account"
-                  className={`text-sm font-medium transition-colors ${isTransparent ? 'text-white/90 hover:text-white' : 'text-muted-foreground hover:text-primary'}`}
+                  className={`text-sm font-medium transition-colors text-muted-foreground hover:text-primary`}
                 >
                   {t('account')}
                 </Link>
@@ -218,10 +209,6 @@ export function Header() {
               height={447}
               priority
               className={`w-auto transition-all duration-700 ${scrolled ? 'h-14' : 'h-16'}`}
-              style={{
-                filter: isTransparent ? 'brightness(0) invert(1)' : 'none',
-                transition: 'filter 0.6s ease',
-              }}
             />
           </Link>
 
@@ -229,14 +216,14 @@ export function Header() {
           <div className="flex flex-1 items-center justify-end gap-2 sm:gap-3">
             {/* Language switcher (desktop / tablet) */}
             <div className="hidden sm:block">
-              <LanguageSwitcher isTransparent={isTransparent} />
+              <LanguageSwitcher />
             </div>
 
             {/* Auth (icon) */}
             {isLoggedIn ? (
               <button
                 onClick={logout}
-                className={`hidden rounded-full p-2 transition-colors sm:inline-flex ${isTransparent ? 'text-white hover:bg-white/10' : 'text-foreground hover:text-primary hover:bg-secondary/50'}`}
+                className={`hidden rounded-full p-2 transition-colors sm:inline-flex text-foreground hover:text-primary hover:bg-secondary/50`}
                 aria-label={t('logout')}
               >
                 <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -246,7 +233,7 @@ export function Header() {
             ) : (
               <Link
                 href="/login"
-                className={`rounded-full p-2 transition-colors ${isTransparent ? 'text-white hover:bg-white/10' : 'text-foreground hover:text-primary hover:bg-secondary/50'}`}
+                className={`rounded-full p-2 transition-colors text-foreground hover:text-primary hover:bg-secondary/50`}
                 aria-label={t('login')}
               >
                 <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -262,7 +249,7 @@ export function Header() {
                 setSearchOpen((v) => !v);
                 if (suggestions && searchQuery.length >= 2) setShowSuggestions(true);
               }}
-              className={`rounded-full p-2 transition-colors ${isTransparent ? 'text-white hover:bg-white/10' : 'text-foreground hover:text-primary hover:bg-secondary/50'}`}
+              className={`rounded-full p-2 transition-colors text-foreground hover:text-primary hover:bg-secondary/50`}
               aria-label={t('search')}
               aria-expanded={searchOpen}
             >
@@ -276,7 +263,7 @@ export function Header() {
               type="button"
               onClick={openCartDrawer}
               data-cart-icon
-              className={`relative rounded-full p-2 transition-colors ${isTransparent ? 'text-white hover:bg-white/10' : 'text-foreground hover:text-primary hover:bg-secondary/50'}`}
+              className={`relative rounded-full p-2 transition-colors text-foreground hover:text-primary hover:bg-secondary/50`}
               aria-label={`${itemCount} ${itemCount === 1 ? tc('item') : tc('items')}`}
             >
               <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -313,11 +300,11 @@ export function Header() {
                   if (suggestions && searchQuery.length >= 2) setShowSuggestions(true);
                 }}
                 placeholder={t('searchPlaceholder')}
-                className={`h-12 w-full rounded-full border px-5 pe-12 text-sm focus:outline-none focus:ring-2 transition-all ${isTransparent ? 'border-white/40 bg-white/10 text-white placeholder:text-white/60 focus:ring-white/20 focus:border-white/70' : 'border-border bg-secondary/50 text-foreground placeholder:text-muted-foreground focus:ring-primary/20 focus:border-primary'}`}
+                className={`h-12 w-full rounded-full border px-5 pe-12 text-sm focus:outline-none focus:ring-2 transition-all border-border bg-secondary/50 text-foreground placeholder:text-muted-foreground focus:ring-primary/20 focus:border-primary`}
               />
               <button
                 type="submit"
-                className={`absolute end-2 top-2 flex h-12 w-12 items-center justify-center transition-colors ${isTransparent ? 'text-white/70 hover:text-white' : 'text-muted-foreground hover:text-primary'} ${scrolled ? '-mt-1' : ''}`}
+                className={`absolute end-2 top-2 flex h-12 w-12 items-center justify-center transition-colors text-muted-foreground hover:text-primary ${scrolled ? '-mt-1' : ''}`}
                 aria-label={t('search')}
               >
                 <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -403,32 +390,32 @@ export function Header() {
 
         {/* Mobile Menu */}
         {mobileMenuOpen && (
-          <div className={`space-y-1 border-t py-3 md:hidden ${isTransparent ? 'border-white/20 bg-black/60 backdrop-blur-md rounded-b-2xl px-2' : 'border-border'}`}>
+          <div className={`space-y-1 border-t py-3 md:hidden border-border`}>
             <Link
               href="/products"
               onClick={() => setMobileMenuOpen(false)}
-              className={`block rounded-lg px-3 py-2.5 text-sm font-medium transition-colors ${isTransparent ? 'text-white hover:bg-white/10' : 'text-foreground hover:bg-secondary/50'}`}
+              className={`block rounded-lg px-3 py-2.5 text-sm font-medium transition-colors text-foreground hover:bg-secondary/50`}
             >
               {t('products')}
             </Link>
             <Link
               href="/blog"
               onClick={() => setMobileMenuOpen(false)}
-              className={`block rounded-lg px-3 py-2.5 text-sm font-medium transition-colors ${isTransparent ? 'text-white hover:bg-white/10' : 'text-foreground hover:bg-secondary/50'}`}
+              className={`block rounded-lg px-3 py-2.5 text-sm font-medium transition-colors text-foreground hover:bg-secondary/50`}
             >
               {t('blog')}
             </Link>
             <Link
               href="/about"
               onClick={() => setMobileMenuOpen(false)}
-              className={`block rounded-lg px-3 py-2.5 text-sm font-medium transition-colors ${isTransparent ? 'text-white hover:bg-white/10' : 'text-foreground hover:bg-secondary/50'}`}
+              className={`block rounded-lg px-3 py-2.5 text-sm font-medium transition-colors text-foreground hover:bg-secondary/50`}
             >
               {t('about')}
             </Link>
             <Link
               href="/contact"
               onClick={() => setMobileMenuOpen(false)}
-              className={`block rounded-lg px-3 py-2.5 text-sm font-medium transition-colors ${isTransparent ? 'text-white hover:bg-white/10' : 'text-foreground hover:bg-secondary/50'}`}
+              className={`block rounded-lg px-3 py-2.5 text-sm font-medium transition-colors text-foreground hover:bg-secondary/50`}
             >
               {t('contact')}
             </Link>
@@ -436,7 +423,7 @@ export function Header() {
               <Link
                 href="/account"
                 onClick={() => setMobileMenuOpen(false)}
-                className={`block rounded-lg px-3 py-2.5 text-sm font-medium transition-colors ${isTransparent ? 'text-white hover:bg-white/10' : 'text-foreground hover:bg-secondary/50'}`}
+                className={`block rounded-lg px-3 py-2.5 text-sm font-medium transition-colors text-foreground hover:bg-secondary/50`}
               >
                 {t('account')}
               </Link>
@@ -447,7 +434,7 @@ export function Header() {
                   logout();
                   setMobileMenuOpen(false);
                 }}
-                className={`block w-full rounded-lg px-3 py-2.5 text-start text-sm font-medium transition-colors ${isTransparent ? 'text-white hover:bg-white/10' : 'text-foreground hover:bg-secondary/50'}`}
+                className={`block w-full rounded-lg px-3 py-2.5 text-start text-sm font-medium transition-colors text-foreground hover:bg-secondary/50`}
               >
                 {t('logout')}
               </button>
@@ -455,7 +442,7 @@ export function Header() {
               <Link
                 href="/login"
                 onClick={() => setMobileMenuOpen(false)}
-                className={`block rounded-lg px-3 py-2.5 text-sm font-medium transition-colors ${isTransparent ? 'text-white hover:bg-white/10' : 'text-foreground hover:bg-secondary/50'}`}
+                className={`block rounded-lg px-3 py-2.5 text-sm font-medium transition-colors text-foreground hover:bg-secondary/50`}
               >
                 {t('login')}
               </Link>
@@ -475,7 +462,7 @@ export function Header() {
                     if (suggestions && searchQuery.length >= 2) setShowSuggestions(true);
                   }}
                   placeholder={t('searchPlaceholder')}
-                  className={`h-10 w-full rounded-full border px-4 text-sm focus:outline-none focus:ring-2 transition-all ${isTransparent ? 'border-white/40 bg-white/10 text-white placeholder:text-white/60 focus:ring-white/20 focus:border-white/70' : 'border-border bg-secondary/50 text-foreground placeholder:text-muted-foreground focus:ring-primary/20 focus:border-primary'}`}
+                  className={`h-10 w-full rounded-full border px-4 text-sm focus:outline-none focus:ring-2 transition-all border-border bg-secondary/50 text-foreground placeholder:text-muted-foreground focus:ring-primary/20 focus:border-primary`}
                 />
               </form>
 
@@ -553,8 +540,8 @@ export function Header() {
             </div>
 
             {/* Language switcher (mobile) */}
-            <div className={`mt-2 border-t pt-2 ${isTransparent ? 'border-white/20' : 'border-border'}`}>
-              <LanguageSwitcher isTransparent={isTransparent} variant="block" />
+            <div className={`mt-2 border-t pt-2 border-border`}>
+              <LanguageSwitcher variant="block" />
             </div>
           </div>
         )}

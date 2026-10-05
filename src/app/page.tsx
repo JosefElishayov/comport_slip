@@ -46,7 +46,8 @@ export default async function HomePage() {
   const regionId = await getServerRegionId();
   const client = getServerClient(locale);
   const [productsRes, bannersRes] = await Promise.allSettled([
-    client.getProducts({ limit: 4, sortBy: 'createdAt', sortOrder: 'desc', regionId }),
+    // No sortBy — same manual dashboard order (menuOrder) as the products page's default sort
+    client.getProducts({ limit: 4, regionId }),
     client.getDiscountBanners(),
   ]);
 

@@ -10,6 +10,7 @@ import { ProductGrid } from '@/components/products/product-grid';
 import { LoadingSpinner } from '@/components/shared/loading-spinner';
 import { Reveal } from '@/components/shared/reveal';
 import { useTranslations } from '@/lib/translations';
+import { HeroSlideshow } from '@/components/home/hero-slideshow';
 
 interface HomePageClientProps {
   initialProducts: Product[];
@@ -26,8 +27,6 @@ export default function HomePageClient({ initialProducts, initialBanners }: Home
   const skipInitialFetch = useRef(initialProducts.length > 0 || initialBanners.length > 0);
   const t = useTranslations('home');
   const tc = useTranslations('common');
-  const heroRef = useRef<HTMLElement>(null);
-  const heroOverlayRef = useRef<HTMLDivElement>(null);
   const bannerRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -49,46 +48,6 @@ export default function HomePageClient({ initialProducts, initialBanners }: Home
   }, [banners.length, bannerDismissed]);
 
   useEffect(() => {
-    const handleScroll = () => {
-      const hero = heroRef.current;
-      const overlay = heroOverlayRef.current;
-      if (!hero) return;
-
-      // clamp negative values from iOS rubber-band overscroll so the hero
-      // never gets stuck mid-shrink (exposing page background at its edges)
-      const scrollY = Math.max(window.scrollY, 0);
-      const vh = window.innerHeight;
-      // shrink animation completes over first 55vh of scroll
-      const progress = scrollY <= 0 ? 0 : Math.min(scrollY / (vh * 0.55), 1);
-
-      const scale = 1 - progress * 0.2;
-      const radius = progress * 28;
-
-      hero.style.transform = `scale(${scale})`;
-      hero.style.borderRadius = `${radius}px`;
-
-      // hide completely once content scrolls over it — no bleed-through
-      hero.style.visibility = scrollY >= vh * 0.85 ? 'hidden' : 'visible';
-
-      if (overlay) {
-        overlay.style.opacity = String(Math.max(0, 1 - progress * 2.2));
-      }
-    };
-
-    window.addEventListener('scroll', handleScroll, { passive: true });
-    window.addEventListener('resize', handleScroll);
-    // mobile browsers restore scroll position from bfcache without firing
-    // 'scroll', which can leave the hero rendered mid-shrink from a stale run
-    window.addEventListener('pageshow', handleScroll);
-    handleScroll();
-    return () => {
-      window.removeEventListener('scroll', handleScroll);
-      window.removeEventListener('resize', handleScroll);
-      window.removeEventListener('pageshow', handleScroll);
-    };
-  }, []);
-
-  useEffect(() => {
     if (skipInitialFetch.current) {
       skipInitialFetch.current = false;
       return;
@@ -97,7 +56,7 @@ export default function HomePageClient({ initialProducts, initialBanners }: Home
       try {
         const client = getClient();
         const [productsRes, bannersRes] = await Promise.allSettled([
-          client.getProducts({ limit: 8, sortBy: 'createdAt', sortOrder: 'desc', regionId: regionId ?? undefined }),
+          client.getProducts({ limit: 8, regionId: regionId ?? undefined }),
           client.getDiscountBanners(),
         ]);
 
@@ -119,7 +78,7 @@ export default function HomePageClient({ initialProducts, initialBanners }: Home
 
   return (
     <div>
-      {/* Discount Banners — fixed announcement bar above header & hero video */}
+      {/* Discount Banners — fixed announcement bar above the header */}
       {banners.length > 0 && !bannerDismissed && (
         <div
           ref={bannerRef}
@@ -145,48 +104,11 @@ export default function HomePageClient({ initialProducts, initialBanners }: Home
         </div>
       )}
 
-      {/* Fixed video — shrinks on scroll, content slides over it */}
-      <section ref={heroRef} className="hero-video-section">
-        <video autoPlay muted loop playsInline preload="auto" poster="">
-          <source src="/hero-video.mp4" type="video/mp4" />
-        </video>
+      {/* The banner is fixed and the sticky header sits below it — reserve its height */}
+      <div style={{ height: 'var(--banner-h, 0px)' }} aria-hidden="true" />
 
-        <div ref={heroOverlayRef} className="hero-video-overlay">
-          <div className="mx-auto max-w-3xl">
-            <h1 className="animate-fade-in-up text-4xl font-bold tracking-tight text-white sm:text-5xl md:text-6xl lg:text-7xl">
-              {t('heroTitle')}
-            </h1>
-            <p className="animate-fade-in-up-delay mx-auto mt-6 max-w-2xl text-lg text-white/95 sm:text-xl md:text-2xl">
-              {t('heroSubtitle')}
-            </p>
-            <p className="animate-fade-in-up-delay mx-auto mt-4 max-w-2xl text-base leading-relaxed text-white/85 sm:text-lg">
-              {t('heroIntro')}
-            </p>
-            <div className="animate-fade-in-up-delay-2 mt-10 flex flex-col items-center gap-4 sm:flex-row sm:justify-center">
-              <Link
-                href="/products"
-                className="btn-shimmer inline-flex max-w-full items-center gap-2 rounded-full bg-accent px-8 py-4 text-lg font-semibold text-white shadow-lg transition-all hover:-translate-y-0.5 hover:shadow-2xl hover:brightness-110"
-              >
-                <span className="min-w-0">{t('heroCta')}</span>
-                <svg className="h-5 w-5 flex-shrink-0 rtl:rotate-180" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-                  <path strokeLinecap="round" strokeLinejoin="round" d="M14 5l7 7m0 0l-7 7m7-7H3" />
-                </svg>
-              </Link>
-            </div>
-          </div>
+      <HeroSlideshow />
 
-          <div className="scroll-indicator">
-            <svg className="h-8 w-8 text-white/70" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
-              <path strokeLinecap="round" strokeLinejoin="round" d="M19 14l-7 7m0 0l-7-7m7 7V3" />
-            </svg>
-          </div>
-        </div>
-      </section>
-
-      {/* Spacer — scroll space so content starts below the video */}
-      <div className="hero-spacer" aria-hidden="true" />
-
-      {/* All page content scrolls over the fixed video */}
       <div className="hero-content-layer">
 
       {loading ? (
