@@ -153,10 +153,17 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
     // Refresh auth state from server (reads httpOnly cookie)
     await refreshAuth();
 
-    // Merge guest session cart into customer cart
-    const client = getClient();
-    client.syncCartOnLogin().catch(console.error);
-  }, [refreshAuth]);
+    // Merge guest session cart into customer cart. Awaited so callers that
+    // hard-navigate right after login() don't abort the merge mid-flight.
+    try {
+      await getClient().syncCartOnLogin();
+    } catch (err) {
+      console.error(err);
+    }
+
+    // Re-fetch so the drawer shows the merged cart, not a pre-merge snapshot
+    await refreshCart();
+  }, [refreshAuth, refreshCart]);
 
   const logout = useCallback(async () => {
     // Clear httpOnly cookie server-side
