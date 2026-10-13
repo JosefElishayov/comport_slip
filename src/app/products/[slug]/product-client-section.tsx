@@ -11,6 +11,7 @@ import type {
 } from 'brainerce';
 import { getDescriptionContent } from 'brainerce';
 import { useCart, useStoreInfo } from '@/providers/store-provider';
+import { addToCart } from '@/lib/cart-store';
 import { getDisplayPriceInfo, getVariantDisplayPriceInfo } from '@/lib/pricing';
 import { trackViewItem, trackAddToCart } from '@/lib/gtag-ecommerce';
 import { flyToCart } from '@/lib/fly-to-cart';
@@ -119,7 +120,7 @@ interface ProductClientSectionProps {
 }
 
 export function ProductClientSection({ product: initialProduct }: ProductClientSectionProps) {
-  const { refreshCart, openCartDrawer } = useCart();
+  const { openCartDrawer } = useCart();
   const { storeInfo } = useStoreInfo();
   const router = useRouter();
   const fallbackCurrency = storeInfo?.currency || 'ILS';
@@ -252,9 +253,7 @@ export function ProductClientSection({ product: initialProduct }: ProductClientS
         flyToCart(mainImageRef.current);
       }
 
-      const { getClient } = await import('@/lib/brainerce');
-      const client = getClient();
-      await client.smartAddToCart({
+      await addToCart({
         productId: product.id,
         variantId: selectedVariant?.id,
         quantity,
@@ -267,7 +266,6 @@ export function ProductClientSection({ product: initialProduct }: ProductClientS
         variantName: selectedVariant?.name,
         category: product.categories?.[0]?.name,
       });
-      await refreshCart();
       setAddedMessage(true);
       openCartDrawer();
       setTimeout(() => setAddedMessage(false), 2000);
@@ -287,9 +285,7 @@ export function ProductClientSection({ product: initialProduct }: ProductClientS
 
     try {
       setBuyingNow(true);
-      const { getClient } = await import('@/lib/brainerce');
-      const client = getClient();
-      await client.smartAddToCart({
+      await addToCart({
         productId: product.id,
         variantId: selectedVariant?.id,
         quantity,
@@ -304,7 +300,6 @@ export function ProductClientSection({ product: initialProduct }: ProductClientS
         variantName: selectedVariant?.name,
         category: product.categories?.[0]?.name,
       });
-      await refreshCart();
       router.push('/checkout');
     } catch (err) {
       console.error('Failed to start checkout:', err);

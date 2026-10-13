@@ -16,6 +16,7 @@ import { PriceDisplay } from '@/components/shared/price-display';
 import { StockBadge } from '@/components/products/stock-badge';
 import { DiscountBadge } from '@/components/products/discount-badge';
 import { useCart, useStoreInfo } from '@/providers/store-provider';
+import { addToCart } from '@/lib/cart-store';
 import { cn } from '@/lib/utils';
 import { flyToCart } from '@/lib/fly-to-cart';
 import { trackAddToCart } from '@/lib/gtag-ecommerce';
@@ -34,7 +35,7 @@ export function ProductCard({ product, className }: ProductCardProps) {
   const tProd = useTranslations('products');
   const attrLabel = useAttributeLabel();
   const router = useRouter();
-  const { refreshCart, openCartDrawer } = useCart();
+  const { openCartDrawer } = useCart();
   const { storeInfo } = useStoreInfo();
   const fallbackCurrency = storeInfo?.currency || 'ILS';
   // Region currency overlay (EUR for FR visitors, etc.) when present on the product.
@@ -120,9 +121,7 @@ export function ProductCard({ product, className }: ProductCardProps) {
       try {
         setAdding(true);
         if (imageRef.current) flyToCart(imageRef.current);
-        const { getClient } = await import('@/lib/brainerce');
-        const client = getClient();
-        await client.smartAddToCart({ productId: product.id, variantId: selectedVariant.id, quantity: 1 });
+        await addToCart({ productId: product.id, variantId: selectedVariant.id, quantity: 1 });
         trackAddToCart(priceCurrency, {
           id: product.id,
           name: product.name,
@@ -131,7 +130,6 @@ export function ProductCard({ product, className }: ProductCardProps) {
           variantName: selectedVariant.name,
           category: product.categories?.[0]?.name,
         });
-        await refreshCart();
         setAdded(true);
         openCartDrawer();
         setTimeout(() => setAdded(false), 2000);
@@ -147,9 +145,7 @@ export function ProductCard({ product, className }: ProductCardProps) {
     try {
       setAdding(true);
       if (imageRef.current) flyToCart(imageRef.current);
-      const { getClient } = await import('@/lib/brainerce');
-      const client = getClient();
-      await client.smartAddToCart({ productId: product.id, quantity: 1 });
+      await addToCart({ productId: product.id, quantity: 1 });
       trackAddToCart(priceCurrency, {
         id: product.id,
         name: product.name,
@@ -157,7 +153,6 @@ export function ProductCard({ product, className }: ProductCardProps) {
         quantity: 1,
         category: product.categories?.[0]?.name,
       });
-      await refreshCart();
       setAdded(true);
       openCartDrawer();
       setTimeout(() => setAdded(false), 2000);
@@ -175,9 +170,7 @@ export function ProductCard({ product, className }: ProductCardProps) {
     (async () => {
       try {
         setAdding(true);
-        const { getClient } = await import('@/lib/brainerce');
-        const client = getClient();
-        await client.smartAddToCart({ productId: product.id, quantity: 1 });
+        await addToCart({ productId: product.id, quantity: 1 });
         trackAddToCart(priceCurrency, {
           id: product.id,
           name: product.name,
@@ -185,7 +178,6 @@ export function ProductCard({ product, className }: ProductCardProps) {
           quantity: 1,
           category: product.categories?.[0]?.name,
         });
-        await refreshCart();
         router.push('/checkout');
       } catch (err) {
         console.error('Failed to buy now:', err);

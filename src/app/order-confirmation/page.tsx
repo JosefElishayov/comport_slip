@@ -3,9 +3,9 @@
 import { Suspense, useEffect, useState } from 'react';
 import { useSearchParams } from 'next/navigation';
 import { Link } from '@/lib/navigation';
-import type { WaitForOrderResult, OrderDownloadLink } from 'brainerce';
+import type { OrderDownloadLink } from 'brainerce';
 import { getClient } from '@/lib/brainerce';
-import { useCart } from '@/providers/store-provider';
+import { getCartStore } from '@/lib/cart-store';
 import { LoadingSpinner } from '@/components/shared/loading-spinner';
 import { OrderConfirmationSummary } from '@/components/checkout/order-confirmation-summary';
 import { useTranslations } from '@/lib/translations';
@@ -14,10 +14,9 @@ function OrderConfirmationContent() {
   const searchParams = useSearchParams();
   const checkoutId = searchParams.get('checkout_id');
 
-  const { refreshCart } = useCart();
   const t = useTranslations('orderConfirmation');
   const tc = useTranslations('common');
-  const [result, setResult] = useState<WaitForOrderResult | null>(null);
+  const [order, setOrder] = useState<{ orderId?: string; orderNumber?: string } | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [polling, setPolling] = useState(false);
@@ -29,36 +28,33 @@ function OrderConfirmationContent() {
       return;
     }
 
-    async function waitForOrder() {
+    async function confirmOrder() {
       try {
         const client = getClient();
+        // The paid cart is gone server-side: drop it locally and load a fresh one
+        const clearPaidCart = () => {
+          client.handlePaymentSuccess(checkoutId!);
+          getCartStore().reset('order-complete');
+        };
 
-        // Clear cart state after successful payment
-        client.handlePaymentSuccess(checkoutId!);
-        await refreshCart();
-
-        // For redirect-based payment providers (e.g. CardCom), the customer
-        // returns with provider params in the URL (lowprofilecode, etc.).
-        // Send these to the backend for server-side verification via the
-        // provider's API (e.g. GetLpResult) — never trust URL params alone.
-        const lowProfileCode =
-          searchParams.get('lowprofilecode') || searchParams.get('LowProfileCode');
-        if (lowProfileCode) {
-          try {
-            await client.confirmSdkPayment(checkoutId!, {
-              paymentIntentId: lowProfileCode,
-            });
-          } catch (err) {
-            console.warn('Redirect payment confirmation failed:', err);
-            // Don't block — webhook may still process the payment
-          }
-        }
-
-        const orderResult = await client.waitForOrder(checkoutId!, {
+        // Hand any provider return params (Cardcom lowprofilecode, PayPal token)
+        // to the server for verification, then wait for the order. The query
+        // string alone proves nothing — the server checks with the provider.
+        const ret = await client.completePaymentReturn(checkoutId!, {
+          search: window.location.search,
           maxWaitMs: 30000,
         });
-        setResult(orderResult);
-        if (!orderResult.success) setPolling(true);
+        if (ret.status === 'succeeded') {
+          clearPaidCart();
+          setOrder({ orderId: ret.orderId, orderNumber: ret.orderNumber });
+        } else if (ret.status === 'pending') {
+          // Paid, still confirming — the order arrives by webhook; keep polling
+          clearPaidCart();
+          setPolling(true);
+        } else {
+          // Failed / canceled: keep the cart so the shopper can try again
+          setError(t('paymentNotCompleted'));
+        }
       } catch (err) {
         const message = err instanceof Error ? err.message : 'Failed to confirm order';
         setError(message);
@@ -67,8 +63,8 @@ function OrderConfirmationContent() {
       }
     }
 
-    waitForOrder();
-  }, [checkoutId, refreshCart]);
+    confirmOrder();
+  }, [checkoutId]);
 
   useEffect(() => {
     if (!polling || !checkoutId) return;
@@ -84,7 +80,7 @@ function OrderConfirmationContent() {
             maxWaitMs: 10000,
           });
           if (res.success && !cancelled) {
-            setResult(res);
+            setOrder({ orderId: res.status.orderId, orderNumber: res.status.orderNumber });
             setPolling(false);
             return;
           }
@@ -138,8 +134,8 @@ function OrderConfirmationContent() {
   }
 
   // Order was created successfully
-  if (result?.success) {
-    const orderNumber = result.status.orderNumber;
+  if (order) {
+    const orderNumber = order.orderNumber;
 
     return (
       <div className="mx-auto max-w-2xl px-4 py-16 text-center sm:px-6 lg:px-8">
@@ -167,8 +163,8 @@ function OrderConfirmationContent() {
 
         <p className="text-muted-foreground mt-2">{t('confirmationEmail')}</p>
 
-        {result.status.orderId && (
-          <ConfirmationDownloads orderId={result.status.orderId} checkoutId={checkoutId!} />
+        {order.orderId && (
+          <ConfirmationDownloads orderId={order.orderId} checkoutId={checkoutId!} />
         )}
 
         <OrderConfirmationSummary checkoutId={checkoutId!} />

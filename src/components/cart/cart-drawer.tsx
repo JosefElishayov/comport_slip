@@ -8,7 +8,6 @@ import { formatPrice, getCartItemImage } from 'brainerce';
 import { useTranslations } from '@/lib/translations';
 import { useCart, useStoreInfo } from '@/providers/store-provider';
 import { getClient } from '@/lib/brainerce';
-import { LoadingSpinner } from '@/components/shared/loading-spinner';
 import { CouponInput } from '@/components/cart/coupon-input';
 import { CartBundleOfferCard } from '@/components/cart/cart-bundle-offer';
 import { cn } from '@/lib/utils';
@@ -123,7 +122,6 @@ export function CartDrawer() {
                     key={`${item.productId}-${item.variantId || ''}`}
                     item={item}
                     currency={currency}
-                    onUpdate={refreshCart}
                   />
                 ))}
               </div>
@@ -210,50 +208,30 @@ export function CartDrawer() {
 function DrawerCartItem({
   item,
   currency,
-  onUpdate,
 }: {
   item: import('brainerce').CartItem;
   currency: string;
-  onUpdate: () => void;
 }) {
   const tc = useTranslations('common');
   const td = useTranslations('productDetail');
   const imageUrl = getCartItemImage(item);
   const unitPrice = parseFloat(item.unitPrice);
   const lineTotal = unitPrice * item.quantity;
-  const [removing, setRemoving] = useState(false);
-  const [updating, setUpdating] = useState(false);
+  const { cartStore } = useCart();
 
-  async function handleQuantityChange(newQuantity: number) {
-    if (newQuantity < 1 || updating) return;
-    try {
-      setUpdating(true);
-      const client = getClient();
-      await client.smartUpdateCartItem(item.productId, newQuantity, item.variantId || undefined);
-      onUpdate();
-    } catch (err) {
-      console.error('Failed to update quantity:', err);
-    } finally {
-      setUpdating(false);
-    }
+  // Optimistic: the line updates at once and rapid taps coalesce. A failed
+  // write rolls back in the store.
+  function handleQuantityChange(newQuantity: number) {
+    if (newQuantity < 1) return;
+    void cartStore?.setQuantity(item.id, newQuantity);
   }
 
-  async function handleRemove() {
-    if (removing) return;
-    try {
-      setRemoving(true);
-      const client = getClient();
-      await client.smartRemoveFromCart(item.productId, item.variantId || undefined);
-      onUpdate();
-    } catch (err) {
-      console.error('Failed to remove item:', err);
-    } finally {
-      setRemoving(false);
-    }
+  function handleRemove() {
+    void cartStore?.remove(item.id);
   }
 
   return (
-    <div className={cn('flex gap-3 border-b border-border py-3 last:border-0', (removing || updating) && 'opacity-50')}>
+    <div className="flex gap-3 border-b border-border py-3 last:border-0">
       {/* Image */}
       <div className="bg-secondary/50 relative h-16 w-16 flex-shrink-0 overflow-hidden rounded-lg">
         {imageUrl ? (
@@ -280,23 +258,18 @@ function DrawerCartItem({
             <button
               type="button"
               onClick={() => handleQuantityChange(item.quantity - 1)}
-              disabled={updating || item.quantity <= 1}
+              disabled={item.quantity <= 1}
               className="text-foreground hover:bg-muted px-2 py-0.5 text-sm transition-colors disabled:cursor-not-allowed disabled:opacity-40"
               aria-label={td('decreaseQuantity')}
             >
               -
             </button>
             <span className="text-foreground min-w-[2rem] px-1 py-0.5 text-center text-xs font-medium">
-              {updating ? (
-                <LoadingSpinner size="sm" className="border-muted-foreground/30 border-t-foreground mx-auto" />
-              ) : (
-                item.quantity
-              )}
+              {item.quantity}
             </span>
             <button
               type="button"
               onClick={() => handleQuantityChange(item.quantity + 1)}
-              disabled={updating}
               className="text-foreground hover:bg-muted px-2 py-0.5 text-sm transition-colors disabled:cursor-not-allowed disabled:opacity-40"
               aria-label={td('increaseQuantity')}
             >
@@ -307,10 +280,9 @@ function DrawerCartItem({
           <button
             type="button"
             onClick={handleRemove}
-            disabled={removing}
-            className="text-destructive hover:text-destructive/80 text-xs transition-colors disabled:opacity-40"
+            className="text-destructive hover:text-destructive/80 text-xs transition-colors"
           >
-            {removing ? tc('removing') : tc('remove')}
+            {tc('remove')}
           </button>
         </div>
       </div>

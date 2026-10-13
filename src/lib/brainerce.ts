@@ -25,28 +25,14 @@ export function getClient(): BrainerceClient {
       salesChannelId: CONNECTION_ID,
       baseUrl: '/api/store', // same-origin proxy handles auth via httpOnly cookie
       proxyMode: true, // skip client-side token checks; proxy adds Authorization header
+      // We can finish carrier pickup-point rates (lockers / partner shops), so
+      // the server may offer them. See PickupPointPicker in the checkout.
+      features: ['pickup-points'],
     });
   }
   return clientInstance;
 }
 
-
-// Cart ID helpers (not a security token — safe in localStorage)
-const CART_ID_KEY = 'brainerce_cart_id';
-
-export function getStoredCartId(): string | null {
-  if (typeof window === 'undefined') return null;
-  return localStorage.getItem(CART_ID_KEY);
-}
-
-export function setStoredCartId(cartId: string | null): void {
-  if (typeof window === 'undefined') return;
-  if (cartId) {
-    localStorage.setItem(CART_ID_KEY, cartId);
-  } else {
-    localStorage.removeItem(CART_ID_KEY);
-  }
-}
 
 // Initialize client (no token hydration — auth handled by httpOnly cookie)
 export function initClient(): BrainerceClient {

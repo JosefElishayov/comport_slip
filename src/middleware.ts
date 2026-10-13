@@ -1,5 +1,6 @@
 
 import { NextRequest, NextResponse } from 'next/server';
+import { buildStorefrontCsp } from 'brainerce';
 import { stripLocalePrefix, withLocalePrefix } from '@/lib/locale';
 
 const TOKEN_COOKIE = 'brainerce_customer_token';
@@ -15,34 +16,51 @@ function generateNonce(): string {
   return btoa(binary);
 }
 
+const API_ORIGIN = new URL(process.env.BRAINERCE_API_URL || 'https://api.brainerce.com').origin;
+
+// Sources this storefront needs on top of the SDK's storefront policy:
+// Cloudflare Web Analytics, and Google Ads gtag.js — its conversion-linker
+// iframe on td.doubleclick.net, remarketing frames from googletagmanager.com.
+const EXTRA_SOURCES: Record<string, string[]> = {
+  'script-src': ['https://static.cloudflareinsights.com'],
+  'frame-src': [
+    'https://www.googletagmanager.com',
+    'https://td.doubleclick.net',
+    'https://*.doubleclick.net',
+  ],
+  'connect-src': [
+    'https://brainerce.com',
+    'https://*.brainerce.com',
+    'https://cloudflareinsights.com',
+    'https://*.cloudflareinsights.com',
+    'https://*.g.doubleclick.net',
+    'https://td.doubleclick.net',
+    'https://pagead2.googlesyndication.com',
+    'https://www.google.co.il',
+  ],
+};
+
+// The SDK owns the payment-provider hosts (frame-src / connect-src come from
+// the same allowlist `startPayment` enforces), so a newly enabled provider
+// needs no CSP edit here.
 function buildCsp(nonce: string): string {
-  const isDev = process.env.NODE_ENV === 'development';
-  // Next dev uses webpack's eval-source-map devtool, which requires 'unsafe-eval'
-  // to execute module code. Prod builds never eval, so this only loosens dev.
-  const scriptSrc = isDev
-    ? `script-src 'self' 'nonce-${nonce}' 'strict-dynamic' 'unsafe-eval' https://static.cloudflareinsights.com`
-    : `script-src 'self' 'nonce-${nonce}' 'strict-dynamic' https://static.cloudflareinsights.com`;
-  return [
-    "default-src 'self'",
-    scriptSrc,
-    "style-src 'self' 'unsafe-inline' https://cdn.meshulam.co.il",
-    "img-src 'self' data: blob: https:",
-    "font-src 'self' data:",
-    // Active payment provider: Meshulam/Grow only. Add other providers here if enabled in Brainerce.
-    // Google Ads gtag.js drops a conversion-linker iframe on td.doubleclick.net
-    // and serves remarketing frames from googletagmanager.com.
-    "frame-src 'self' https://brainerce.com https://*.brainerce.com https://meshulam.co.il https://*.meshulam.co.il https://grow.link https://*.grow.link https://grow.security https://*.grow.security https://pay.google.com https://www.googletagmanager.com https://td.doubleclick.net https://*.doubleclick.net",
-    "connect-src 'self' https://brainerce.com https://*.brainerce.com https://*.meshulam.co.il https://grow.link https://*.grow.link https://*.grow.security https://pay.google.com https://cloudflareinsights.com https://*.cloudflareinsights.com https://www.googletagmanager.com https://*.google-analytics.com https://*.analytics.google.com https://*.g.doubleclick.net https://td.doubleclick.net https://pagead2.googlesyndication.com https://www.google.com https://www.google.co.il",
-    "worker-src 'self' blob:",
-    // 'self' (not 'none') so iframe-based payment providers (e.g. Cardcom)
-    // can redirect the iframe back to /payment-complete on the storefront
-    // itself after a successful charge.
-    "frame-ancestors 'self'",
-    "base-uri 'self'",
-    "form-action 'self'",
-    "object-src 'none'",
-    'upgrade-insecure-requests',
-  ].join('; ');
+  const base = buildStorefrontCsp({
+    nonce,
+    apiOrigin: API_ORIGIN,
+    // Next dev's eval-source-map devtool needs 'unsafe-eval'; prod never evals.
+    isDev: process.env.NODE_ENV === 'development',
+  });
+  return base
+    .split(';')
+    .map((directive) => directive.trim())
+    .filter(Boolean)
+    .map((directive) => {
+      const [name, ...sources] = directive.split(/\s+/);
+      const extra = EXTRA_SOURCES[name];
+      if (!extra) return directive;
+      return [name, ...new Set([...sources, ...extra])].join(' ');
+    })
+    .join('; ');
 }
 
 function applyCspHeaders(response: NextResponse, nonce: string): NextResponse {

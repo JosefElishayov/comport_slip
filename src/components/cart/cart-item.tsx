@@ -1,28 +1,23 @@
 'use client';
 
-import { useState } from 'react';
 import Image from 'next/image';
 import type { CartItem as CartItemType } from 'brainerce';
 import { getCartItemImage, formatPrice } from 'brainerce';
-import { getClient } from '@/lib/brainerce';
 import { useTranslations } from '@/lib/translations';
-import { useStoreInfo } from '@/providers/store-provider';
-import { LoadingSpinner } from '@/components/shared/loading-spinner';
+import { useStoreInfo, useCart } from '@/providers/store-provider';
 import { cn } from '@/lib/utils';
 
 interface CartItemProps {
   item: CartItemType;
-  onUpdate: () => void;
   className?: string;
 }
 
-export function CartItem({ item, onUpdate, className }: CartItemProps) {
+export function CartItem({ item, className }: CartItemProps) {
   const t = useTranslations('common');
   const td = useTranslations('productDetail');
   const { storeInfo } = useStoreInfo();
   const currency = storeInfo?.currency || 'ILS';
-  const [updating, setUpdating] = useState(false);
-  const [removing, setRemoving] = useState(false);
+  const { cartStore } = useCart();
 
   const productName = item.product.name;
   const imageUrl = getCartItemImage(item);
@@ -30,41 +25,21 @@ export function CartItem({ item, onUpdate, className }: CartItemProps) {
   const unitPrice = parseFloat(item.unitPrice);
   const lineTotal = unitPrice * item.quantity;
 
-  async function handleQuantityChange(newQuantity: number) {
-    if (newQuantity < 1 || updating) return;
-
-    try {
-      setUpdating(true);
-      const client = getClient();
-      await client.smartUpdateCartItem(item.productId, newQuantity, item.variantId || undefined);
-      onUpdate();
-    } catch (err) {
-      console.error('Failed to update quantity:', err);
-    } finally {
-      setUpdating(false);
-    }
+  // Optimistic: the line updates at once and rapid taps coalesce into at most
+  // two requests. A failed write rolls back in the store.
+  function handleQuantityChange(newQuantity: number) {
+    if (newQuantity < 1) return;
+    void cartStore?.setQuantity(item.id, newQuantity);
   }
 
-  async function handleRemove() {
-    if (removing) return;
-
-    try {
-      setRemoving(true);
-      const client = getClient();
-      await client.smartRemoveFromCart(item.productId, item.variantId || undefined);
-      onUpdate();
-    } catch (err) {
-      console.error('Failed to remove item:', err);
-    } finally {
-      setRemoving(false);
-    }
+  function handleRemove() {
+    void cartStore?.remove(item.id);
   }
 
   return (
     <div
       className={cn(
         'border-border flex gap-4 border-b py-4 last:border-0',
-        (updating || removing) && 'opacity-60',
         className
       )}
     >
@@ -104,26 +79,18 @@ export function CartItem({ item, onUpdate, className }: CartItemProps) {
             <button
               type="button"
               onClick={() => handleQuantityChange(item.quantity - 1)}
-              disabled={updating || item.quantity <= 1}
+              disabled={item.quantity <= 1}
               className="text-foreground hover:bg-muted px-2 py-1 text-sm transition-colors disabled:cursor-not-allowed disabled:opacity-40"
               aria-label={td('decreaseQuantity')}
             >
               -
             </button>
             <span className="text-foreground min-w-[2.5rem] px-3 py-1 text-center text-sm font-medium">
-              {updating ? (
-                <LoadingSpinner
-                  size="sm"
-                  className="border-muted-foreground/30 border-t-foreground mx-auto"
-                />
-              ) : (
-                item.quantity
-              )}
+              {item.quantity}
             </span>
             <button
               type="button"
               onClick={() => handleQuantityChange(item.quantity + 1)}
-              disabled={updating}
               className="text-foreground hover:bg-muted px-2 py-1 text-sm transition-colors disabled:cursor-not-allowed disabled:opacity-40"
               aria-label={td('increaseQuantity')}
             >
@@ -134,10 +101,9 @@ export function CartItem({ item, onUpdate, className }: CartItemProps) {
           <button
             type="button"
             onClick={handleRemove}
-            disabled={removing}
-            className="text-destructive hover:text-destructive/80 text-xs transition-colors disabled:opacity-40"
+            className="text-destructive hover:text-destructive/80 text-xs transition-colors"
           >
-            {removing ? t('removing') : t('remove')}
+            {t('remove')}
           </button>
         </div>
       </div>

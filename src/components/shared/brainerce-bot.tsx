@@ -3,6 +3,7 @@
 import { useEffect } from 'react';
 import { getClient } from '@/lib/brainerce';
 import { useCart } from '@/providers/store-provider';
+import { addToCart } from '@/lib/cart-store';
 import { trackAddToCart } from '@/lib/gtag-ecommerce';
 
 const CONNECTION_ID =
@@ -15,11 +16,11 @@ const CONNECTION_ID =
  * CSP needs no changes). All appearance/behavior is configured server-side in
  * the merchant dashboard — the widget renders nothing until the bot is Live.
  *
- * The bot's product cards add to OUR cart through `onAddToCart`, so the header
- * count and cart drawer stay in sync; on failure it falls back to the PDP.
+ * The bot's product cards add to OUR cart store through `onAddToCart`, so the
+ * header count and cart drawer stay in sync; on failure it falls back to the PDP.
  */
 export function BrainerceBot() {
-  const { refreshCart, openCartDrawer } = useCart();
+  const { openCartDrawer } = useCart();
 
   useEffect(() => {
     let bot: { destroy: () => void } | null = null;
@@ -30,9 +31,14 @@ export function BrainerceBot() {
         const instance = await Bot.mount({
           connectionId: CONNECTION_ID,
           baseUrl: process.env.NEXT_PUBLIC_BRAINERCE_API_URL,
+          // Signed-in shoppers can look up their orders in the chat. The client
+          // asks through our /api/store proxy (which holds the httpOnly session
+          // cookie) and hands the widget a 5-minute bot-only token, never the
+          // real session token.
+          getBotSession: () => getClient().getBotSession(),
           onAddToCart: async ({ productId, variantId, quantity }) => {
             try {
-              await getClient().smartAddToCart({
+              await addToCart({
                 productId,
                 variantId: variantId ?? undefined,
                 quantity,
@@ -40,7 +46,6 @@ export function BrainerceBot() {
               // The bot's callback carries ids only — no name or price. A thin
               // add_to_cart still beats losing the bot's conversions entirely.
               trackAddToCart(undefined, { id: productId, quantity });
-              await refreshCart();
               openCartDrawer();
               return true;
             } catch (err) {
@@ -59,7 +64,7 @@ export function BrainerceBot() {
       cancelled = true;
       bot?.destroy();
     };
-  }, [refreshCart, openCartDrawer]);
+  }, [openCartDrawer]);
 
   return null;
 }

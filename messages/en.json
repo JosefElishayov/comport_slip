@@ -308,7 +308,20 @@
     "changeOptions": "Change options",
     "surcharges": "Surcharges",
     "fillAddressForShipping": "Fill in the address details above to see shipping options",
-    "completeAboveSteps": "Complete the steps above to continue to payment"
+    "completeAboveSteps": "Complete the steps above to continue to payment",
+    "choosePickupPoint": "Choose a pickup point or locker",
+    "pickupPointSearchPlaceholder": "Search by city",
+    "search": "Search",
+    "tryAgain": "Try again",
+    "pickupPointsLoadFailed": "We couldn't load pickup points from the carrier right now.",
+    "noPickupPointsNearby": "No pickup points found nearby. Try searching another city.",
+    "pickupPointUnavailable": "This pickup point is no longer available. Please choose another.",
+    "pickupPointLocker": "Locker",
+    "pickupPointRequired": "Choose a pickup point to continue to payment",
+    "paymentSessionLocked": "This payment can no longer continue. Go back to your cart to start a new checkout.",
+    "openPaymentInNewTab": "Open the payment page in a new tab",
+    "backToCart": "Back to cart",
+    "reopenPayment": "Reopen payment window"
   },
   "checkoutForm": {
     "email": "Email",
@@ -510,7 +523,8 @@
     "paymentBit": "Bit",
     "paymentApplePay": "Apple Pay",
     "paymentGooglePay": "Google Pay",
-    "privacyNote": "For privacy, customer details and the full address are not shown on this page. The complete details were emailed to you and are available in your account."
+    "privacyNote": "For privacy, customer details and the full address are not shown on this page. The complete details were emailed to you and are available in your account.",
+    "paymentNotCompleted": "The payment was not completed. You can go back to checkout and try again."
   },
   "reservation": {
     "expired": "Your reservation has expired. The items may no longer be available.",

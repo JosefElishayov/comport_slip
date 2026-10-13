@@ -3,6 +3,7 @@
 import { useState } from 'react';
 import type { Cart, Checkout } from 'brainerce';
 import { getClient } from '@/lib/brainerce';
+import { applyCartCoupon, removeCartCoupon } from '@/lib/cart-store';
 import { useTranslations } from '@/lib/translations';
 import { LoadingSpinner } from '@/components/shared/loading-spinner';
 import { cn } from '@/lib/utils';
@@ -37,9 +38,9 @@ export function CouponInput({ cart, checkoutId, onUpdate, className }: CouponInp
         setCode('');
         onUpdate(updated);
       } else {
-        await client.applyCoupon(cart.id, trimmed);
+        // The cart store adopts the updated cart itself — no refetch needed.
+        await applyCartCoupon(trimmed);
         setCode('');
-        onUpdate();
       }
     } catch (err) {
       const message = err instanceof Error ? err.message : t('invalidCode');
@@ -60,8 +61,7 @@ export function CouponInput({ cart, checkoutId, onUpdate, className }: CouponInp
         const updated = await client.removeCheckoutCoupon(checkoutId);
         onUpdate(updated);
       } else {
-        await client.removeCoupon(cart.id);
-        onUpdate();
+        await removeCartCoupon();
       }
     } catch (err) {
       console.error('Failed to remove coupon:', err);

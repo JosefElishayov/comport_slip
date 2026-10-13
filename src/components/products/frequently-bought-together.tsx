@@ -4,7 +4,7 @@ import { useEffect, useMemo, useRef, useState } from 'react';
 import Image from 'next/image';
 import type { Product, ProductRecommendation, ProductVariant } from 'brainerce';
 import { formatPrice, getVariantOptions } from 'brainerce';
-import { useCart } from '@/providers/store-provider';
+import { addToCart } from '@/lib/cart-store';
 import { useStoreInfo } from '@/providers/store-provider';
 import { useTranslations } from '@/lib/translations';
 import { useAttributeLabel } from '@/lib/attribute-i18n';
@@ -104,7 +104,6 @@ export function FrequentlyBoughtTogether({
   className,
 }: FrequentlyBoughtTogetherProps) {
   const { storeInfo } = useStoreInfo();
-  const { refreshCart } = useCart();
   const t = useTranslations('productDetail');
   const attrLabel = useAttributeLabel();
 
@@ -275,8 +274,6 @@ export function FrequentlyBoughtTogether({
     if (adding || selected.size === 0 || variantsLoading) return;
     try {
       setAdding(true);
-      const { getClient } = await import('@/lib/brainerce');
-      const client = getClient();
       const itemsToAdd = bundleItems.filter((item) => selected.has(item.key));
       // Only the lines that actually landed get reported, and as a single
       // add_to_cart — "add all" is one shopper action, not N of them.
@@ -284,7 +281,7 @@ export function FrequentlyBoughtTogether({
       for (const item of itemsToAdd) {
         const chosen = getChosenVariant(item);
         try {
-          await client.smartAddToCart({
+          await addToCart({
             productId: item.productId,
             variantId: chosen?.id,
             quantity: 1,
@@ -302,7 +299,6 @@ export function FrequentlyBoughtTogether({
         }
       }
       trackAddToCart(currency, added);
-      await refreshCart();
     } finally {
       setAdding(false);
     }

@@ -22,6 +22,7 @@ import { CheckoutForm } from '@/components/checkout/checkout-form';
 import { ShippingStep } from '@/components/checkout/shipping-step';
 import { PaymentStep } from '@/components/checkout/payment-step';
 import { PickupStep } from '@/components/checkout/pickup-step';
+import { PickupPointPicker } from '@/components/checkout/pickup-point-picker';
 import { CustomFieldsStep } from '@/components/checkout/custom-fields-step';
 import { ElevatorGate, type ElevatorAnswer } from '@/components/checkout/elevator-gate';
 import { OrderBumpCard } from '@/components/checkout/order-bump-card';
@@ -38,7 +39,7 @@ import { isFloorField, elevatorFitsValue, isElevatorFitsValue } from '@/lib/chec
 function CheckoutContent() {
   const searchParams = useSearchParams();
   const { storeInfo } = useStoreInfo();
-  const { cart, refreshCart } = useCart();
+  const { cart, refreshCart, cartStore } = useCart();
   const { isLoggedIn } = useAuth();
   const currency = storeInfo?.currency || 'ILS';
   const t = useTranslations('checkout');
@@ -85,7 +86,15 @@ function CheckoutContent() {
     : deliveryType === 'pickup'
       ? !!checkout?.pickupLocation
       : !!checkout?.shippingAddress;
-  const shippingDone = isAllDigital || deliveryType === 'pickup' || !!selectedRateId;
+  // A carrier pickup-point rate (partner shop / locker) is only done once a
+  // point is chosen — the server refuses payment until then.
+  const selectedRate = shippingRates.find((r) => r.id === selectedRateId);
+  const needsPickupPoint =
+    !isAllDigital && deliveryType === 'shipping' && !!selectedRate?.requiresPickupPoint;
+  const shippingDone =
+    isAllDigital ||
+    deliveryType === 'pickup' ||
+    (!!selectedRateId && (!needsPickupPoint || !!checkout?.pickupPoint));
 
   // Auto-open shipping drawer & collapse address drawer when address is done
   useEffect(() => {
@@ -200,6 +209,10 @@ function CheckoutContent() {
           return;
         }
 
+        // Let queued cart edits (quantity taps, removals) land on the server
+        // first, so the checkout is built from what the shopper sees.
+        await cartStore?.flush();
+
         // Create new checkout — cart is always server-side now
         const newCheckout = await client.createCheckout({ cartId: cart.id });
         setCheckout(newCheckout);
@@ -229,7 +242,7 @@ function CheckoutContent() {
     };
 
     initCheckout();
-  }, [cart?.id, existingCheckoutId]);
+  }, [cart?.id, existingCheckoutId, cartStore]);
 
   // Load order bumps when checkout is available
   useEffect(() => {
@@ -870,12 +883,24 @@ function CheckoutContent() {
                 <div className="overflow-hidden">
                   <div className="px-6 pb-6">
                     {shippingRates.length > 0 ? (
-                      <ShippingStep
-                        rates={shippingRates}
-                        selectedRateId={selectedRateId}
-                        onSelect={handleShippingSelect}
-                        loading={loading}
-                      />
+                      <>
+                        <ShippingStep
+                          rates={shippingRates}
+                          selectedRateId={selectedRateId}
+                          onSelect={handleShippingSelect}
+                          loading={loading}
+                        />
+                        {needsPickupPoint && checkout && !loading && (
+                          <PickupPointPicker
+                            // Choosing another rate clears the point server-side: start fresh
+                            key={selectedRateId}
+                            checkoutId={checkout.id}
+                            selected={checkout.pickupPoint}
+                            onSelected={setCheckout}
+                            className="border-border mt-4 border-t pt-4"
+                          />
+                        )}
+                      </>
                     ) : (
                       <p className="text-muted-foreground py-4 text-center text-sm">
                         {addressDone ? t('noShippingOptions') : t('fillAddressForShipping')}

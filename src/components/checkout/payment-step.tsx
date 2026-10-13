@@ -1,554 +1,124 @@
 'use client';
 
-import { useEffect, useState, useRef, useCallback } from 'react';
-import type { PaymentIntent, PaymentClientSdk } from 'brainerce';
-import { formatPrice } from 'brainerce';
+import { useEffect, useRef, useState } from 'react';
+import type { PaymentFlowError, PaymentFlowStatus, PaymentSession } from 'brainerce';
 import { getClient } from '@/lib/brainerce';
+import { Link } from '@/lib/navigation';
 import { useTranslations } from '@/lib/translations';
 import { LoadingSpinner } from '@/components/shared/loading-spinner';
 import { useStoreInfo } from '@/providers/store-provider';
 import { cn } from '@/lib/utils';
-import { isAllowedPaymentUrl, isValidCheckoutId, safePaymentRedirect } from '@/lib/safe-redirect';
+import { isValidCheckoutId } from '@/lib/safe-redirect';
+
+/** `PaymentSession['presentation']` without the null. */
+type Presentation = NonNullable<PaymentSession['presentation']>;
+
+/** Fallback height for a provider's own payment page (it reports no height). */
+const PROVIDER_PAGE_HEIGHT = 600;
 
 /**
- * Backward-compat defaults when backend doesn't return clientSdk.
+ * Some providers (e.g. Cardcom) finish the payment by webhook and never send
+ * the iframe back to /payment-complete. Poll for the order as a safety net.
  */
-const LEGACY_GROW_SDK: PaymentClientSdk = {
-  renderType: 'sdk-widget',
-  scriptUrl: 'https://cdn.meshulam.co.il/sdk/gs.min.js',
-  globalName: 'growPayment',
-  initMethod: 'init',
-  renderMethod: 'renderPaymentOptions',
-  containerId: 'grow-payment-container',
-  initConfig: { version: 1, environment: 'DEV' },
-  additionalScripts: [
-    { url: 'https://meshulam.co.il/_media/js/apple_pay_sdk/sdk.min.js', optional: true },
-  ],
-  bodyStyles:
-    '[id*="Gr0W8-"],[id*="Gr0W8-"] *,[class*="Gr0W8-"],[class*="Gr0W8-"] *{direction:ltr !important;text-align:left}',
-};
-
-/** Fallback height until the embed page reports its real content height. */
-const DEFAULT_IFRAME_HEIGHT = 600;
-const MIN_IFRAME_HEIGHT = 320;
-const MAX_IFRAME_HEIGHT = 2400;
+const ORDER_POLL_START_MS = 8000;
+const ORDER_POLL_INTERVAL_MS = 3000;
 
 interface PaymentStepProps {
   checkoutId: string;
   className?: string;
 }
 
-function resolveClientSdk(
-  intent: PaymentIntent | null,
-  preloadedSdk?: PaymentClientSdk | null
-): PaymentClientSdk {
-  const fullSdk = [preloadedSdk, intent?.clientSdk].find((s) => s?.renderType);
-  const runtimeSdk = intent?.clientSdk;
-  if (fullSdk) {
-    if (!runtimeSdk || runtimeSdk === fullSdk) return fullSdk;
-    return {
-      ...fullSdk,
-      ...(runtimeSdk.renderArg ? { renderArg: runtimeSdk.renderArg } : {}),
-      ...(runtimeSdk.initConfig
-        ? { initConfig: { ...fullSdk.initConfig, ...runtimeSdk.initConfig } }
-        : {}),
-    };
-  }
-  const legacy = intent?.provider === 'grow' ? LEGACY_GROW_SDK : null;
-  if (legacy && runtimeSdk) {
-    return {
-      ...legacy,
-      ...(runtimeSdk.renderArg ? { renderArg: runtimeSdk.renderArg } : {}),
-      ...(runtimeSdk.initConfig
-        ? { initConfig: { ...legacy.initConfig, ...runtimeSdk.initConfig } }
-        : {}),
-    };
-  }
-  if (legacy) return legacy;
-  return { renderType: 'redirect' };
-}
-
-function extractMessage(response: unknown): string {
-  if (typeof response === 'string') return response;
-  return (response as { message?: string })?.message || '';
-}
-
+/**
+ * The payment step for any provider the store has, via the SDK's
+ * `startPayment`: it picks the render type the platform returns (redirect,
+ * provider iframe, Brainerce embed, JS widget, sandbox), enforces the payment
+ * URL / script allowlists, and reports success only after the SERVER confirms
+ * the order. This component only chooses the wrapper and the messages.
+ */
 export function PaymentStep({ checkoutId, className }: PaymentStepProps) {
   const t = useTranslations('checkout');
   const { storeInfo } = useStoreInfo();
 
-  const [paymentIntent, setPaymentIntent] = useState<PaymentIntent | null>(null);
-  const [preloadedSdk, setPreloadedSdk] = useState<PaymentClientSdk | null>(null);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
-  const [sdkReady, setSdkReady] = useState(false);
-  const [confirming, setConfirming] = useState(false);
-  const walletOpenRef = useRef(false);
-  const initialized = useRef(false);
-  const successHandledRef = useRef(false);
-  const iframeRef = useRef<HTMLIFrameElement>(null);
-  const [iframeHeight, setIframeHeight] = useState(DEFAULT_IFRAME_HEIGHT);
+  const containerRef = useRef<HTMLDivElement>(null);
+  const sessionRef = useRef<PaymentSession | null>(null);
+  const [presentation, setPresentation] = useState<Presentation | null>(null);
+  const [status, setStatus] = useState<PaymentFlowStatus>('preparing');
+  const [failure, setFailure] = useState<string | null>(null);
+  const [flowError, setFlowError] = useState<PaymentFlowError | null>(null);
+  const [placingTestOrder, setPlacingTestOrder] = useState(false);
 
-  // Stable refs for SDK event callbacks (avoids stale closures in onload)
-  const cbRef = useRef({
-    onSuccess: (_r: unknown) => {},
-    onFailure: (_r: unknown) => {},
-    onError: (_r: unknown) => {},
-    onTimeout: () => {},
-    onWalletChange: (_s: string) => {},
-    retryRender: () => {},
-  });
-
-  const handleSuccess = useCallback(
-    async (response: unknown) => {
-      if (successHandledRef.current) return;
-      successHandledRef.current = true;
-      console.info('Payment SDK success:', response);
-      setConfirming(true);
-
-      const resp = response as Record<string, unknown>;
-      const data = (resp?.data && typeof resp.data === 'object' ? resp.data : resp) as
-        | Record<string, string>
-        | undefined;
-
-      try {
-        const client = getClient();
-        // Race against 10s timeout so a stalled API call never blocks the redirect
-        await Promise.race([
-          client.confirmSdkPayment(checkoutId, data || undefined),
-          new Promise<void>((resolve) => setTimeout(resolve, 10_000)),
-        ]);
-      } catch (err) {
-        console.warn('Failed to confirm payment with backend:', err);
-      }
-
-      // Pass lowprofilecode to order-confirmation so it can retry server-side
-      // verification if the confirmSdkPayment above timed out or failed
-      const lowProfileCode = data?.paymentIntentId || data?.lowprofilecode || data?.LowProfileCode;
-      const qs = lowProfileCode
-        ? `checkout_id=${checkoutId}&lowprofilecode=${encodeURIComponent(lowProfileCode)}`
-        : `checkout_id=${checkoutId}`;
-      window.location.href = `/order-confirmation?${qs}`;
-    },
-    [checkoutId]
-  );
-
-  // Backup mechanism: detect iframe navigation to /payment-complete via onLoad.
-  // Covers the case where postMessage is lost (e.g. React Strict Mode cleanup).
-  const handleIframeLoad = useCallback(() => {
-    try {
-      const contentWindow = iframeRef.current?.contentWindow;
-      if (!contentWindow) return;
-      const href = contentWindow.location.href;
-      if (!href.includes('/payment-complete')) return;
-
-      const params = new URLSearchParams(contentWindow.location.search);
-      if (params.get('failed') === 'true') {
-        setError(t('paymentError'));
-        return;
-      }
-
-      const data: Record<string, string> = {};
-      params.forEach((value, key) => { data[key] = value; });
-      const lowProfileCode = data.lowprofilecode || data.LowProfileCode;
-      const normalized: Record<string, unknown> = { ...data };
-      if (lowProfileCode) normalized.paymentIntentId = lowProfileCode;
-
-      handleSuccess(normalized);
-    } catch {
-      // Cross-origin (Cardcom page) — SecurityError expected, ignore
-    }
-  }, [handleSuccess, t]);
-
-  cbRef.current = {
-    onSuccess: handleSuccess,
-    onFailure: (response: unknown) => {
-      console.error('Payment SDK failure:', response);
-      setError(extractMessage(response) || t('paymentError'));
-    },
-    onError: (response: unknown) => {
-      const TRANSIENT = [
-        'Wallet not initialized',
-        "SDK was not loaded as needed and therefore can't run",
-      ];
-      const msg = extractMessage(response);
-      if (TRANSIENT.some((e) => msg.includes(e))) {
-        console.info('Payment SDK: transient error, retrying render in 1s:', msg);
-        setTimeout(() => cbRef.current.retryRender(), 1000);
-        return;
-      }
-      console.error('Payment SDK error:', response);
-      setError(msg || t('paymentError'));
-    },
-    onTimeout: () => {
-      console.warn('Payment SDK: wallet timed out');
-      setError(t('paymentTimedOut'));
-    },
-    onWalletChange: (state: string) => {
-      console.info('Payment SDK wallet state:', state);
-      if (state === 'open') {
-        walletOpenRef.current = true;
-        setSdkReady(true);
-      }
-      if (state === 'close') setSdkReady(false);
-    },
-    retryRender: () => {},
-  };
-
-  // =========================================================================
-  // MAIN EFFECT — Follows Grow SDK docs exactly:
-  //
-  // Step 1: Load gs.min.js (insertBefore, as docs show)
-  // Step 2: s.onload → growPayment.init({ environment, version, events })
-  //         This triggers the SDK to load mp.min.js → CSS, HTML, params, services
-  // Step 3: createPaymentIntent (starts wallet timer — should be AFTER init)
-  // Step 4: growPayment.renderPaymentOptions(authCode)
-  //
-  // "call createPaymentProcess right before you need to render the wallet"
-  // =========================================================================
   useEffect(() => {
-    if (initialized.current) return;
-    initialized.current = true;
+    if (!isValidCheckoutId(checkoutId) || !containerRef.current) return;
 
-    const client = getClient();
-    const iframeSuccessUrl = `${window.location.origin}/payment-complete?checkout_id=${checkoutId}`;
-    const iframeFailedUrl = `${window.location.origin}/payment-complete?checkout_id=${checkoutId}&failed=true`;
-    const redirectSuccessUrl = `${window.location.origin}/order-confirmation?checkout_id=${checkoutId}`;
-    const cancelUrl = `${window.location.origin}/checkout?checkout_id=${checkoutId}&canceled=true`;
+    const confirmationUrl = () =>
+      `/order-confirmation?checkout_id=${encodeURIComponent(checkoutId)}`;
 
-    let sdkInitDone = false;
-    let currentSdk: PaymentClientSdk | null = null;
-    const cleanups: (() => void)[] = [];
-
-    // --- Load SDK script exactly as Grow docs show ---
-    function loadScript(sdk: PaymentClientSdk) {
-      if (!sdk.scriptUrl || !sdk.globalName) return;
-
-      // Inject bodyStyles
-      if (sdk.bodyStyles && !document.querySelector('style[data-payment-sdk]')) {
-        const style = document.createElement('style');
-        style.setAttribute('data-payment-sdk', 'true');
-        style.textContent = sdk.bodyStyles;
-        document.head.appendChild(style);
-        cleanups.push(() => style.remove());
-      }
-
-      // Additional scripts (Apple Pay etc.) — fire and forget
-      if (sdk.additionalScripts) {
-        for (const extra of sdk.additionalScripts) {
-          if (document.querySelector(`script[src="${extra.url}"]`)) continue;
-          const s = document.createElement('script');
-          s.type = 'text/javascript';
-          s.async = true;
-          s.src = extra.url;
-          const ref = document.getElementsByTagName('script')[0];
-          if (ref?.parentNode) ref.parentNode.insertBefore(s, ref);
-          else document.head.appendChild(s);
-        }
-      }
-
-      // Already loaded? Init immediately
-      if ((window as any)[sdk.globalName]) {
-        initSdk(sdk);
-        return;
-      }
-
-      // Already loading (from a previous call)? Wait for it instead of duplicating
-      if (document.querySelector(`script[src="${sdk.scriptUrl}"]`)) {
-        const waitId = setInterval(() => {
-          if ((window as any)[sdk.globalName!]) {
-            clearInterval(waitId);
-            initSdk(sdk);
-          }
-        }, 100);
-        cleanups.push(() => clearInterval(waitId));
-        return;
-      }
-
-      // Load main SDK — insertBefore first <script> as Grow docs show
-      const s = document.createElement('script');
-      s.type = 'text/javascript';
-      s.async = true;
-      s.src = sdk.scriptUrl;
-      s.onload = () => initSdk(sdk); // init DIRECTLY in onload
-      s.onerror = () => {
-        console.error('Payment SDK: script load failed');
-        setError(t('failedToLoadPaymentSdk'));
-      };
-      const ref = document.getElementsByTagName('script')[0];
-      if (ref?.parentNode) ref.parentNode.insertBefore(s, ref);
-      else document.head.appendChild(s);
-    }
-
-    // --- Init: called in s.onload (as Grow docs require) ---
-    function initSdk(sdk: PaymentClientSdk) {
-      if (sdkInitDone) return; // Guard against double init
-
-      const global = (window as any)[sdk.globalName!];
-      if (!global) {
-        setError(t('failedToLoadPaymentSdk'));
-        return;
-      }
-
-      const method = sdk.initMethod || 'init';
-      const config = {
-        ...(sdk.initConfig || {}),
-        events: {
-          onSuccess: (r: unknown) => cbRef.current.onSuccess(r),
-          onFailure: (r: unknown) => cbRef.current.onFailure(r),
-          onError: (r: unknown) => cbRef.current.onError(r),
-          onTimeout: () => cbRef.current.onTimeout(),
-          onWalletChange: (s: string) => cbRef.current.onWalletChange(s),
-        },
-      };
-
-      console.info(`Payment SDK: calling ${method}()`);
-      global[method](config);
-      sdkInitDone = true;
-    }
-
-    // --- Render: call once, then safety-net retries if wallet doesn't open ---
-    // Grow SDK sometimes silently swallows renderPaymentOptions when its
-    // internal resources (mp.min.js etc.) aren't fully loaded yet.
-    // Strategy: render once, then retry up to 3 times with increasing delays
-    // (2s, 3s, 4s) if onWalletChange("open") hasn't fired.
-    let pendingRender: { sdk: PaymentClientSdk; intent: PaymentIntent } | null = null;
-    let renderAttempts = 0;
-    const MAX_RENDER_ATTEMPTS = 4;
-
-    function renderPayment(sdk: PaymentClientSdk, intent: PaymentIntent) {
-      const global = (window as any)[sdk.globalName!];
-      if (!global || walletOpenRef.current) return;
-
-      const renderMethod = sdk.renderMethod || 'renderPaymentOptions';
-      const renderArg = sdk.renderArg || intent.clientSecret;
-      renderAttempts++;
-
-      try {
-        global[renderMethod](renderArg);
-        console.info(`Payment SDK: renderPaymentOptions called (attempt ${renderAttempts})`);
-      } catch (err) {
-        console.info('Payment SDK: render threw, will retry in 1s');
-      }
-
-      // Safety net: if wallet doesn't open within a delay, retry
-      if (renderAttempts < MAX_RENDER_ATTEMPTS) {
-        const delay = 1000 + renderAttempts * 1000; // 2s, 3s, 4s
-        const retryId = setTimeout(() => {
-          if (!walletOpenRef.current) {
-            console.info(`Payment SDK: wallet not open after ${delay}ms, retrying render...`);
-            renderPayment(sdk, intent);
-          }
-        }, delay);
-        cleanups.push(() => clearTimeout(retryId));
-      }
-    }
-
-    function retryRender() {
-      if (pendingRender && !walletOpenRef.current) {
-        renderPayment(pendingRender.sdk, pendingRender.intent);
-      }
-    }
-
-    // =============================================
-    // Execution flow
-    // =============================================
-
-    // A) Get SDK config from providers (fast, no wallet timer)
-    const providerPromise = client
-      .getPaymentProviders()
-      .then((res) => {
-        const sdk = res.defaultProvider?.clientSdk;
-        if (sdk) setPreloadedSdk(sdk);
-        return sdk || null;
-      })
-      .catch(() => null);
-
-    // B) Load + init SDK as early as possible (skip for sandbox)
-    providerPromise.then((providerSdk) => {
-      if (providerSdk?.renderType === 'sandbox') return;
-      if (providerSdk?.renderType === 'sdk-widget' && providerSdk.scriptUrl) {
-        currentSdk = providerSdk;
-        loadScript(providerSdk);
-      }
-    });
-
-    // C) Create payment intent (starts wallet timer)
-    // Wait for provider info so we can choose the right success URL:
-    // iframe providers redirect inside the iframe to /payment-complete (postMessage),
-    // redirect providers go straight to /order-confirmation.
-    const intentPromise = providerPromise
-      .then((providerSdk) => {
-        const isIframe = providerSdk?.renderType === 'iframe';
-        const successUrl = isIframe ? iframeSuccessUrl : redirectSuccessUrl;
-        const failedUrl = isIframe ? iframeFailedUrl : cancelUrl;
-        return client.createPaymentIntent(checkoutId, {
-          successUrl,
-          cancelUrl: failedUrl,
-        });
-      })
-      .then((intent) => {
-        setPaymentIntent(intent);
-        return intent;
-      })
-      .catch((err) => {
-        setError(err instanceof Error ? err.message : t('paymentError'));
-        return null;
-      })
-      .finally(() => setLoading(false));
-
-    // D) When both ready: resolve final SDK config and render
-    Promise.all([providerPromise, intentPromise]).then(([providerSdk, intent]) => {
-      if (!intent) return;
-
-      const sdk = resolveClientSdk(intent, providerSdk);
-      currentSdk = sdk;
-
-      // Sandbox mode — no SDK to load, UI handles it
-      if (sdk.renderType === 'sandbox') return;
-
-      if (sdk.renderType === 'redirect') {
-        if (!isAllowedPaymentUrl(intent.clientSecret)) {
-          setError(t('paymentRedirectBlocked'));
+    let done = false;
+    const session = getClient().startPayment(checkoutId, {
+      container: containerRef.current,
+      onStatus: setStatus,
+      onPresentation: setPresentation,
+      onSuccess: () => {
+        done = true;
+        window.location.href = confirmationUrl();
+      },
+      onFailure: (message) => {
+        console.warn('Payment not completed:', message);
+        setFailure(message || t('paymentError'));
+      },
+      onError: (err) => {
+        // The provider says it is paid but the order is still on its way
+        // (webhook pending) — the confirmation page keeps waiting for it.
+        if (err.code === 'unconfirmed') {
+          done = true;
+          window.location.href = confirmationUrl();
           return;
         }
-        safePaymentRedirect(intent.clientSecret);
-        return;
-      }
-
-      // Iframe mode: listen for postMessage from the /payment-complete callback
-      // page that loads inside the iframe after the provider redirects on completion.
-      if (sdk.renderType === 'iframe') {
-        if (!isAllowedPaymentUrl(intent.clientSecret)) {
-          setError(t('paymentRedirectBlocked'));
-          return;
-        }
-        // The embed page runs on the platform origin; our own /payment-complete
-        // callback later loads inside the same iframe on our origin. Trusting
-        // only window.location.origin dropped every message the embed page sent.
-        let paymentOrigin = '';
-        try {
-          paymentOrigin = new URL(intent.clientSecret).origin;
-        } catch {
-          // clientSecret already passed isAllowedPaymentUrl above
-        }
-        const isTrustedOrigin = (origin: string) =>
-          origin === window.location.origin || (!!paymentOrigin && origin === paymentOrigin);
-
-        const handleMessage = (event: MessageEvent) => {
-          if (!isTrustedOrigin(event.origin)) return;
-
-          // Embed page reports its real content height. Without this the iframe
-          // stays at its fallback height and the payment form gets its own
-          // nested scrollbar.
-          if (event.data?.type === 'brainerce:resize') {
-            const height = Number(event.data.height ?? event.data.data?.height);
-            if (Number.isFinite(height) && height > 0) {
-              setIframeHeight(
-                Math.min(Math.max(Math.round(height), MIN_IFRAME_HEIGHT), MAX_IFRAME_HEIGHT)
-              );
-            }
-            return;
-          }
-
-          if (event.data?.type !== 'brainerce:payment-complete') return;
-
-          const params = event.data.data as Record<string, string> | undefined;
-          if (params?.failed === 'true') {
-            setError(t('paymentError'));
-            return;
-          }
-
-          // Map provider-specific params to normalized format for
-          // server-side verification (e.g. CardCom lowprofilecode → paymentIntentId)
-          const lowProfileCode = params?.lowprofilecode || params?.LowProfileCode;
-          const normalized: Record<string, unknown> = { ...params };
-          if (lowProfileCode) {
-            normalized.paymentIntentId = lowProfileCode;
-          }
-
-          // Trigger server-side verification + order creation
-          handleSuccess(normalized);
-        };
-        window.addEventListener('message', handleMessage);
-        cleanups.push(() => window.removeEventListener('message', handleMessage));
-
-        // Backend-status fallback: some providers (e.g. CardCom) finish the
-        // payment via webhook but don't redirect the iframe to our callback,
-        // or postMessage gets lost. Poll the order endpoint — when the order
-        // shows up server-side we know payment succeeded and can redirect.
-        let pollCancelled = false;
-        const startPollDelayMs = 8000; // give the normal flow a head start
-        const pollIntervalMs = 3000;
-
-        const pollOrderStatus = async () => {
-          while (!pollCancelled && !successHandledRef.current) {
-            try {
-              const res = await client.waitForOrder(checkoutId, { maxWaitMs: 2500 });
-              if (pollCancelled || successHandledRef.current) return;
-              if (res.success) {
-                handleSuccess({});
-                return;
-              }
-            } catch {
-              // ignore — keep polling
-            }
-            await new Promise((r) => setTimeout(r, pollIntervalMs));
-          }
-        };
-
-        const pollStartId = setTimeout(pollOrderStatus, startPollDelayMs);
-        cleanups.push(() => {
-          pollCancelled = true;
-          clearTimeout(pollStartId);
-        });
-        return;
-      }
-
-      if (sdk.renderType !== 'sdk-widget' || !sdk.globalName) return;
-
-      // Store for retryRender from onError callback
-      pendingRender = { sdk, intent };
-      cbRef.current.retryRender = retryRender;
-
-      // If SDK wasn't loaded from providers, load + init now
-      if (!sdkInitDone) {
-        loadScript(sdk);
-        // Wait for init to complete, then render once
-        const id = setInterval(() => {
-          if (sdkInitDone) {
-            clearInterval(id);
-            renderPayment(sdk, intent);
-          }
-        }, 100);
-        cleanups.push(() => clearInterval(id));
-        return;
-      }
-
-      // Re-init with final config if environment changed
-      if (sdk.initConfig?.environment && currentSdk) {
-        const global = (window as any)[sdk.globalName];
-        if (global) {
-          const method = sdk.initMethod || 'init';
-          global[method]({
-            ...(sdk.initConfig || {}),
-            events: {
-              onSuccess: (r: unknown) => cbRef.current.onSuccess(r),
-              onFailure: (r: unknown) => cbRef.current.onFailure(r),
-              onError: (r: unknown) => cbRef.current.onError(r),
-              onTimeout: () => cbRef.current.onTimeout(),
-              onWalletChange: (s: string) => cbRef.current.onWalletChange(s),
-            },
-          });
-        }
-      }
-
-      // SDK ready — render once
-      renderPayment(sdk, intent);
+        console.error('Payment error:', err.code, err.message);
+        setFlowError(err);
+      },
     });
+    sessionRef.current = session;
 
-    return () => cleanups.forEach((fn) => fn());
+    // Webhook-only completion safety net (see ORDER_POLL_START_MS).
+    let pollCancelled = false;
+    const pollStartId = setTimeout(async () => {
+      while (!pollCancelled && !done) {
+        if (sessionRef.current?.presentation === 'provider-page') {
+          try {
+            const res = await getClient().waitForOrder(checkoutId, { maxWaitMs: 2500 });
+            if (res.success && !pollCancelled && !done) {
+              done = true;
+              window.location.href = confirmationUrl();
+              return;
+            }
+          } catch {
+            // keep polling
+          }
+        }
+        await new Promise((r) => setTimeout(r, ORDER_POLL_INTERVAL_MS));
+      }
+    }, ORDER_POLL_START_MS);
+
+    return () => {
+      pollCancelled = true;
+      clearTimeout(pollStartId);
+      session.destroy();
+      sessionRef.current = null;
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [checkoutId]);
+
+  function handleRetry() {
+    setFailure(null);
+    sessionRef.current?.reopen();
+  }
+
+  async function handleCompleteTestOrder() {
+    setPlacingTestOrder(true);
+    await sessionRef.current?.completeTestOrder();
+    setPlacingTestOrder(false);
+  }
 
   // --- UI ---
 
@@ -562,31 +132,17 @@ export function PaymentStep({ checkoutId, className }: PaymentStepProps) {
     );
   }
 
-  if (confirming) {
-    return (
-      <div className={cn('flex flex-col items-center justify-center py-12', className)}>
-        <LoadingSpinner size="lg" />
-        <p className="text-muted-foreground mt-4 text-sm">{t('confirmingPayment')}</p>
-      </div>
-    );
-  }
+  const isFrame = presentation === 'provider-page' || presentation === 'embedded';
+  const processing = status === 'processing' || placingTestOrder;
+  // A full-panel state replaces the payment UI. The container below stays
+  // mounted (only hidden), so the SDK's iframe / widget survives a retry.
+  const showFrame = isFrame && !flowError && !processing;
 
-  if (loading) {
-    return (
-      <div className={cn('flex flex-col items-center justify-center py-12', className)}>
-        <LoadingSpinner size="lg" />
-        <p className="text-muted-foreground mt-4 text-sm">{t('preparingPayment')}</p>
-      </div>
-    );
-  }
-
-  if (error) {
-    const isNotConfigured =
-      error.toLowerCase().includes('not configured') ||
-      error.toLowerCase().includes('no payment') ||
-      error.toLowerCase().includes('provider');
-    return (
-      <div className={cn('py-12 text-center', className)}>
+  let panel: React.ReactNode = null;
+  if (flowError) {
+    const isNotConfigured = flowError.code === 'unavailable';
+    panel = (
+      <div className="py-12 text-center">
         <svg
           className="text-muted-foreground mx-auto mb-4 h-12 w-12"
           fill="none"
@@ -604,31 +160,46 @@ export function PaymentStep({ checkoutId, className }: PaymentStepProps) {
           {isNotConfigured ? t('paymentNotConfigured') : t('paymentError')}
         </h3>
         <p className="text-muted-foreground mx-auto max-w-md text-sm">
-          {isNotConfigured ? t('paymentNotConfiguredDesc') : error}
+          {isNotConfigured
+            ? t('paymentNotConfiguredDesc')
+            : flowError.code === 'session_locked'
+              ? t('paymentSessionLocked')
+              : flowError.code === 'blocked_url' || flowError.code === 'blocked_script'
+                ? t('paymentRedirectBlocked')
+                : flowError.code === 'load_failed'
+                  ? t('failedToLoadPaymentSdk')
+                  : flowError.message}
         </p>
+        {flowError.code === 'load_failed' && flowError.url && (
+          <a
+            href={flowError.url}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="text-primary mt-3 inline-block text-sm font-medium hover:underline"
+          >
+            {t('openPaymentInNewTab')}
+          </a>
+        )}
+        {flowError.code === 'session_locked' && (
+          <Link
+            href="/cart"
+            className="text-primary mt-3 inline-block text-sm font-medium hover:underline"
+          >
+            {t('backToCart')}
+          </Link>
+        )}
       </div>
     );
-  }
-
-  if (!paymentIntent) return null;
-
-  const sdk = resolveClientSdk(paymentIntent, preloadedSdk);
-
-  if (sdk.renderType === 'sandbox') {
-    const handleCompleteSandbox = async () => {
-      setLoading(true);
-      try {
-        const client = getClient();
-        await client.completeGuestCheckout(checkoutId);
-        window.location.href = `/order-confirmation?checkout_id=${checkoutId}`;
-      } catch (err) {
-        setError(err instanceof Error ? err.message : t('paymentError'));
-        setLoading(false);
-      }
-    };
-
-    return (
-      <div className={cn('py-8 text-center', className)}>
+  } else if (processing) {
+    panel = (
+      <div className="flex flex-col items-center justify-center py-12">
+        <LoadingSpinner size="lg" />
+        <p className="text-muted-foreground mt-4 text-sm">{t('confirmingPayment')}</p>
+      </div>
+    );
+  } else if (presentation === 'sandbox') {
+    panel = (
+      <div className="py-8 text-center">
         <div className="mx-auto max-w-md rounded-lg border border-amber-200 bg-amber-50 p-6">
           <svg
             className="mx-auto mb-3 h-10 w-10 text-amber-500"
@@ -646,7 +217,7 @@ export function PaymentStep({ checkoutId, className }: PaymentStepProps) {
           <h3 className="text-foreground mb-1 text-lg font-semibold">{t('sandboxTitle')}</h3>
           <p className="text-muted-foreground mb-4 text-sm">{t('sandboxDescription')}</p>
           <button
-            onClick={handleCompleteSandbox}
+            onClick={handleCompleteTestOrder}
             className="inline-flex items-center rounded-md bg-amber-500 px-6 py-2.5 text-sm font-medium text-white transition-colors hover:bg-amber-600"
           >
             {t('completeTestOrder')}
@@ -654,93 +225,115 @@ export function PaymentStep({ checkoutId, className }: PaymentStepProps) {
         </div>
       </div>
     );
-  }
-
-  if (sdk.renderType === 'sdk-widget') {
-    const containerId =
-      sdk.containerId || `${paymentIntent.provider || 'payment'}-payment-container`;
-    return (
-      <div className={cn('py-4', className)}>
-        {!sdkReady && (
-          <div className="flex flex-col items-center justify-center py-8">
-            <LoadingSpinner size="lg" />
-            <p className="text-muted-foreground mt-4 text-sm">{t('loadingPaymentOptions')}</p>
-          </div>
+  } else if (presentation === 'redirect') {
+    const paymentUrl = sessionRef.current?.paymentUrl;
+    panel = (
+      <div className="flex flex-col items-center justify-center py-12">
+        <LoadingSpinner size="lg" />
+        <p className="text-muted-foreground mt-4 text-sm">{t('redirectingToPayment')}</p>
+        {paymentUrl && (
+          <p className="text-muted-foreground mt-2 text-xs">
+            {t('redirectingHint')}
+            <a href={paymentUrl} className="text-primary hover:underline">
+              {t('clickHere')}
+            </a>
+            .
+          </p>
         )}
-        <div id={containerId} />
       </div>
     );
-  }
-
-  if (sdk.renderType === 'iframe') {
-    if (!isAllowedPaymentUrl(paymentIntent.clientSecret)) return null;
-    const formattedAmount = formatPrice((Number(paymentIntent.amount) || 0) / 100, {
-      currency: paymentIntent.currency,
-    }) as string;
-    return (
-      <div className={cn('border-border overflow-hidden rounded-2xl border shadow-sm', className)}>
-        {/* Header */}
-        <div className="border-border flex items-center justify-between gap-4 border-b px-5 py-4">
-          <div className="flex min-w-0 flex-col">
-            <span className="text-foreground truncate text-sm font-semibold">
-              {storeInfo?.name}
-            </span>
-            <span className="text-muted-foreground text-xs">{t('payment')}</span>
+  } else if (!isFrame) {
+    // Preparing, or a JS widget (it opens its own overlay).
+    panel = (
+      <>
+        {status !== 'open' && status !== 'closed' && !failure && (
+          <div className="flex flex-col items-center justify-center py-8">
+            <LoadingSpinner size="lg" />
+            <p className="text-muted-foreground mt-4 text-sm">
+              {presentation === 'widget' ? t('loadingPaymentOptions') : t('preparingPayment')}
+            </p>
           </div>
-          <div className="flex items-baseline gap-1.5">
-            <span className="text-foreground text-lg font-bold tabular-nums">
-              {formattedAmount}
-            </span>
-            <span className="text-muted-foreground text-xs uppercase">
-              {paymentIntent.currency}
-            </span>
+        )}
+        {status === 'closed' && !failure && (
+          <div className="py-4 text-center">
+            <button
+              type="button"
+              onClick={handleRetry}
+              className="bg-primary text-primary-foreground hover:bg-primary/90 rounded-lg px-6 py-3 text-sm font-semibold transition-colors"
+            >
+              {t('reopenPayment')}
+            </button>
           </div>
-        </div>
-        {/* Iframe body — embedded inline, no modal */}
-        <iframe
-          ref={iframeRef}
-          src={paymentIntent.clientSecret}
-          onLoad={handleIframeLoad}
-          className="w-full border-0 transition-[height] duration-200 ease-out"
-          style={{ height: `${iframeHeight}px` }}
-          title={t('payment')}
-          allow="payment"
-        />
-        {/* Footer */}
-        <div className="border-border bg-secondary/30 text-muted-foreground flex items-center justify-center gap-2 border-t px-5 py-3 text-xs">
-          <svg
-            width="14"
-            height="14"
-            viewBox="0 0 24 24"
-            fill="none"
-            stroke="currentColor"
-            strokeWidth="2"
-            strokeLinecap="round"
-            strokeLinejoin="round"
-            aria-hidden="true"
-          >
-            <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z" />
-            <path d="m9 12 2 2 4-4" />
-          </svg>
-          <span>
-            {t('securePayment')} · <span className="font-medium">Brainerce</span>
-          </span>
-        </div>
-      </div>
+        )}
+      </>
     );
   }
 
   return (
-    <div className={cn('flex flex-col items-center justify-center py-12', className)}>
-      <LoadingSpinner size="lg" />
-      <p className="text-muted-foreground mt-4 text-sm">{t('redirectingToPayment')}</p>
-      <p className="text-muted-foreground mt-2 text-xs">
-        {t('redirectingHint')}
-        <a href={paymentIntent.clientSecret} className="text-primary hover:underline">
-          {t('clickHere')}
-        </a>
-        .
-      </p>
+    <div className={cn('py-4', className)}>
+      {!flowError && !processing && failure && (
+        <div
+          role="alert"
+          className="bg-destructive/10 border-destructive/20 mb-4 flex items-center justify-between gap-3 rounded-lg border px-4 py-3"
+        >
+          <p className="text-destructive text-sm">{failure}</p>
+          <button
+            type="button"
+            onClick={handleRetry}
+            className="text-foreground flex-shrink-0 text-sm font-medium hover:underline"
+          >
+            {t('tryAgain')}
+          </button>
+        </div>
+      )}
+      {panel}
+      {/* Stable host for the SDK's iframe / widget — never unmounted mid-flow */}
+      <div
+        className={cn(showFrame && 'border-border overflow-hidden rounded-2xl border shadow-sm')}
+        hidden={isFrame && !showFrame}
+      >
+        {showFrame && (
+          <div className="border-border flex items-center justify-between gap-4 border-b px-5 py-4">
+            <div className="flex min-w-0 flex-col">
+              <span className="text-foreground truncate text-sm font-semibold">
+                {storeInfo?.name}
+              </span>
+              <span className="text-muted-foreground text-xs">{t('payment')}</span>
+            </div>
+          </div>
+        )}
+        {showFrame && status !== 'open' && (
+          <div className="flex items-center justify-center py-8">
+            <LoadingSpinner size="lg" />
+          </div>
+        )}
+        <div
+          ref={containerRef}
+          className={cn(isFrame && 'transition-[height] duration-200 ease-out')}
+          style={presentation === 'provider-page' ? { height: PROVIDER_PAGE_HEIGHT } : undefined}
+        />
+        {showFrame && (
+          <div className="border-border bg-secondary/30 text-muted-foreground flex items-center justify-center gap-2 border-t px-5 py-3 text-xs">
+            <svg
+              width="14"
+              height="14"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="2"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              aria-hidden="true"
+            >
+              <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z" />
+              <path d="m9 12 2 2 4-4" />
+            </svg>
+            <span>
+              {t('securePayment')} · <span className="font-medium">Brainerce</span>
+            </span>
+          </div>
+        )}
+      </div>
     </div>
   );
 }

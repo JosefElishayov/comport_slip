@@ -103,7 +103,7 @@ export default function CartPage() {
           <div>
             {cart.items.map((item) => (
               <div key={item.id}>
-                <CartItem item={item} onUpdate={refreshCart} />
+                <CartItem item={item} />
                 {upgrades?.upgrades?.[item.productId] && (
                   <CartUpgradeBanner
                     suggestion={upgrades.upgrades[item.productId]}

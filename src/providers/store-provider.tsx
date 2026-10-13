@@ -1,9 +1,11 @@
 'use client';
 
 import React, { createContext, useContext, useEffect, useState, useCallback } from 'react';
-import type { StoreInfo, Cart, CustomerProfile } from 'brainerce';
+import type { StoreInfo, Cart, CustomerProfile, CartStore } from 'brainerce';
 import { getCartTotals } from 'brainerce';
-import { getClient, initClient, setStoredCartId } from '@/lib/brainerce';
+import { CartProvider, useCart as useCartSnapshot } from 'brainerce/react';
+import { getClient, initClient } from '@/lib/brainerce';
+import { getCartStore } from '@/lib/cart-store';
 import { checkAuthStatus, proxyLogout } from '@/lib/auth';
 
 
@@ -47,7 +49,13 @@ export function useAuth() {
 interface CartContextValue {
   cart: Cart | null;
   cartLoading: boolean;
+  /** First load failed and there is no cart to show — offer `retryCart`. */
+  cartError: boolean;
+  retryCart: () => Promise<void>;
+  /** A write is queued or in flight; totals in `cart` may not include it yet. */
+  cartSyncing: boolean;
   refreshCart: () => Promise<void>;
+  cartStore: CartStore | null;
   itemCount: number;
   totals: { subtotal: number; discount: number; shipping: number; total: number };
   isCartDrawerOpen: boolean;
@@ -58,7 +66,11 @@ interface CartContextValue {
 const CartContext = createContext<CartContextValue>({
   cart: null,
   cartLoading: true,
+  cartError: false,
+  retryCart: async () => {},
+  cartSyncing: false,
   refreshCart: async () => {},
+  cartStore: null,
   itemCount: 0,
   totals: { subtotal: 0, discount: 0, shipping: 0, total: 0 },
   isCartDrawerOpen: false,
@@ -79,12 +91,6 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
   const [isLoggedIn, setIsLoggedIn] = useState(false);
   const [customer, setCustomer] = useState<CustomerProfile | null>(null);
   const [authLoading, setAuthLoading] = useState(true);
-  const [cart, setCart] = useState<Cart | null>(null);
-  const [cartLoading, setCartLoading] = useState(true);
-  const [isCartDrawerOpen, setIsCartDrawerOpen] = useState(false);
-
-  const openCartDrawer = useCallback(() => setIsCartDrawerOpen(true), []);
-  const closeCartDrawer = useCallback(() => setIsCartDrawerOpen(false), []);
 
 
   // Check auth status via httpOnly cookie (server-side validation)
@@ -125,29 +131,6 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
   }, [refreshAuth]);
 
 
-  // Cart management
-  const refreshCart = useCallback(async () => {
-    try {
-      setCartLoading(true);
-      const client = getClient();
-      const c = await client.smartGetCart();
-      setCart(c);
-
-      // Persist server cart ID
-      if (c && c.id) {
-        setStoredCartId(c.id);
-      }
-    } catch (err) {
-      console.error('Failed to load cart:', err);
-    } finally {
-      setCartLoading(false);
-    }
-  }, []);
-
-  useEffect(() => {
-    refreshCart();
-  }, [refreshCart, isLoggedIn]);
-
   // Called after successful login (cookie already set by proxy)
   const login = useCallback(async () => {
     // Refresh auth state from server (reads httpOnly cookie)
@@ -161,9 +144,9 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
       console.error(err);
     }
 
-    // Re-fetch so the drawer shows the merged cart, not a pre-merge snapshot
-    await refreshCart();
-  }, [refreshAuth, refreshCart]);
+    // The cart's identity changed: drop the guest view and load the merged cart
+    getCartStore().reset('login');
+  }, [refreshAuth]);
 
   const logout = useCallback(async () => {
     // Clear httpOnly cookie server-side
@@ -173,27 +156,52 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
     client.onLogout();
     setIsLoggedIn(false);
     setCustomer(null);
-    setCart(null);
-    refreshCart();
-  }, [refreshCart]);
-
-  const itemCount = cart
-    ? cart.items.reduce((sum, item) => sum + item.quantity, 0)
-    : 0;
-
-  const totals = cart ? getCartTotals(cart) : { subtotal: 0, discount: 0, shipping: 0, total: 0 };
-
+    getCartStore().reset('logout');
+  }, []);
 
   return (
     <StoreInfoContext.Provider value={{ storeInfo, loading: storeLoading }}>
       <AuthContext.Provider value={{ isLoggedIn, authLoading, customer, login, logout }}>
-        <CartContext.Provider
-          value={{ cart, cartLoading, refreshCart, itemCount, totals, isCartDrawerOpen, openCartDrawer, closeCartDrawer }}
-        >
-          {children}
-        </CartContext.Provider>
+        <CartProvider store={getCartStore()}>
+          <CartContextBridge>{children}</CartContextBridge>
+        </CartProvider>
       </AuthContext.Provider>
     </StoreInfoContext.Provider>
   );
+}
 
+// Adapts the SDK cart store to this app's cart context, and owns the drawer.
+function CartContextBridge({ children }: { children: React.ReactNode }) {
+  const snapshot = useCartSnapshot();
+  const [isCartDrawerOpen, setIsCartDrawerOpen] = useState(false);
+
+  const openCartDrawer = useCallback(() => setIsCartDrawerOpen(true), []);
+  const closeCartDrawer = useCallback(() => setIsCartDrawerOpen(false), []);
+
+  const { store, cart, itemCount, status, isSyncing } = snapshot;
+  const refreshCart = useCallback(() => store.refresh({ force: true }), [store]);
+  const retryCart = useCallback(() => store.retry(), [store]);
+
+  const totals = cart ? getCartTotals(cart) : { subtotal: 0, discount: 0, shipping: 0, total: 0 };
+
+  return (
+    <CartContext.Provider
+      value={{
+        cart,
+        cartLoading: status === 'loading',
+        cartError: status === 'error',
+        retryCart,
+        cartSyncing: isSyncing,
+        refreshCart,
+        cartStore: store,
+        itemCount,
+        totals,
+        isCartDrawerOpen,
+        openCartDrawer,
+        closeCartDrawer,
+      }}
+    >
+      {children}
+    </CartContext.Provider>
+  );
 }

@@ -4,7 +4,7 @@ import { useState, useEffect } from 'react';
 import Image from 'next/image';
 import type { CartUpgradeSuggestion, CartItem as CartItemType } from 'brainerce';
 import { formatPrice } from 'brainerce';
-import { getClient } from '@/lib/brainerce';
+import { addToCart, removeCartItem } from '@/lib/cart-store';
 import { useStoreInfo } from '@/providers/store-provider';
 import { useTranslations } from '@/lib/translations';
 import { cn } from '@/lib/utils';
@@ -65,9 +65,8 @@ export function CartUpgradeBanner({
     if (upgrading) return;
     try {
       setUpgrading(true);
-      const client = getClient();
-      await client.smartRemoveFromCart(cartItem.productId, cartItem.variantId || undefined);
-      await client.smartAddToCart({ productId: target.id, quantity: cartItem.quantity });
+      await removeCartItem(cartItem.id);
+      await addToCart({ productId: target.id, quantity: cartItem.quantity });
       // Only the upgraded-to product is reported. The line it replaced was a
       // remove_from_cart, which this storefront doesn't track.
       trackAddToCart(currency, {

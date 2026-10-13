@@ -308,7 +308,20 @@
     "changeOptions": "שנה אפשרויות",
     "surcharges": "תוספות",
     "fillAddressForShipping": "מלאו את פרטי הכתובת למעלה כדי לראות אפשרויות משלוח",
-    "completeAboveSteps": "השלימו את השלבים למעלה כדי להמשיך לתשלום"
+    "completeAboveSteps": "השלימו את השלבים למעלה כדי להמשיך לתשלום",
+    "choosePickupPoint": "בחרו נקודת איסוף או לוקר",
+    "pickupPointSearchPlaceholder": "חיפוש לפי עיר",
+    "search": "חיפוש",
+    "tryAgain": "נסו שוב",
+    "pickupPointsLoadFailed": "לא הצלחנו לטעון נקודות איסוף מחברת המשלוחים כרגע.",
+    "noPickupPointsNearby": "לא נמצאו נקודות איסוף באזור. נסו לחפש עיר אחרת.",
+    "pickupPointUnavailable": "נקודת האיסוף הזו כבר לא זמינה. בחרו נקודה אחרת.",
+    "pickupPointLocker": "לוקר",
+    "pickupPointRequired": "יש לבחור נקודת איסוף כדי להמשיך לתשלום",
+    "paymentSessionLocked": "לא ניתן להמשיך בתשלום הזה. חזרו לעגלה כדי להתחיל תשלום חדש.",
+    "openPaymentInNewTab": "פתיחת דף התשלום בלשונית חדשה",
+    "backToCart": "חזרה לעגלה",
+    "reopenPayment": "פתיחת חלון התשלום מחדש"
   },
   "checkoutForm": {
     "email": "אימייל",
@@ -510,7 +523,8 @@
     "paymentBit": "ביט",
     "paymentApplePay": "Apple Pay",
     "paymentGooglePay": "Google Pay",
-    "privacyNote": "מטעמי פרטיות, פרטי הלקוח והכתובת המלאה אינם מוצגים בעמוד זה. הפרטים המלאים נשלחו אליכם באימייל וזמינים באזור האישי."
+    "privacyNote": "מטעמי פרטיות, פרטי הלקוח והכתובת המלאה אינם מוצגים בעמוד זה. הפרטים המלאים נשלחו אליכם באימייל וזמינים באזור האישי.",
+    "paymentNotCompleted": "התשלום לא הושלם. אפשר לחזור לקופה ולנסות שוב."
   },
   "reservation": {
     "expired": "השריון פג. ייתכן שהמוצרים כבר לא זמינים.",
