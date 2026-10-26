@@ -9,10 +9,10 @@ import { getClient } from '@/lib/brainerce';
  *
  * Replicates what the hosted `t.js` pixel does, but through the SDK so the strict
  * CSP needs no third-party script source — same approach as <BrainerceBot/>.
- * Beacons route through the same /api/store BFF proxy as every other SDK call
- * (httpOnly-cookie auth + `X-Requested-With` CSRF header are added there), and
- * `trackEvent()` is fire-and-forget: the SDK swallows errors so a failed beacon
- * never affects the page.
+ * The SDK sends beacons straight to the Brainerce API (not the /api/store BFF
+ * proxy) so the visitor's real IP reaches it for country lookup; `trackEvent()`
+ * is fire-and-forget and swallows errors so a failed beacon never affects the page.
+ * Do not also load `t.js` — that would double-count every pageview.
  *
  * Per route we send:
  *  - one `pageview` (de-duped on consecutive identical paths), and
@@ -23,6 +23,44 @@ import { getClient } from '@/lib/brainerce';
  * referrer to a hostname and resolves IP→country then discards it, so this stays
  * cookieless with no PII and needs no consent banner under GDPR/ePrivacy.
  */
+
+type LandingAttribution = {
+  referrer?: string;
+  utmSource?: string;
+  utmMedium?: string;
+  utmCampaign?: string;
+};
+
+/**
+ * Traffic source of this page load, read once from the entry URL.
+ *
+ * `trackEvent()` adds no referrer/UTM on its own, and the backend buckets every
+ * pageview by its own source. Reading `location.search` per route would drop the
+ * UTM tags on the first client-side navigation — e.g. a ChatGPT visit (typically
+ * `utm_source=chatgpt.com` and no referrer) turned "direct" from page two on.
+ * So the entry values are captured before anything can rewrite the URL and
+ * repeated on every SPA pageview of this visit, just as `document.referrer`
+ * stays fixed across them. Kept in memory only: a new page load (a fresh entry)
+ * starts from scratch and never inherits an earlier visit's source.
+ */
+let landing: LandingAttribution | null = null;
+
+function getLandingAttribution(): LandingAttribution {
+  if (!landing) {
+    const params = new URLSearchParams(window.location.search);
+    landing = {
+      referrer: document.referrer || undefined,
+      utmSource: params.get('utm_source') || undefined,
+      utmMedium: params.get('utm_medium') || undefined,
+      utmCampaign: params.get('utm_campaign') || undefined,
+    };
+  }
+  return landing;
+}
+
+// Capture at module load (hydration), ahead of any effect that might clean the URL.
+if (typeof window !== 'undefined') getLandingAttribution();
+
 export function AnalyticsTracker() {
   const pathname = usePathname();
   // Last path we sent a pageview for — guards against duplicate beacons from
@@ -35,14 +73,10 @@ export function AnalyticsTracker() {
     // --- pageview ---
     if (lastPath.current !== pathname) {
       lastPath.current = pathname;
-      const params = new URLSearchParams(window.location.search);
       client.trackEvent({
         eventType: 'pageview',
         path: pathname,
-        referrer: document.referrer || undefined,
-        utmSource: params.get('utm_source') ?? undefined,
-        utmMedium: params.get('utm_medium') ?? undefined,
-        utmCampaign: params.get('utm_campaign') ?? undefined,
+        ...getLandingAttribution(),
         screenWidth: window.innerWidth,
         lang: navigator.language,
       });
