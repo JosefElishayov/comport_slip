@@ -1,6 +1,14 @@
 import type { NextConfig } from 'next';
 
 const nextConfig: NextConfig = {
+  async redirects() {
+    return [{
+      source: '/:path*',
+      has: [{ type: 'host', value: 'www.comfortsleep.co.il' }],
+      destination: 'https://comfortsleep.co.il/:path*',
+      permanent: true,
+    }];
+  },
   images: {
     // The storefront is a consumer of the Brainerce API — it has to render
     // whatever image URLs the API returns. In practice those URLs can be on

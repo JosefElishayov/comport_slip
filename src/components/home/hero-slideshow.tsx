@@ -15,10 +15,10 @@ const SLIDES = [
   { image: '/bedroom-bg.webp', href: '/products' },
   { image: '/hero/aminach.webp', href: '/products?search=עמינח' },
   { image: '/hero/golden-touch.webp', href: '/products?search=גולדן' },
-  { image: '/hero/protector.webp', href: '/products?search=מגן מזרן' },
+  { image: '/hero/protector.webp', href: '/category/מגן-מזרן' },
 ] as const;
 
-export function HeroSlideshow() {
+export function HeroSlideshow({ goldenTouchHref }: { goldenTouchHref: string }) {
   const t = useTranslations('home');
   const count = SLIDES.length;
   const [current, setCurrent] = useState(0);
@@ -87,7 +87,8 @@ export function HeroSlideshow() {
           setDragging(true);
         }}
       >
-        {SLIDES.map((slide, i) => {
+        {SLIDES.map((originalSlide, i) => {
+          const slide = i === 4 ? { ...originalSlide, href: goldenTouchHref } : originalSlide;
           let rel = (((i - current) % count) + count) % count;
           if (rel > count / 2) rel -= count;
           const active = rel === 0;

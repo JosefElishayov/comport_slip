@@ -1,3 +1,4 @@
+import { localizedAlternates } from '@/lib/seo';
 import type { Metadata } from 'next';
 import { type Locale } from '@/lib/locale';
 import { getServerLocale } from '@/lib/locale-server';
@@ -15,7 +16,7 @@ const META = {
 
 export async function generateMetadata(): Promise<Metadata> {
   const locale = await getServerLocale();
-  return { ...META[locale], alternates: { canonical: '/accessibility' } };
+  return { ...META[locale], alternates: localizedAlternates('/accessibility', locale) };
 }
 
 const CONTENT = {

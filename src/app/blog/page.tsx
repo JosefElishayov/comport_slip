@@ -1,3 +1,4 @@
+import { localizedAlternates } from '@/lib/seo';
 import type { Metadata } from 'next';
 import Link from 'next/link';
 import Image from 'next/image';
@@ -55,11 +56,11 @@ export async function generateMetadata(): Promise<Metadata> {
   return {
     title: c.metaTitle,
     description: c.metaDescription,
-    alternates: { canonical: '/blog' },
+    alternates: localizedAlternates('/blog', locale),
     openGraph: {
       title: c.metaTitle,
       description: c.metaDescription,
-      url: '/blog',
+      url: withLocalePrefix('/blog', locale),
       type: 'website',
       locale: locale === 'he' ? 'he_IL' : 'en_US',
     },

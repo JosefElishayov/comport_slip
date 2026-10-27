@@ -1,6 +1,8 @@
 import type { BrainerceClient } from 'brainerce';
 import { getServerClient } from '@/lib/brainerce';
 import type { Locale } from '@/lib/locale';
+import { cache } from 'react';
+import { withLocalePrefix } from '@/lib/locale';
 
 // The blog types ship in the SDK's runtime (`client.blog.*` works) but are not
 // re-exported from its public type entry as of brainerce 1.37.3 — so derive them
@@ -27,6 +29,32 @@ export interface BlogListResult {
 }
 
 const EMPTY: BlogListResult = { posts: [], total: 0, totalPages: 1, page: 1 };
+
+/** Read all pages; the public listing caps each page at 100. Request-memoized. */
+export const getPublishedBlogPosts = cache(async (locale: Locale): Promise<BlogPost[]> => {
+  const client = getServerClient(locale);
+  const posts: BlogPost[] = [];
+  for (let page = 1; page <= 50; page++) {
+    const response = await client.blog.getPosts({ limit: 100, page });
+    posts.push(...response.data);
+    if (page >= response.meta.totalPages || response.data.length === 0) break;
+  }
+  return posts;
+});
+
+export async function getBlogLocalePaths(post: BlogPost, locale: Locale) {
+  const paths: Partial<Record<Locale, string>> = {
+    [locale]: withLocalePrefix(`/blog/${post.slug}`, locale),
+  };
+  const other = locale === 'he' ? 'en' : 'he';
+  try {
+    const translated = (await getPublishedBlogPosts(other)).find((candidate) => candidate.id === post.id);
+    if (translated?.slug) paths[other] = withLocalePrefix(`/blog/${translated.slug}`, other);
+  } catch {
+    // Omit an unverified translation when the service is unavailable.
+  }
+  return paths;
+}
 
 export async function getBlogPosts(
   locale: Locale,

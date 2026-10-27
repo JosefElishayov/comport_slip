@@ -7,9 +7,11 @@ import { withLocalePrefix, locales, type Locale } from '@/lib/locale';
 import { ProductJsonLd } from '@/components/seo/product-json-ld';
 import { RegisterLocaleAlternates } from '@/providers/nav-locale-provider';
 import { ProductClientSection } from './product-client-section';
+import { SITE_URL } from '@/lib/seo';
 
 type Props = {
   params: Promise<{ slug: string; locale?: string }>;
+  searchParams: Promise<{ variant?: string }>;
 };
 
 function stripHtml(input: string): string {
@@ -142,7 +144,7 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
         images: images.length > 0 ? images.map((i) => i.url) : undefined,
       },
       robots: {
-        index: product.status === 'active' && inStock ? true : true,
+        index: product.status === 'active',
         follow: true,
         googleBot: {
           index: product.status === 'active',
@@ -164,23 +166,20 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
   }
 }
 
-export default async function ProductDetailPage({ params }: Props) {
+export default async function ProductDetailPage({ params, searchParams }: Props) {
   const { slug } = await params;
   const locale = await getServerLocale();
   const regionId = await getServerRegionId();
 
-  let product;
-  try {
-    product = await getServerProductBySlug(slug, { locale, regionId });
-  } catch {
-    // Network/backend error — let Next show 404 rather than 500 to crawlers.
-    notFound();
-  }
+  // Only an actual missing product is a 404. Transient upstream failures must
+  // propagate as server errors, otherwise crawlers may remove a valid URL.
+  const product = await getServerProductBySlug(slug, { locale, regionId });
   if (!product) {
     notFound();
   }
 
-  const baseUrl = process.env.NEXT_PUBLIC_SITE_URL || '';
+  const baseUrl = SITE_URL;
+  const { variant: initialVariantId } = await searchParams;
   // For the absolute URL in JSON-LD we DO need to encode — this is a raw string,
   // not a Next.js Metadata field. Next hands `slug` to us already
   // percent-encoded for non-ASCII (Hebrew), so decode first: encoding it as-is
@@ -194,7 +193,7 @@ export default async function ProductDetailPage({ params }: Props) {
       return slug;
     }
   })();
-  const productUrl = `${baseUrl}/products/${encodeURIComponent(decodedSlug)}`;
+  const productUrl = `${baseUrl}${withLocalePrefix(`/products/${encodeURIComponent(decodedSlug)}`, locale)}`;
   const currency = process.env.NEXT_PUBLIC_STORE_CURRENCY || 'ILS';
 
   // Per-locale alternate URLs so the language switcher swaps to the matching
@@ -219,8 +218,8 @@ export default async function ProductDetailPage({ params }: Props) {
   return (
     <>
       <RegisterLocaleAlternates alternates={alternates} />
-      <ProductJsonLd product={product} url={productUrl} currency={currency} />
-      <ProductClientSection product={product} />
+      <ProductJsonLd product={product} url={productUrl} currency={currency} locale={locale} />
+      <ProductClientSection key={`${product.id}:${initialVariantId || ''}`} product={product} initialVariantId={initialVariantId} />
     </>
   );
 }

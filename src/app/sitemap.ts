@@ -1,5 +1,7 @@
 import type { MetadataRoute } from 'next';
 import { getServerClient } from '@/lib/brainerce';
+import { getPublishedBlogPosts } from '@/lib/blog';
+import { SITE_URL } from '@/lib/seo';
 import { categoryPath, flattenLinkableCategories, getCategoryTree } from '@/lib/categories';
 
 // Without this the sitemap is generated once at build time and frozen —
@@ -19,7 +21,7 @@ function languagesFor(hePath: string, enPath: string, baseUrl: string) {
 }
 
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
-  const baseUrl = process.env.NEXT_PUBLIC_SITE_URL || 'https://example.com';
+  const baseUrl = SITE_URL;
 
   const staticPaths: Array<{ path: string; priority: number }> = [
     { path: '', priority: 1 },
@@ -36,7 +38,6 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
 
   const staticPages: MetadataRoute.Sitemap = staticPaths.map(({ path, priority }) => ({
     url: `${baseUrl}${path}`,
-    lastModified: new Date(),
     priority,
     alternates: { languages: languagesFor(path, `/en${path}`, baseUrl) },
   }));
@@ -50,7 +51,6 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     const path = categoryPath(category.slug);
     return {
       url: `${baseUrl}${path}`,
-      lastModified: new Date(),
       priority: 0.85,
       alternates: { languages: languagesFor(path, `/en${path}`, baseUrl) },
     };
@@ -59,12 +59,12 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   try {
     // Hebrew slugs (default locale). The `slug` field is locale-aware, so a
     // second fetch in `en` gives the English slug for the same product id.
-    const heProducts = (await getServerClient('he').getProducts({ limit: 1000 })).data;
+    const heProducts = await getServerClient('he').getSitemapProducts(5000);
 
     const enSlugById = new Map<string, string>();
     try {
-      const enProducts = (await getServerClient('en').getProducts({ limit: 1000 })).data;
-      for (const p of enProducts) if (p.slug) enSlugById.set(p.id, p.slug);
+      const enProducts = await getServerClient('en').getSitemapProducts(5000);
+      for (const p of enProducts) if (p.localeSlugs?.en || p.slug) enSlugById.set(p.id, p.localeSlugs?.en || p.slug!);
     } catch {
       // English fetch failed — emit Hebrew-only entries (no hreflang) rather
       // than dropping the whole product sitemap.
@@ -95,10 +95,10 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     // Blog posts — localized slugs, same he/en reciprocal-alternates treatment.
     let blogPages: MetadataRoute.Sitemap = [];
     try {
-      const hePosts = (await getServerClient('he').blog.getPosts({ limit: 1000 })).data;
+      const hePosts = await getPublishedBlogPosts('he');
       const enSlugById = new Map<string, string>();
       try {
-        const enPosts = (await getServerClient('en').blog.getPosts({ limit: 1000 })).data;
+        const enPosts = await getPublishedBlogPosts('en');
         for (const p of enPosts) if (p.slug) enSlugById.set(p.id, p.slug);
       } catch {
         // English fetch failed — emit Hebrew-only blog entries.
@@ -128,10 +128,19 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
       // Blog fetch failed entirely — skip blog entries, keep the rest.
     }
 
-    return [...staticPages, ...categoryPages, ...productPages, ...blogPages];
+    return withEnglishEntries([...staticPages, ...categoryPages, ...productPages, ...blogPages]);
   } catch {
     // Product fetch failed — categories resolve independently (and already
     // degrade to [] on their own), so keep them rather than dropping to static.
-    return [...staticPages, ...categoryPages];
+    return withEnglishEntries([...staticPages, ...categoryPages]);
   }
+}
+
+function withEnglishEntries(entries: MetadataRoute.Sitemap): MetadataRoute.Sitemap {
+  return entries.flatMap((entry) => {
+    const english = entry.alternates?.languages?.['en-US'];
+    return typeof english === 'string' && english !== entry.url
+      ? [entry, { ...entry, url: english }]
+      : [entry];
+  });
 }

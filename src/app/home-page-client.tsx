@@ -15,9 +15,10 @@ import { HeroSlideshow } from '@/components/home/hero-slideshow';
 interface HomePageClientProps {
   initialProducts: Product[];
   initialBanners: DiscountBanner[];
+  goldenTouchHref: string;
 }
 
-export default function HomePageClient({ initialProducts, initialBanners }: HomePageClientProps) {
+export default function HomePageClient({ initialProducts, initialBanners, goldenTouchHref }: HomePageClientProps) {
   useStoreInfo();
   const regionId = useRegionId();
   const [products, setProducts] = useState<Product[]>(initialProducts);
@@ -107,7 +108,7 @@ export default function HomePageClient({ initialProducts, initialBanners }: Home
       {/* The banner is fixed and the sticky header sits below it — reserve its height */}
       <div style={{ height: 'var(--banner-h, 0px)' }} aria-hidden="true" />
 
-      <HeroSlideshow />
+      <HeroSlideshow goldenTouchHref={goldenTouchHref} />
 
       <div className="hero-content-layer">
 

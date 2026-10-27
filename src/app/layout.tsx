@@ -19,18 +19,19 @@ import { AnalyticsTracker } from '@/components/analytics/analytics-tracker';
 import { GoogleTag } from '@/components/analytics/google-tag';
 import { GoogleTagConsent } from '@/components/analytics/google-tag-consent';
 import { getNonce } from '@/lib/nonce';
+import { SITE_URL } from '@/lib/seo';
 import './globals.css';
 
 const font = Assistant({ subsets: ['hebrew', 'latin'], display: 'swap' });
 
-const baseUrl = process.env.NEXT_PUBLIC_SITE_URL || 'https://example.com';
+const baseUrl = SITE_URL;
 
 const META_BY_LOCALE = {
   he: {
     titleDefault: 'קומפורט סליפ — מזרנים, מיטות ומוצרי שינה מבית רהיטי וייס',
     titleTemplate: '%s | קומפורט סליפ',
     description:
-      'קומפורט סליפ — חנות המזרנים המובילה מבית רהיטי וייס עם למעלה מ-40 שנות ניסיון. מזרנים אורתופדיים, מיטות, בסיסים ומוצרי שינה מהמותגים המובילים: עמינח, פולירון, סימונס ועוד. משלוח חינם, החזרה תוך 30 יום ותשלום מאובטח.',
+      'קומפורט סליפ — חנות המזרנים המובילה מבית רהיטי וייס עם למעלה מ-40 שנות ניסיון. מזרנים אורתופדיים, מיטות, בסיסים ומוצרי שינה מהמותגים המובילים: עמינח, פולירון, סימונס ועוד. ייעוץ אישי ותשלום מאובטח. משלוחים והחזרות בהתאם למדיניות האתר.',
     keywords: ['מזרנים', 'מזרן אורתופדי', 'מיטות', 'מוצרי שינה', 'עמינח', 'פולירון', 'סימונס', 'קומפורט סליפ', 'רהיטי וייס'],
     ogLocale: 'he_IL',
   },
@@ -38,7 +39,7 @@ const META_BY_LOCALE = {
     titleDefault: 'Comfort Sleep — Mattresses, Beds & Sleep Products by Weiss Furniture',
     titleTemplate: '%s | Comfort Sleep',
     description:
-      'Comfort Sleep — the leading mattress store by Weiss Furniture, with over 40 years of experience. Orthopedic mattresses, beds, bases and sleep products from the top brands: Aminach, Polyron, Simmons and more. Free shipping, 30-day returns and secure checkout.',
+      'Comfort Sleep — the leading mattress store by Weiss Furniture, with over 40 years of experience. Orthopedic mattresses, beds, bases and sleep products from the top brands: Aminach, Polyron, Simmons and more. Personal advice and secure checkout. Shipping and returns are subject to store policy.',
     keywords: ['mattresses', 'orthopedic mattress', 'beds', 'sleep products', 'Aminach', 'Polyron', 'Simmons', 'Comfort Sleep', 'Weiss Furniture'],
     ogLocale: 'en_US',
   },
@@ -56,13 +57,6 @@ export async function generateMetadata(): Promise<Metadata> {
   },
   description: m.description,
   keywords: m.keywords as unknown as string[],
-  alternates: {
-    canonical: '/',
-    languages: {
-      'he-IL': '/',
-      'en-US': '/',
-    },
-  },
   icons: {
     icon: [
       { url: '/favicon-16x16.png', sizes: '16x16', type: 'image/png' },
@@ -89,16 +83,29 @@ export async function generateMetadata(): Promise<Metadata> {
 
 const organizationJsonLd = {
   '@context': 'https://schema.org',
-  '@type': 'Organization',
+  '@type': 'FurnitureStore',
+  '@id': `${baseUrl}/#store`,
   name: 'קומפורט סליפ',
-  alternateName: 'Comfort Sleep',
+  alternateName: ['Comfort Sleep', 'רהיטי וייס'],
   url: baseUrl,
   logo: `${baseUrl}/logo.png`,
+  telephone: '+972-3-5794542',
+  address: {
+    '@type': 'PostalAddress',
+    streetAddress: 'רש״י 30',
+    addressLocality: 'בני ברק',
+    addressCountry: 'IL',
+  },
+  openingHoursSpecification: [
+    { '@type': 'OpeningHoursSpecification', dayOfWeek: ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday'], opens: '11:00', closes: '14:00' },
+    { '@type': 'OpeningHoursSpecification', dayOfWeek: ['Sunday', 'Monday', 'Wednesday', 'Thursday'], opens: '17:00', closes: '21:00' },
+  ],
   description:
-    'חנות מזרנים ומוצרי שינה מבית רהיטי וייס. מעל 40 שנות ניסיון, מותגים מובילים, משלוח חינם והחזרה תוך 30 יום.',
+    'חנות מזרנים ומוצרי שינה מבית רהיטי וייס. מעל 40 שנות ניסיון, מותגים מובילים, משלוחים והחזרות בהתאם למדיניות האתר.',
   contactPoint: {
     '@type': 'ContactPoint',
     contactType: 'customer service',
+    telephone: '+972-3-5794542',
     areaServed: 'IL',
     availableLanguage: ['Hebrew', 'he'],
   },
@@ -119,9 +126,7 @@ const websiteJsonLd = {
     'query-input': 'required name=search_term_string',
   },
   publisher: {
-    '@type': 'Organization',
-    name: 'קומפורט סליפ',
-    logo: `${baseUrl}/logo.png`,
+    '@id': `${baseUrl}/#store`,
   },
 };
 

@@ -1,5 +1,7 @@
 'use client';
 
+import { getProductVariantPriceInfo } from '@/lib/pricing';
+
 import { useEffect, useState, useMemo, useRef } from 'react';
 import Image from 'next/image';
 import { Link, useRouter } from '@/lib/navigation';
@@ -12,7 +14,7 @@ import type {
 import { getDescriptionContent } from 'brainerce';
 import { useCart, useStoreInfo } from '@/providers/store-provider';
 import { addToCart } from '@/lib/cart-store';
-import { getDisplayPriceInfo, getVariantDisplayPriceInfo } from '@/lib/pricing';
+import { getDisplayPriceInfo } from '@/lib/pricing';
 import { trackViewItem, trackAddToCart } from '@/lib/gtag-ecommerce';
 import { flyToCart } from '@/lib/fly-to-cart';
 import { PriceDisplay } from '@/components/shared/price-display';
@@ -117,9 +119,10 @@ function MetafieldValue({ field }: { field: ProductMetafield }) {
 
 interface ProductClientSectionProps {
   product: Product;
+  initialVariantId?: string;
 }
 
-export function ProductClientSection({ product: initialProduct }: ProductClientSectionProps) {
+export function ProductClientSection({ product: initialProduct, initialVariantId }: ProductClientSectionProps) {
   const { openCartDrawer } = useCart();
   const { storeInfo } = useStoreInfo();
   const router = useRouter();
@@ -132,7 +135,7 @@ export function ProductClientSection({ product: initialProduct }: ProductClientS
   const recommendations = product?.recommendations ?? null;
 
   const [selectedVariant, setSelectedVariant] = useState<ProductVariant | null>(
-    product.variants && product.variants.length > 0 ? product.variants[0] : null
+    product.variants?.find((variant) => variant.id === initialVariantId && variant.status !== 'draft') ?? product.variants?.find((variant) => variant.status !== 'draft') ?? null
   );
   const [selectedImageIndex, setSelectedImageIndex] = useState(0);
   const [quantity, setQuantity] = useState(1);
@@ -175,45 +178,8 @@ export function ProductClientSection({ product: initialProduct }: ProductClientS
   // Region currency overlay (displayPrice/displayCurrency) is preferred when
   // present; the `currency` field tells PriceDisplay how to format.
   const priceInfo = useMemo(() => {
-    if (selectedVariant?.price) {
-      // When the variant carries a region display price, it is the authoritative
-      // converted value — use it directly (no separate discount-rule overlay).
-      if (selectedVariant.displayCurrency && selectedVariant.displayPrice != null) {
-        return getVariantDisplayPriceInfo(selectedVariant, product.basePrice, fallbackCurrency);
-      }
-
-      const variantBase = parseFloat(selectedVariant.price);
-      const variantSale = selectedVariant.salePrice ? parseFloat(selectedVariant.salePrice) : null;
-      const variantEffective =
-        variantSale != null && variantSale < variantBase ? variantSale : variantBase;
-
-      // Overlay any product-level discount rule onto the variant price using the rule's ratio
-      if (product.discount) {
-        const ruleOriginal = parseFloat(product.discount.originalPrice) || 0;
-        const ruleDiscounted = parseFloat(product.discount.discountedPrice) || 0;
-        const ratio = ruleOriginal > 0 ? ruleDiscounted / ruleOriginal : 1;
-        const discounted = variantEffective * ratio;
-        const amount = Math.max(0, variantEffective - discounted);
-        return {
-          price: discounted,
-          originalPrice: variantEffective,
-          isOnSale: discounted < variantEffective,
-          discountAmount: amount,
-          discountPercent: variantEffective > 0 ? Math.round((amount / variantEffective) * 100) : 0,
-          currency: fallbackCurrency,
-        };
-      }
-
-      return {
-        price: variantEffective,
-        originalPrice: variantBase,
-        isOnSale: variantEffective < variantBase,
-        discountPercent:
-          variantEffective < variantBase && variantBase > 0
-            ? Math.round(((variantBase - variantEffective) / variantBase) * 100)
-            : 0,
-        currency: fallbackCurrency,
-      };
+    if (selectedVariant) {
+      return getProductVariantPriceInfo(product, selectedVariant, fallbackCurrency);
     }
     return getDisplayPriceInfo(product, fallbackCurrency);
   }, [product, selectedVariant, fallbackCurrency]);
@@ -491,6 +457,16 @@ export function ProductClientSection({ product: initialProduct }: ProductClientS
           />
 
           {/* Variant Selector */}
+          <p className="text-sm leading-relaxed text-muted-foreground">
+            {locale === 'he' ? 'זמן האספקה לפי פרטי הדגם. לפני ההזמנה עיינו ב' : 'Delivery time is listed in the model details. Before ordering, review our '}
+            <Link href="/shipping" className="underline underline-offset-2">
+              {locale === 'he' ? 'תנאי המשלוח' : 'shipping terms'}
+            </Link>
+            {locale === 'he' ? ' וב' : ' and '}
+            <Link href="/returns" className="underline underline-offset-2">
+              {locale === 'he' ? 'מדיניות ההחזרות' : 'returns policy'}
+            </Link>.
+          </p>
           {product.type === 'VARIABLE' && product.variants && product.variants.length > 0 && (
             <VariantSelector
               product={product}

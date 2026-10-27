@@ -1,5 +1,7 @@
 'use client';
 
+import { textSummary } from '@/lib/seo';
+
 import { useState, useRef, useMemo, useCallback } from 'react';
 import { Link, useRouter } from '@/lib/navigation';
 import Image from 'next/image';
@@ -7,7 +9,7 @@ import type { Product } from 'brainerce';
 import { formatPrice } from 'brainerce';
 import {
   getDisplayPriceInfo,
-  getVariantDisplayPriceInfo,
+  getProductVariantPriceInfo,
   getProductDisplayCurrency,
 } from '@/lib/pricing';
 import { useTranslations } from '@/lib/translations';
@@ -109,7 +111,7 @@ export function ProductCard({ product, className }: ProductCardProps) {
 
   // Variant price display (region currency when available)
   const variantPrice = selectedVariant
-    ? getVariantDisplayPriceInfo(selectedVariant, product.basePrice, fallbackCurrency).price
+    ? getProductVariantPriceInfo(product, selectedVariant, fallbackCurrency).price
     : null;
 
   async function handleAddToCart(e: React.MouseEvent) {
@@ -289,7 +291,7 @@ export function ProductCard({ product, className }: ProductCardProps) {
           </h3>
           {product.description && (
             <p className="mt-1 line-clamp-2 text-[11px] leading-4 text-muted-foreground">
-              {product.description.replace(/<[^>]*>/g, '').trim()}
+              {textSummary(product.description, 150)}
             </p>
           )}
         </Link>
@@ -314,9 +316,9 @@ export function ProductCard({ product, className }: ProductCardProps) {
               </span>
             ) : (
               (() => {
-                const variants = product.variants ?? [];
+                const variants = (product.variants ?? []).filter((variant) => variant.status !== 'draft');
                 const prices = variants.map(
-                  (v) => getVariantDisplayPriceInfo(v, product.basePrice, fallbackCurrency).price
+                  (v) => getProductVariantPriceInfo(product, v, fallbackCurrency).price
                 );
                 const min = Math.min(...prices);
                 const max = Math.max(...prices);

@@ -1,3 +1,5 @@
+import { withLocalePrefix } from '@/lib/locale';
+import { localizedAlternates } from '@/lib/seo';
 import { Suspense } from 'react';
 import type { Metadata } from 'next';
 import type { Product, ProductQueryParams } from 'brainerce';
@@ -14,17 +16,17 @@ const PRODUCTS_META = {
   he: {
     title: 'כל המוצרים — מזרנים, מיטות ובסיסים',
     description:
-      'מבחר רחב של מזרנים אורתופדיים, מיטות, בסיסים ומוצרי שינה מהמותגים המובילים — עמינח, פולירון, סימונס ועוד. סינון לפי קטגוריה, מותג ומחיר. משלוח חינם והחזרה תוך 30 יום.',
+      'מבחר רחב של מזרנים אורתופדיים, מיטות, בסיסים ומוצרי שינה מהמותגים המובילים — עמינח, פולירון, סימונס ועוד. סינון לפי קטגוריה, מותג ומחיר. משלוחים והחזרות בהתאם למדיניות האתר.',
     ogTitle: 'כל המוצרים | קומפורט סליפ',
-    ogDescription: 'מזרנים, מיטות ובסיסים מהמותגים המובילים — משלוח חינם והחזרה תוך 30 יום.',
+    ogDescription: 'מזרנים, מיטות ובסיסים מהמותגים המובילים — משלוחים והחזרות בהתאם למדיניות האתר.',
     ogLocale: 'he_IL',
   },
   en: {
     title: 'All products — Mattresses, Beds & Bases',
     description:
-      'A wide selection of orthopedic mattresses, beds, bases and sleep products from the leading brands — Aminach, Polyron, Simmons and more. Filter by category, brand and price. Free shipping and 30-day returns.',
+      'A wide selection of orthopedic mattresses, beds, bases and sleep products from the leading brands — Aminach, Polyron, Simmons and more. Filter by category, brand and price. Shipping and returns are subject to store policy.',
     ogTitle: 'All products | Comfort Sleep',
-    ogDescription: 'Mattresses, beds and bases from the leading brands — free shipping and 30-day returns.',
+    ogDescription: 'Mattresses, beds and bases from the leading brands — shipping and returns subject to store policy.',
     ogLocale: 'en_US',
   },
 } as const;
@@ -35,11 +37,11 @@ export async function generateMetadata(): Promise<Metadata> {
   return {
     title: m.title,
     description: m.description,
-    alternates: { canonical: '/products' },
+    alternates: localizedAlternates('/products', locale),
     openGraph: {
       title: m.ogTitle,
       description: m.ogDescription,
-      url: '/products',
+      url: withLocalePrefix('/products', locale),
       type: 'website',
       locale: m.ogLocale,
     },

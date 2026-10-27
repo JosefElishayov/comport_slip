@@ -13,6 +13,8 @@ import {
   type BlogPost,
 } from '@/lib/blog';
 import { BlogContent } from '@/components/blog/blog-content';
+import { getBlogLocalePaths } from '@/lib/blog';
+import { RegisterLocaleAlternates } from '@/providers/nav-locale-provider';
 
 // Serialize a JSON-LD object for embedding in a <script> tag. Escapes `<`, `>`
 // and `&` so author-controlled post fields cannot break out of the script
@@ -31,7 +33,7 @@ const COPY = {
     minRead: 'דק׳ קריאה',
     related: 'כתבות נוספות',
     shopCta: 'מצאו את המזרן המושלם עבורכם',
-    shopCtaBody: 'מבחר רחב של מזרנים, מיטות ובסיסים מהמותגים המובילים — משלוח חינם והחזרה תוך 30 יום.',
+    shopCtaBody: 'מבחר רחב של מזרנים, מיטות ובסיסים מהמותגים המובילים — משלוחים והחזרות בהתאם למדיניות האתר.',
     shopCtaBtn: 'למעבר לחנות',
   },
   en: {
@@ -40,7 +42,7 @@ const COPY = {
     minRead: 'min read',
     related: 'More stories',
     shopCta: 'Find the mattress that fits you',
-    shopCtaBody: 'A wide selection of mattresses, beds and bases from the leading brands — free shipping and 30-day returns.',
+    shopCtaBody: 'A wide selection of mattresses, beds and bases from the leading brands — shipping and returns subject to store policy.',
     shopCtaBtn: 'Browse the store',
   },
 } as const;
@@ -61,12 +63,19 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
   const title = post.seoTitle || post.title;
   const description = post.seoDescription || postExcerpt(post, 160);
   const ogImage = post.ogImageUrl || post.coverImageUrl;
-  const canonical = `/blog/${post.slug}`;
+  const canonical = withLocalePrefix(`/blog/${post.slug}`, locale);
+  const paths = await getBlogLocalePaths(post, locale);
 
   return {
     title,
     description,
-    alternates: { canonical },
+    alternates: {
+      canonical,
+      languages: {
+        ...(paths.he ? { 'he-IL': paths.he, 'x-default': paths.he } : {}),
+        ...(paths.en ? { 'en-US': paths.en } : {}),
+      },
+    },
     openGraph: {
       title,
       description,
@@ -96,6 +105,7 @@ export default async function BlogPostPage({ params }: PageProps) {
   if (!post) notFound();
 
   const c = COPY[locale];
+  const paths = await getBlogLocalePaths(post, locale);
   const date = formatBlogDate(post.publishedAt || post.createdAt, locale);
   const mins = readingMinutes(post.content);
 
@@ -116,7 +126,7 @@ export default async function BlogPostPage({ params }: PageProps) {
     datePublished: post.publishedAt || post.createdAt,
     dateModified: post.updatedAt,
     author: post.author
-      ? { '@type': 'Person', name: post.author }
+      ? { '@type': /(?:\bteam\b|צוות|קומפורט סליפ|comfort sleep)/i.test(post.author) ? 'Organization' : 'Person', name: post.author }
       : { '@type': 'Organization', name: 'קומפורט סליפ' },
     publisher: {
       '@type': 'Organization',
@@ -132,6 +142,7 @@ export default async function BlogPostPage({ params }: PageProps) {
 
   return (
     <div className="bg-background">
+      <RegisterLocaleAlternates alternates={paths} />
       <script
         type="application/ld+json"
         dangerouslySetInnerHTML={{ __html: serializeJsonLd(jsonLd) }}

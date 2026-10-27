@@ -1,3 +1,4 @@
+import { localizedAlternates } from '@/lib/seo';
 import type { Metadata } from 'next';
 import { ContactForm } from '@/components/contact/contact-form';
 import { type Locale } from '@/lib/locale';
@@ -18,7 +19,7 @@ const META = {
 
 export async function generateMetadata(): Promise<Metadata> {
   const locale = await getServerLocale();
-  return { ...META[locale], alternates: { canonical: '/contact' } };
+  return { ...META[locale], alternates: localizedAlternates('/contact', locale) };
 }
 
 const CONTENT = {

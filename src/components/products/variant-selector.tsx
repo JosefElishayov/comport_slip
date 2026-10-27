@@ -5,7 +5,7 @@ import type { Product, ProductVariant } from 'brainerce';
 import { getVariantOptions, getProductSwatches, formatPrice } from 'brainerce';
 import type { InventoryInfo } from 'brainerce';
 import { useStoreInfo } from '@/providers/store-provider';
-import { getVariantDisplayPriceInfo } from '@/lib/pricing';
+import { getProductVariantPriceInfo } from '@/lib/pricing';
 import { useTranslations } from '@/lib/translations';
 import { useAttributeLabel } from '@/lib/attribute-i18n';
 import { cn } from '@/lib/utils';
@@ -39,7 +39,7 @@ export function VariantSelector({
   const t = useTranslations('productDetail');
   const attrLabel = useAttributeLabel();
   const fallbackCurrency = storeInfo?.currency || 'ILS';
-  const variants = useMemo(() => product.variants || [], [product.variants]);
+  const variants = useMemo(() => (product.variants || []).filter((variant) => variant.status !== 'draft'), [product.variants]);
 
   // Get swatch metadata from product attribute options
   const swatchData = useMemo(() => getProductSwatches(product), [product]);
@@ -269,9 +269,9 @@ export function VariantSelector({
           {selectedVariant.price &&
             (() => {
               // Region-aware: prefer the variant's converted display price/currency.
-              const vinfo = getVariantDisplayPriceInfo(
+              const vinfo = getProductVariantPriceInfo(
+                product,
                 selectedVariant,
-                product.basePrice,
                 fallbackCurrency
               );
               return <span>{formatPrice(vinfo.price, { currency: vinfo.currency }) as string}</span>;

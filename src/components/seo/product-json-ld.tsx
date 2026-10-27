@@ -1,10 +1,14 @@
 import type { Product } from 'brainerce';
 import { getProductPriceInfo } from 'brainerce';
+import { getProductVariantPriceInfo } from '@/lib/pricing';
+import { SITE_URL } from '@/lib/seo';
+import { withLocalePrefix, type Locale } from '@/lib/locale';
 
 interface ProductJsonLdProps {
   product: Product;
   url: string;
   currency?: string;
+  locale?: Locale;
 }
 
 function stripHtml(input: string): string {
@@ -32,9 +36,9 @@ export async function ProductJsonLd(props: ProductJsonLdProps) {
   }
 }
 
-async function renderProductJsonLd({ product, url, currency = 'ILS' }: ProductJsonLdProps) {
+async function renderProductJsonLd({ product, url, currency = 'ILS', locale = 'he' }: ProductJsonLdProps) {
   const priceInfo = getProductPriceInfo(product);
-  const baseUrl = process.env.NEXT_PUBLIC_SITE_URL || '';
+  const baseUrl = SITE_URL;
   const storeName = process.env.NEXT_PUBLIC_STORE_NAME || undefined;
 
   const images = (product.images || []).map((img) => img.url).filter(Boolean);
@@ -90,15 +94,14 @@ async function renderProductJsonLd({ product, url, currency = 'ILS' }: ProductJs
         }
       : null;
 
-  const seller = storeName ? { '@type': 'Organization', name: storeName } : undefined;
+  const seller = { '@id': `${baseUrl}/#store`, ...(storeName ? { name: storeName } : {}) };
 
   // Build offers: AggregateOffer for variable products with priced variants, Offer otherwise.
   const variantPrices = (product.variants || [])
+    .filter((v) => v.status !== 'draft')
     .map((v) => {
-      const base = v.price ? parseFloat(v.price) : NaN;
-      const sale = v.salePrice ? parseFloat(v.salePrice) : NaN;
-      const effective = !isNaN(sale) && sale > 0 ? sale : base;
-      return isNaN(effective) ? null : effective;
+      const effective = getProductVariantPriceInfo(product, v, currency).price;
+      return Number.isFinite(effective) && effective >= 0 ? effective : null;
     })
     .filter((n): n is number => n != null);
 
@@ -150,6 +153,48 @@ async function renderProductJsonLd({ product, url, currency = 'ILS' }: ProductJs
   if (aggregateRating) {
     productJsonLd.aggregateRating = aggregateRating;
   }
+  if (product.gtin) productJsonLd.gtin = product.gtin;
+  if (product.mpn) productJsonLd.mpn = product.mpn;
+
+  // Each offer links to a real URL that preselects that variant in the UI.
+  if (product.type === 'VARIABLE' && variantPrices.length > 0) {
+    const variants = (product.variants || []).filter((variant) => variant.status !== 'draft');
+    const variantNodes = variants.flatMap((variant) => {
+      const price = getProductVariantPriceInfo(product, variant, currency);
+      if (!Number.isFinite(price.price) || price.price < 0) return [];
+      const variantUrl = `${url}?variant=${encodeURIComponent(variant.id)}`;
+      const attributes = variant.attributes || Object.fromEntries((variant.options || []).map((option) => [option.name, option.value]));
+      const sizeKey = Object.keys(attributes).find((key) => /size|מידה/i.test(key));
+      const variantImage = typeof variant.image === 'string' ? variant.image : variant.image?.url;
+      return [{
+        '@type': 'Product',
+        '@id': variantUrl,
+        name: [product.name, ...Object.values(attributes)].join(' — '),
+        description,
+        image: variantImage || images[0],
+        sku: variant.sku || variant.id,
+        url: variantUrl,
+        ...(sizeKey ? { size: attributes[sizeKey] } : {}),
+        additionalProperty: Object.entries(attributes).map(([name, value]) => ({ '@type': 'PropertyValue', name, value })),
+        offers: {
+          '@type': 'Offer',
+          price: price.price,
+          priceCurrency: price.currency,
+          availability: (variant.inventory ?? product.inventory)?.canPurchase === false
+            ? 'https://schema.org/OutOfStock' : 'https://schema.org/InStock',
+          itemCondition: 'https://schema.org/NewCondition',
+          url: variantUrl,
+          seller,
+        },
+      }];
+    });
+    productJsonLd['@type'] = 'ProductGroup';
+    productJsonLd.productGroupID = product.id;
+    productJsonLd.hasVariant = variantNodes;
+    const attributeNames = [...new Set(variants.flatMap((variant) => Object.keys(variant.attributes || Object.fromEntries((variant.options || []).map((option) => [option.name, option.value])))))];
+    productJsonLd.variesBy = attributeNames.map((name) => /size|מידה/i.test(name) ? 'https://schema.org/size' : name);
+    delete productJsonLd.gtin; // A parent GTIN must not be assigned to every size.
+  }
 
   const breadcrumbJsonLd = {
     '@context': 'https://schema.org',
@@ -158,28 +203,28 @@ async function renderProductJsonLd({ product, url, currency = 'ILS' }: ProductJs
       {
         '@type': 'ListItem',
         position: 1,
-        name: 'דף הבית',
-        item: baseUrl || '/',
+        name: locale === 'he' ? 'דף הבית' : 'Home',
+        item: `${baseUrl}${withLocalePrefix('/', locale)}`,
       },
       {
         '@type': 'ListItem',
         position: 2,
-        name: 'מוצרים',
-        item: `${baseUrl}/products`,
+        name: locale === 'he' ? 'מוצרים' : 'Products',
+        item: `${baseUrl}${withLocalePrefix('/products', locale)}`,
       },
-      ...(categoryNames[0]
+      ...(product.categories?.[0]?.slug
         ? [
             {
               '@type': 'ListItem',
               position: 3,
               name: categoryNames[0],
-              item: `${baseUrl}/products`,
+              item: `${baseUrl}${withLocalePrefix(`/category/${product.categories[0].slug}`, locale)}`,
             },
           ]
         : []),
       {
         '@type': 'ListItem',
-        position: categoryNames[0] ? 4 : 3,
+        position: product.categories?.[0]?.slug ? 4 : 3,
         name: product.name,
         item: url,
       },

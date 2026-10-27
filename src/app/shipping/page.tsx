@@ -1,3 +1,4 @@
+import { localizedAlternates } from '@/lib/seo';
 import type { Metadata } from 'next';
 import { type Locale } from '@/lib/locale';
 import { getServerLocale } from '@/lib/locale-server';
@@ -15,7 +16,7 @@ const META = {
 
 export async function generateMetadata(): Promise<Metadata> {
   const locale = await getServerLocale();
-  return { ...META[locale], alternates: { canonical: '/shipping' } };
+  return { ...META[locale], alternates: localizedAlternates('/shipping', locale) };
 }
 
 /** A section is rendered as: heading + array of blocks. A block is either a
@@ -54,7 +55,7 @@ const CONTENT: Record<Locale, { title: string; lastUpdated: string; sections: Se
       {
         title: '3. זמני אספקה',
         blocks: [
-          'זמן האספקה המשוער הוא 3–7 ימי עסקים מרגע אישור ההזמנה והתשלום. ימי עסקים אינם כוללים ימי שישי, שבת, ערבי חג וחגים.',
+          'זמן האספקה משתנה לפי המוצר והמידה ומפורט בעמוד המוצר. יש לבדוק את זמן האספקה של הדגם שנבחר לפני ההזמנה; בהיעדר מידע יש לפנות אלינו לבירור. ימי עסקים אינם כוללים ימי שישי, שבת, ערבי חג וחגים.',
           'מוצרים מסוימים, לרבות מזרונים בהזמנה אישית, עשויים לחייב זמן אספקה ארוך יותר. במקרים אלו נעדכן אותך מראש ונתאם את מועד המסירה טלפונית.',
         ],
       },
@@ -111,7 +112,7 @@ const CONTENT: Record<Locale, { title: string; lastUpdated: string; sections: Se
       {
         title: '3. Delivery times',
         blocks: [
-          'The estimated delivery time is 3–7 business days from confirmation of the order and payment. Business days do not include Fridays, Saturdays, holiday eves and holidays.',
+          'Delivery time varies by product and size and is stated on the product page. Check the selected model’s delivery time before ordering; if no estimate is listed, contact us for details. Business days do not include Fridays, Saturdays, holiday eves and holidays.',
           'Certain products, including made-to-order mattresses, may require a longer delivery time. In such cases we will notify you in advance and coordinate the delivery date by phone.',
         ],
       },

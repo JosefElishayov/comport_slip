@@ -10,7 +10,7 @@ const CONTENT = {
     sub1: 'הדף שחיפשת הלך לישון ולא קם.',
     sub2: 'אל תדאג — אנחנו כאן כדי שתישן טוב.',
     cta: 'לחנות המזרנים',
-    trust: ['✓ משלוח חינם מ-₪299', '✓ החזרה בתוך 30 יום', '✓ תשלום מאובטח'],
+    trust: ['✓ משלוח חינם מ-₪299', '✓ החזרות בהתאם למדיניות האתר', '✓ תשלום מאובטח'],
   },
   en: {
     headlinePre: 'Looks like you have',
@@ -19,7 +19,7 @@ const CONTENT = {
     sub1: 'The page you were looking for went to sleep and didn’t wake up.',
     sub2: 'Don’t worry — we’re here to help you sleep well.',
     cta: 'To the mattress store',
-    trust: ['✓ Free shipping over ₪299', '✓ 30-day returns', '✓ Secure checkout'],
+    trust: ['✓ Free shipping over ₪299', '✓ Returns subject to store policy', '✓ Secure checkout'],
   },
 } as const;
 

@@ -1,3 +1,5 @@
+import { withLocalePrefix } from '@/lib/locale';
+import { localizedAlternates } from '@/lib/seo';
 import type { Metadata } from 'next';
 import type { Product, DiscountBanner } from 'brainerce';
 import { getServerClient } from '@/lib/brainerce';
@@ -9,17 +11,17 @@ const HOME_META = {
   he: {
     title: 'קומפורט סליפ — מזרנים, מיטות ומוצרי שינה איכותיים',
     description:
-      'גלו את מבחר המזרנים, המיטות ומוצרי השינה של קומפורט סליפ מבית רהיטי וייס — עמינח, פולירון, סימונס ועוד. ייעוץ מקצועי, משלוח חינם, החזרה תוך 30 יום ותשלום מאובטח.',
+      'מזרנים ומוצרי שינה בקומפורט סליפ מבית רהיטי וייס — עמינח, פולירון, סימונס ועוד. ייעוץ מקצועי ותשלום מאובטח. משלוחים והחזרות בהתאם למדיניות האתר.',
     ogTitle: 'קומפורט סליפ — מזרנים ומוצרי שינה',
-    ogDescription: 'חנות המזרנים המובילה — עמינח, פולירון, סימונס ועוד. משלוח חינם, החזרה תוך 30 יום.',
+    ogDescription: 'מזרנים מהמותגים המובילים מבית רהיטי וייס. ייעוץ אישי, תשלום מאובטח ומשלוחים והחזרות בהתאם למדיניות האתר.',
     ogLocale: 'he_IL',
   },
   en: {
     title: 'Comfort Sleep — Quality Mattresses, Beds & Sleep Products',
     description:
-      'Discover the selection of mattresses, beds and sleep products from Comfort Sleep by Weiss Furniture — Aminach, Polyron, Simmons and more. Professional advice, free shipping, 30-day returns and secure checkout.',
+      'Discover the selection of mattresses, beds and sleep products from Comfort Sleep by Weiss Furniture — Aminach, Polyron, Simmons and more. Professional advice, secure checkout, with shipping and returns subject to store policy.',
     ogTitle: 'Comfort Sleep — Mattresses & Sleep Products',
-    ogDescription: 'The leading mattress store — Aminach, Polyron, Simmons and more. Free shipping, 30-day returns.',
+    ogDescription: 'Mattresses by leading brands from Weiss Furniture. Personal advice and secure checkout. Shipping and returns are subject to store policy.',
     ogLocale: 'en_US',
   },
 } as const;
@@ -30,11 +32,11 @@ export async function generateMetadata(): Promise<Metadata> {
   return {
     title: m.title,
     description: m.description,
-    alternates: { canonical: '/' },
+    alternates: localizedAlternates('/', locale),
     openGraph: {
       title: m.ogTitle,
       description: m.ogDescription,
-      url: '/',
+      url: withLocalePrefix('/', locale),
       type: 'website',
       locale: m.ogLocale,
     },
@@ -45,10 +47,13 @@ export default async function HomePage() {
   const locale = await getServerLocale();
   const regionId = await getServerRegionId();
   const client = getServerClient(locale);
-  const [productsRes, bannersRes] = await Promise.allSettled([
+  const [productsRes, bannersRes, heroProductRes] = await Promise.allSettled([
     // No sortBy — same manual dashboard order (menuOrder) as the products page's default sort
     client.getProducts({ limit: 4, regionId }),
     client.getDiscountBanners(),
+    // Resolve the translated slug by stable id, so the promotion opens the
+    // product directly in either language instead of another search page.
+    client.getProduct('cmmur5snn002x01o6mageud0v'),
   ]);
 
   const initialProducts: Product[] =
@@ -56,5 +61,7 @@ export default async function HomePage() {
   const initialBanners: DiscountBanner[] =
     bannersRes.status === 'fulfilled' ? bannersRes.value : [];
 
-  return <HomePageClient initialProducts={initialProducts} initialBanners={initialBanners} />;
+  const goldenTouchHref = heroProductRes.status === 'fulfilled' && heroProductRes.value?.slug
+    ? `/products/${heroProductRes.value.slug}` : '/products';
+  return <HomePageClient initialProducts={initialProducts} initialBanners={initialBanners} goldenTouchHref={goldenTouchHref} />;
 }
