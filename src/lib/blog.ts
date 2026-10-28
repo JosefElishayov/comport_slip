@@ -86,7 +86,17 @@ export async function getBlogPost(
     // way out — so passing the raw param double-encodes it and the backend 404s.
     // Decode it first so the SDK encodes exactly once. (Mirrors the decode step
     // in lib/brainerce's encodePathSegment for product-by-slug.)
-    return await getServerClient(locale).blog.getPost(normalizeSlug(slug));
+    const normalized = normalizeSlug(slug);
+    const post = await getServerClient(locale).blog.getPost(normalized);
+    if (post) return post;
+
+    // The public list localizes slugs, but the by-slug API currently resolves
+    // only the original slug. Its published list includes the full localized
+    // post, so resolve an exact localized slug there after a genuine miss.
+    // Never match titles or another locale: unknown paths must remain 404s.
+    return (await getPublishedBlogPosts(locale)).find(
+      (candidate) => normalizeSlug(candidate.slug) === normalized
+    ) ?? null;
   } catch {
     return null;
   }
