@@ -10,6 +10,7 @@ import { useTranslations } from '@/lib/translations';
 import { useStoreInfo, useAuth, useCart } from '@/providers/store-provider';
 import { useLocale } from '@/providers/locale-provider';
 import { CartDrawer } from '@/components/cart/cart-drawer';
+import { WishlistLink } from '@/components/products/wishlist-button';
 import { LanguageSwitcher } from '@/components/layout/language-switcher';
 
 export function Header() {
@@ -259,6 +260,7 @@ export function Header() {
             </button>
 
             {/* Cart */}
+            <WishlistLink />
             <button
               type="button"
               onClick={openCartDrawer}

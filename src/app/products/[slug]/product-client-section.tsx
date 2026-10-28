@@ -25,6 +25,7 @@ import { BackInStockForm } from '@/components/products/back-in-stock-form';
 import { RecommendationSection } from '@/components/products/recommendation-section';
 import { FrequentlyBoughtTogether } from '@/components/products/frequently-bought-together';
 import { ProductShareButton } from '@/components/shared/product-share-button';
+import { WishlistButton } from '@/components/products/wishlist-button';
 import { RatingSummary } from '@/components/products/star-rating';
 import { ProductReviews } from '@/components/products/product-reviews';
 import { useTranslations } from '@/lib/translations';
@@ -449,6 +450,7 @@ export function ProductClientSection({ product: initialProduct, initialVariantId
             <StockBadge inventory={inventory} lowStockThreshold={5} />
           )}
 
+          <WishlistButton productId={product.id} />
           <ProductShareButton
             path={withLocalePrefix(`/products/${product.slug || product.id}`, locale)}
             title={product.name}

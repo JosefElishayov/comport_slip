@@ -24,6 +24,7 @@ import { flyToCart } from '@/lib/fly-to-cart';
 import { trackAddToCart } from '@/lib/gtag-ecommerce';
 import { LoadingSpinner } from '@/components/shared/loading-spinner';
 import { ProductShareButton } from '@/components/shared/product-share-button';
+import { WishlistButton } from '@/components/products/wishlist-button';
 import { RatingSummary } from '@/components/products/star-rating';
 
 interface ProductCardProps {
@@ -390,6 +391,7 @@ export function ProductCard({ product, className }: ProductCardProps) {
 
         {/* Action Buttons */}
         <div className="mt-3 flex gap-2">
+          <WishlistButton productId={product.id} />
           <ProductShareButton
             path={`/products/${slug}`}
             title={product.name}

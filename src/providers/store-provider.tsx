@@ -7,6 +7,7 @@ import { CartProvider, useCart as useCartSnapshot } from 'brainerce/react';
 import { getClient, initClient } from '@/lib/brainerce';
 import { getCartStore } from '@/lib/cart-store';
 import { checkAuthStatus, proxyLogout } from '@/lib/auth';
+import { WishlistProvider } from '@/providers/wishlist-provider';
 
 
 // ---- Store Info Context ----
@@ -145,6 +146,13 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
     }
 
     // The cart's identity changed: drop the guest view and load the merged cart
+    // Await the wishlist too: login callers may immediately reload the page.
+    try {
+      await getClient().wishlist.syncOnLogin();
+    } catch (err) {
+      // The SDK retains guest saves on failure; WishlistProvider offers retry.
+      console.error('Wishlist sync failed:', err);
+    }
     getCartStore().reset('login');
   }, [refreshAuth]);
 
@@ -163,7 +171,7 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
     <StoreInfoContext.Provider value={{ storeInfo, loading: storeLoading }}>
       <AuthContext.Provider value={{ isLoggedIn, authLoading, customer, login, logout }}>
         <CartProvider store={getCartStore()}>
-          <CartContextBridge>{children}</CartContextBridge>
+          <WishlistProvider><CartContextBridge>{children}</CartContextBridge></WishlistProvider>
         </CartProvider>
       </AuthContext.Provider>
     </StoreInfoContext.Provider>

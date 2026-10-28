@@ -1,7 +1,8 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import { useRouter } from '@/lib/navigation';
+import { Link, useRouter } from '@/lib/navigation';
+import { useOptionalLocale } from '@/providers/locale-provider';
 import type { CustomerProfile, CustomerAddress, Order } from 'brainerce';
 import { getClient } from '@/lib/brainerce';
 import { useAuth } from '@/providers/store-provider';
@@ -14,6 +15,7 @@ import { useTranslations } from '@/lib/translations';
 
 export default function AccountPage() {
   const router = useRouter();
+  const locale = useOptionalLocale();
   const { isLoggedIn, authLoading, logout } = useAuth();
   const t = useTranslations('account');
   const tc = useTranslations('common');
@@ -113,6 +115,7 @@ export default function AccountPage() {
         </div>
 
         {/* Quick Stats */}
+        <Link href="/wishlist" className="mb-6 inline-block rounded-xl border border-border px-5 py-3 hover:bg-secondary/50">{locale === 'en' ? 'My wishlist' : 'רשימת המשאלות שלי'}</Link>
         <div className="mb-8 grid grid-cols-2 gap-4 sm:grid-cols-3">
           <div className="dashboard-card p-5 text-center">
             <div className="text-3xl font-bold text-primary">{orders.length}</div>
