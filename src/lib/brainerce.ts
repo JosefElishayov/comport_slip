@@ -1,6 +1,6 @@
 import { BrainerceClient, type Product } from 'brainerce';
 
-const CONNECTION_ID = process.env.NEXT_PUBLIC_BRAINERCE_CONNECTION_ID || 'vc_BslbK0EDGoUXP2c5VH0Dk';
+export const CONNECTION_ID = process.env.NEXT_PUBLIC_BRAINERCE_CONNECTION_ID || 'vc_BslbK0EDGoUXP2c5VH0Dk';
 
 // Mirror of the SDK's internal path encoder: normalize (decode if already
 // encoded) then encode once, so it's idempotent whether the route slug arrives
