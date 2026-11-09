@@ -28,6 +28,7 @@ import { ProductShareButton } from '@/components/shared/product-share-button';
 import { WishlistButton } from '@/components/products/wishlist-button';
 import { RatingSummary } from '@/components/products/star-rating';
 import { ProductReviews } from '@/components/products/product-reviews';
+import { AuthorizedDealer } from '@/components/marketing/authorized-dealer';
 import { useTranslations } from '@/lib/translations';
 import { useOptionalLocale } from '@/providers/locale-provider';
 import { withLocalePrefix } from '@/lib/locale';
@@ -553,6 +554,9 @@ export function ProductClientSection({ product: initialProduct, initialVariantId
               )}
             </button>
           </div>
+
+          {/* Authorized dealer trust signal — right under the purchase buttons */}
+          <AuthorizedDealer variant="compact" />
 
           {/* Back-in-stock alert — self-gates on tracked / non-backorderable / sold out */}
           <BackInStockForm

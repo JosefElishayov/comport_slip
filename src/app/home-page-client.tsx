@@ -11,6 +11,7 @@ import { LoadingSpinner } from '@/components/shared/loading-spinner';
 import { Reveal } from '@/components/shared/reveal';
 import { useTranslations } from '@/lib/translations';
 import { HeroSlideshow } from '@/components/home/hero-slideshow';
+import { AuthorizedDealer } from '@/components/marketing/authorized-dealer';
 
 interface HomePageClientProps {
   initialProducts: Product[];
@@ -117,6 +118,9 @@ export default function HomePageClient({ initialProducts, initialBanners, golden
           <LoadingSpinner size="lg" />
         </div>
       ) : (<>
+      {/* Authorized dealer strip (Polyron + Aminach) */}
+      <AuthorizedDealer variant="strip" />
+
       {/* Strength Points */}
       <section className="strength-section border-b border-border bg-secondary">
         <div className="mx-auto max-w-6xl px-4 py-12 sm:px-6 sm:py-14 lg:px-8">

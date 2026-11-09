@@ -667,5 +667,16 @@
     "rateLimited": "Too many requests. Please try again in a minute.",
     "privacyNote": "You can unsubscribe at any time.",
     "honeypot": "Do not fill this field"
+  },
+  "authorizedDealer": {
+    "compactTitle": "Authorized dealer",
+    "compactBody": "Comfort Sleep (Rehitei Weiss, Rashi 30 Bnei Brak) is listed on the official dealer lists of",
+    "polyron": "Polyron",
+    "aminach": "Aminach",
+    "stripTitle": "Authorized dealer of Polyron and Aminach",
+    "stripSubtitle": "Rehitei Weiss, Rashi 30 Bnei Brak, is on the manufacturers' official dealer lists",
+    "verifyPolyron": "Verify on the Polyron stores page",
+    "verifyAminach": "Verify on the Aminach authorized dealers page",
+    "verifyHint": "Click to verify on the manufacturers' sites"
   }
 }
