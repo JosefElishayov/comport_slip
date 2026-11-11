@@ -1,9 +1,9 @@
 'use client';
 
-import { useEffect } from 'react';
+import { useEffect, useRef } from 'react';
 import { getClient } from '@/lib/brainerce';
 import { useCart } from '@/providers/store-provider';
-import { addToCart } from '@/lib/cart-store';
+import { addToCart, getCartStore } from '@/lib/cart-store';
 import { trackAddToCart } from '@/lib/gtag-ecommerce';
 
 const CONNECTION_ID =
@@ -21,6 +21,9 @@ const CONNECTION_ID =
  */
 export function BrainerceBot() {
   const { openCartDrawer } = useCart();
+  // The widget mounts once; keep the latest drawer opener reachable from it.
+  const openCartDrawerRef = useRef(openCartDrawer);
+  openCartDrawerRef.current = openCartDrawer;
 
   useEffect(() => {
     let bot: { destroy: () => void } | null = null;
@@ -36,6 +39,21 @@ export function BrainerceBot() {
           // cookie) and hands the widget a 5-minute bot-only token, never the
           // real session token.
           getBotSession: () => getClient().getBotSession(),
+          // Lets the bot read/change the shopper's cart on the server (3.19+).
+          // The guest cart token is a secret: it only goes to the bot endpoint.
+          getCartProof: () => {
+            const held = getClient().getHeldCartProof();
+            const cartId = getCartStore().getSnapshot().cart?.id ?? held?.cartId;
+            if (!cartId) return null;
+            return held?.cartId === cartId ? held : { cartId };
+          },
+          // The server confirmed a cart change made by the bot: re-read our
+          // cart so the header count and drawer match, and show the drawer.
+          onCartUpdated: () => {
+            void getCartStore()
+              .refresh({ force: true })
+              .then(() => openCartDrawerRef.current());
+          },
           onAddToCart: async ({ productId, variantId, quantity }) => {
             try {
               await addToCart({
@@ -64,7 +82,7 @@ export function BrainerceBot() {
       cancelled = true;
       bot?.destroy();
     };
-  }, [openCartDrawer]);
+  }, []);
 
   return null;
 }
