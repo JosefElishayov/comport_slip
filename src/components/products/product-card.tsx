@@ -273,6 +273,7 @@ export function ProductCard({ product, className }: ProductCardProps) {
           </div>
         </div>
       </Link>
+      <WishlistButton productId={product.id} overlay />
 
       {/* Content */}
       <div className="relative flex flex-1 flex-col p-3">
@@ -391,7 +392,6 @@ export function ProductCard({ product, className }: ProductCardProps) {
 
         {/* Action Buttons */}
         <div className="mt-3 flex gap-2">
-          <WishlistButton productId={product.id} />
           <ProductShareButton
             path={`/products/${slug}`}
             title={product.name}

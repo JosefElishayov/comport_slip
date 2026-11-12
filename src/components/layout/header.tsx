@@ -214,7 +214,7 @@ export function Header() {
           </Link>
 
           {/* Right: actions */}
-          <div className="flex flex-1 items-center justify-end gap-2 sm:gap-3">
+          <div className="flex flex-1 items-center justify-end gap-1 sm:gap-3">
             {/* Language switcher (desktop / tablet) */}
             <div className="hidden sm:block">
               <LanguageSwitcher />
@@ -259,8 +259,10 @@ export function Header() {
               </svg>
             </button>
 
+            {/* Wishlist (desktop / tablet — on mobile it lives in the menu) */}
+            <WishlistLink className="hidden sm:inline-flex" />
+
             {/* Cart */}
-            <WishlistLink />
             <button
               type="button"
               onClick={openCartDrawer}
@@ -430,6 +432,13 @@ export function Header() {
                 {t('account')}
               </Link>
             )}
+            <Link
+              href="/wishlist"
+              onClick={() => setMobileMenuOpen(false)}
+              className={`block rounded-lg px-3 py-2.5 text-sm font-medium transition-colors text-foreground hover:bg-secondary/50`}
+            >
+              {locale === 'en' ? 'Wishlist' : 'רשימת המשאלות'}
+            </Link>
             {isLoggedIn ? (
               <button
                 onClick={() => {
