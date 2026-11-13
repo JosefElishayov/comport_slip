@@ -15,6 +15,7 @@ import { SkipToContent } from '@/components/accessibility/skip-to-content';
 import { CookieConsentBanner } from '@/components/cookie-consent/cookie-consent-banner';
 import { ShabbatOverlay } from '@/components/shared/shabbat-overlay';
 import { BrainerceBot } from '@/components/shared/brainerce-bot';
+import { WebMCP } from '@/components/shared/webmcp';
 import { AnalyticsTracker } from '@/components/analytics/analytics-tracker';
 import { GoogleTag } from '@/components/analytics/google-tag';
 import { GoogleTagConsent } from '@/components/analytics/google-tag-consent';
@@ -149,6 +150,8 @@ export default async function RootLayout({
   return (
     <html lang={locale} dir={dir}>
       <head>
+        <link rel="alternate" type="text/plain" href="/llms.txt" title="AI site summary" />
+        <link rel="alternate" type="text/markdown" href="/agents.md" title="AI agent guide" />
         <GoogleTag />
         <script
           type="application/ld+json"
@@ -178,6 +181,7 @@ export default async function RootLayout({
           <CookieConsentBanner />
           <ShabbatOverlay />
           <BrainerceBot />
+          <WebMCP />
           <AnalyticsTracker />
           <GoogleTagConsent />
         </StoreProvider>
