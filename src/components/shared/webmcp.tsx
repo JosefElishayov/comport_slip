@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect } from 'react';
+import { useEffect, useRef } from 'react';
 import { getClient } from '@/lib/brainerce';
 import { useRouter } from '@/lib/navigation';
 import { useRegionId } from '@/providers/region-provider';
@@ -30,7 +30,9 @@ function textInput(input: Record<string, unknown>, key: string): string {
 export function WebMCP() {
   const router = useRouter();
   const regionId = useRegionId();
-  const { openCartDrawer } = useCart();
+  const cartState = useCart();
+  const latestCart = useRef(cartState);
+  latestCart.current = cartState;
 
   useEffect(() => {
     const context = (document as Document & { modelContext?: ModelContext }).modelContext
@@ -66,7 +68,7 @@ export function WebMCP() {
         execute: async (input) => JSON.stringify(await client.getProduct(textInput(input, 'productId'), regionId ? { regionId } : undefined)),
       },
       {
-        name: 'open_product',
+        name: 'view_product',
         description: 'Open a product detail page using a slug returned by the product catalog. Does not buy or add anything to the cart.',
         inputSchema: schema('slug'),
         annotations: { readOnlyHint: true },
@@ -83,32 +85,52 @@ export function WebMCP() {
         inputSchema: schema(),
         annotations: { readOnlyHint: true },
         execute: async () => {
-          openCartDrawer();
+          latestCart.current.openCartDrawer();
           return JSON.stringify({ opened: true });
         },
       },
+      {
+        name: 'start_checkout',
+        description: 'Start checkout for the shopper’s existing nonempty cart. Opens the checkout form for review of delivery, stock and final total. The shopper completes payment; this tool never submits payment or an order.',
+        inputSchema: schema(),
+        annotations: { readOnlyHint: false },
+        execute: async () => {
+          const state = latestCart.current;
+          if (state.cartLoading || state.cartSyncing) throw new Error('Cart is still syncing; wait and retry.');
+          if (state.cartError) throw new Error('Cart could not be loaded; open the cart and retry.');
+          if (!state.cart?.items.length) throw new Error('Add a product to the cart before starting checkout.');
+          state.closeCartDrawer();
+          router.push('/checkout');
+          return JSON.stringify({ opened: true, paymentSubmitted: false });
+        },
+      },
     ];
-    // Register serially so cleanup also works during React Strict Mode remounts.
+    // Old browsers remove registrations by name; current browsers use the signal.
+    // Register synchronously before cleanup to avoid an old cleanup deleting new tools.
     const registered: string[] = [];
-    const registration = (async () => {
-      for (const tool of tools) {
-        if (controller.signal.aborted) break;
-        try {
-          await context.registerTool(tool, { signal: controller.signal });
-          registered.push(tool.name);
-          if (controller.signal.aborted) context.unregisterTool?.(tool.name);
-        } catch (error) {
+    for (const tool of tools) {
+      const execute = tool.execute;
+      tool.execute = async (input) => {
+        if (controller.signal.aborted) throw new Error('Page context changed; retry.');
+        const result = await execute(input);
+        if (controller.signal.aborted) throw new Error('Page context changed; retry.');
+        return result;
+      };
+      try {
+        const pending = context.registerTool(tool, { signal: controller.signal });
+        registered.push(tool.name);
+        void Promise.resolve(pending).catch((error) => {
           if (!controller.signal.aborted) console.warn('WebMCP tool registration failed', tool.name, error);
-        }
+        });
+      } catch (error) {
+        console.warn('WebMCP tool registration failed', tool.name, error);
       }
-    })();
+    }
     return () => {
       controller.abort();
-      void registration.then(() => {
-        for (const name of registered) context.unregisterTool?.(name);
-      });
+      for (const name of registered) context.unregisterTool?.(name);
     };
-  }, [router, regionId, openCartDrawer]);
+  }, [router, regionId]);
 
   return null;
 }

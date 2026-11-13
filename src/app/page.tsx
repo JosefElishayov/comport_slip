@@ -39,6 +39,7 @@ export async function generateMetadata(): Promise<Metadata> {
       url: withLocalePrefix('/', locale),
       type: 'website',
       locale: m.ogLocale,
+      images: [{ url: '/products-hero.webp', alt: 'Comfort Sleep — קומפורט סליפ' }],
     },
   };
 }

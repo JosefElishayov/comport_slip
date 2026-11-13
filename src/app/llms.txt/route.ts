@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server';
 import { getBlogPosts } from '@/lib/blog';
 import { categoryPath, flattenLinkableCategories, getCategoryTree } from '@/lib/categories';
 import { defaultLocale } from '@/lib/locale';
+import { WHEN_TO_USE } from '@/lib/agent-discovery';
 
 /**
  * llms.txt — a plain-text site summary for AI answer engines (see llmstxt.org).
@@ -67,7 +68,7 @@ function oneLine(value: string | null | undefined, max = 180): string {
 }
 
 export async function GET() {
-  const sections: string[] = [PREAMBLE];
+  const sections: string[] = [PREAMBLE, WHEN_TO_USE, `## Machine-readable references\n\n- [Product catalog guide](${baseUrl}/products/llms.txt)\n- [Prices](${baseUrl}/pricing.md)\n- [Authentication](${baseUrl}/auth.md)\n- [ARD catalog](${baseUrl}/.well-known/ard.json)\n- [Homepage Markdown](${baseUrl}/index.md)`];
 
   const [tree, blog] = await Promise.all([
     getCategoryTree(defaultLocale),

@@ -1,6 +1,13 @@
 import type { NextConfig } from 'next';
 
 const nextConfig: NextConfig = {
+  async rewrites() {
+    return { fallback: [{
+      source: '/:path*',
+      has: [{ type: 'header', key: 'accept', value: '.*text/markdown.*' }],
+      destination: '/agent-not-found',
+    }] };
+  },
   async redirects() {
     return [{
       source: '/:path*',
@@ -27,6 +34,10 @@ const nextConfig: NextConfig = {
       {
         source: '/(.*)',
         headers: [
+          {
+            key: 'Link',
+            value: '</sitemap.xml>; rel="sitemap", </llms.txt>; rel="describedby"; type="text/plain", </index.md>; rel="alternate"; type="text/markdown", </.well-known/ard.json>; rel="ard", </.well-known/mcp/server-card.json>; rel="service-desc"; type="application/mcp-server-card+json"',
+          },
           {
             key: 'Strict-Transport-Security',
             value: 'max-age=63072000; includeSubDomains; preload',

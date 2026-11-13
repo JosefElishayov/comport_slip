@@ -21,6 +21,7 @@ import { GoogleTag } from '@/components/analytics/google-tag';
 import { GoogleTagConsent } from '@/components/analytics/google-tag-consent';
 import { getNonce } from '@/lib/nonce';
 import { SITE_URL } from '@/lib/seo';
+import { getServerClient } from '@/lib/brainerce';
 import './globals.css';
 
 const font = Assistant({ subsets: ['hebrew', 'latin'], display: 'swap' });
@@ -74,6 +75,7 @@ export async function generateMetadata(): Promise<Metadata> {
     siteName: storeName,
     locale: m.ogLocale,
     type: 'website',
+    images: [{ url: '/products-hero.webp', alt: 'Comfort Sleep — קומפורט סליפ' }],
   },
   robots: {
     index: true,
@@ -147,17 +149,27 @@ export default async function RootLayout({
   const locale = await getServerLocale();
   const dir = getDirection(locale);
   const regionId = (await getServerRegionId()) ?? null;
+  const info = await getServerClient(locale).getStoreInfo().catch(() => null);
+  const sameAs = [...new Set([
+    'https://www.facebook.com/profile.php?id=61593023545584',
+    ...Object.values(info?.socialLinks ?? {}),
+  ])].filter((value) => {
+    try { return new URL(value).protocol === 'https:'; } catch { return false; }
+  });
+  const storeJsonLd = { ...organizationJsonLd, ...(sameAs.length ? { sameAs } : {}) };
   return (
     <html lang={locale} dir={dir}>
       <head>
         <link rel="alternate" type="text/plain" href="/llms.txt" title="AI site summary" />
         <link rel="alternate" type="text/markdown" href="/agents.md" title="AI agent guide" />
+        <link rel="ard" href="/.well-known/ard.json" />
+        <link rel="service-desc" type="application/mcp-server-card+json" href="/.well-known/mcp/server-card.json" />
         <GoogleTag />
         <script
           type="application/ld+json"
           nonce={nonce}
           suppressHydrationWarning
-          dangerouslySetInnerHTML={{ __html: serializeJsonLd(organizationJsonLd) }}
+          dangerouslySetInnerHTML={{ __html: serializeJsonLd(storeJsonLd) }}
         />
         <script
           type="application/ld+json"

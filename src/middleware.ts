@@ -69,7 +69,7 @@ function applyCspHeaders(response: NextResponse, nonce: string): NextResponse {
   return response;
 }
 
-export function middleware(request: NextRequest) {
+export async function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl;
 
   // Skip static files and API routes
@@ -113,6 +113,21 @@ export function middleware(request: NextRequest) {
     }
   }
 
+  const wantsMarkdown = (request.headers.get('accept') || '').split(',').some((part) => {
+    const [type, ...options] = part.trim().split(';');
+    const quality = options.find((option) => option.trim().startsWith('q='));
+    return type === 'text/markdown' && (!quality || Number(quality.trim().slice(2)) > 0);
+  });
+  if (wantsMarkdown && (request.method === 'GET' || request.method === 'HEAD')) {
+    if (barePath === '/') {
+      const markdownUrl = request.nextUrl.clone();
+      markdownUrl.pathname = '/index.md';
+      const response = NextResponse.rewrite(markdownUrl);
+      response.headers.set('Vary', 'Accept');
+      return response;
+    }
+  }
+
   // For `/en/...` rewrite onto the unprefixed route tree so the same routes
   // serve both languages; the browser URL keeps its prefix.
   let response: NextResponse;
@@ -123,6 +138,7 @@ export function middleware(request: NextRequest) {
   } else {
     response = NextResponse.next({ request: { headers: requestHeaders } });
   }
+  response.headers.append('Vary', 'Accept');
   return applyCspHeaders(response, nonce);
 }
 

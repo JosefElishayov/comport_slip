@@ -294,6 +294,7 @@ export function Header() {
             <form onSubmit={handleSearchSubmit}>
               <input
                 ref={searchInputRef}
+                aria-label={t('searchPlaceholder')}
                 type="text"
                 value={searchQuery}
                 onChange={(e) => {
@@ -464,6 +465,7 @@ export function Header() {
               <form onSubmit={handleSearchSubmit}>
                 <input
                   type="text"
+                  aria-label={t('searchPlaceholder')}
                   value={searchQuery}
                   onChange={(e) => {
                     setSearchQuery(e.target.value);

@@ -78,14 +78,14 @@ export function CartDrawer() {
       >
         {/* Header */}
         <div className="flex items-center justify-between border-b border-border px-5 py-4">
-          <h2 className="text-lg font-bold text-foreground">
+          <p className="text-lg font-bold text-foreground">
             {tCart('title')}
             {itemCount > 0 && (
               <span className="text-muted-foreground text-sm font-normal ms-2">
                 ({itemCount} {itemCount === 1 ? tc('item') : tc('items')})
               </span>
             )}
-          </h2>
+          </p>
           <button
             onClick={closeCartDrawer}
             className="rounded-full p-2 text-muted-foreground hover:bg-secondary/50 hover:text-foreground transition-colors"

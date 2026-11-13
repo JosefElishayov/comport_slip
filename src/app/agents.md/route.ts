@@ -1,4 +1,5 @@
 import { CONNECTION_ID } from '@/lib/brainerce';
+import { frontmatter, WHEN_TO_USE } from '@/lib/agent-discovery';
 
 export const revalidate = 3600;
 
@@ -7,6 +8,7 @@ export function GET() {
   const api = new URL(process.env.BRAINERCE_API_URL || 'https://api.brainerce.com').origin;
   const channel = encodeURIComponent(CONNECTION_ID);
   const lines = [
+    frontmatter('Comfort Sleep agent guide', 'Shopping tools, policies and safe cart handoff.', '/agents.md').trimEnd(),
     '# Comfort Sleep — guide for AI shopping agents',
     '',
     'Comfort Sleep (קומפורט סליפ), a mattress and sleep-products store in Israel.',
@@ -26,19 +28,22 @@ export function GET() {
     'Send JSON-RPC 2.0 POST requests with Content-Type: application/json and',
     'Accept: application/json, text/event-stream. This server is stateless.',
     'Use initialize, tools/list and tools/call. No API key or customer login is needed.',
-    'Tools: search_products, get_product, list_categories, get_store_info,',
+    'Tools: search_catalog (search_products is a legacy alias), get_product, list_categories, get_store_info,',
     'search_policies_and_faqs, estimate_delivery_and_total, search_locations,',
     'lookup_locations and create_cart.',
     '',
     '## In-browser tools (WebMCP)',
     '',
     'On supported browsers, this storefront registers search_products, get_product,',
-    'open_product and show_cart with document.modelContext (with legacy navigator',
+    'view_product, show_cart and start_checkout with document.modelContext (with legacy navigator',
     'compatibility). Search accepts query, product reads accept productId, and',
     'product navigation accepts slug. These tools do not place orders or take payment.',
     'Search updates the visible product results. All tools use the current storefront',
     'session and language. Regional catalog reads use the selected region.',
     'If WebMCP is unavailable, use the storefront MCP above or normal website links.',
+    'start_checkout opens checkout for the existing nonempty cart. It does not submit payment.',
+    '',
+    WHEN_TO_USE,
     '',
     '## Buying',
     '',
